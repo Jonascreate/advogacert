@@ -490,7 +490,12 @@ function loadPagamentoConfig() {
             emailAviso: process.env.MP_EMAIL_AVISO || file.mercadopago?.email_aviso || ''
         },
         admin: {
-            senha: process.env.ADMIN_SENHA || file.admin?.senha || 'admin'
+            // Sem padrao: o repositorio e publico, entao um valor fixo aqui
+            // seria senha conhecida por qualquer um. Sem configurar, ninguem entra.
+            senha: process.env.ADMIN_SENHA || file.admin?.senha || '',
+            // Segredo do app autenticador (base32). Vazio = 2FA desligado.
+            totpSecret: (process.env.ADMIN_TOTP_SECRET || file.admin?.totp_secret || '')
+                .replace(/\s+/g, '').toUpperCase()
         }
     };
 }
@@ -499,9 +504,68 @@ const PAGAMENTO = loadPagamentoConfig();
 const MP = PAGAMENTO.mp;
 const ADMIN = PAGAMENTO.admin;
 
+if (!ADMIN.senha) {
+    console.warn('⚠️  Painel admin sem senha configurada (ADMIN_SENHA ou pagamento_config.json): o acesso está bloqueado.');
+}
+
 // sessões do painel — memória, expiram em 8 horas
 const adminSessoes = new Map();
 const ADMIN_SESSAO_TTL = 8 * 60 * 60 * 1000;
+
+// tentativas de login no painel por IP — trava forca bruta na senha e no codigo
+const adminTentativas = new Map();
+const ADMIN_MAX_TENTATIVAS = 8;
+const ADMIN_JANELA_TENTATIVAS = 15 * 60 * 1000;
+
+// ============================================================
+// 2FA do painel — TOTP (RFC 6238), compatível com Google Authenticator,
+// Authy, 1Password e Microsoft Authenticator.
+// ============================================================
+const BASE32_ALFABETO = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+
+function base32Decode(texto) {
+    let bits = '';
+    for (const c of texto.replace(/=+$/, '')) {
+        const i = BASE32_ALFABETO.indexOf(c);
+        if (i === -1) return null;
+        bits += i.toString(2).padStart(5, '0');
+    }
+    const bytes = [];
+    for (let i = 0; i + 8 <= bits.length; i += 8) bytes.push(parseInt(bits.slice(i, i + 8), 2));
+    return Buffer.from(bytes);
+}
+
+/** Codigo de 6 digitos para um instante — o mesmo calculo que o app faz. */
+function totpCodigo(secretBase32, contador) {
+    const chave = base32Decode(secretBase32);
+    if (!chave || !chave.length) return null;
+
+    const buf = Buffer.alloc(8);
+    buf.writeUInt32BE(Math.floor(contador / 2 ** 32), 0);
+    buf.writeUInt32BE(contador >>> 0, 4);
+
+    const hmac = crypto.createHmac('sha1', chave).update(buf).digest();
+    const offset = hmac[hmac.length - 1] & 0x0f;
+    const valor = ((hmac[offset] & 0x7f) << 24) | (hmac[offset + 1] << 16) |
+                  (hmac[offset + 2] << 8) | hmac[offset + 3];
+    return String(valor % 1000000).padStart(6, '0');
+}
+
+/**
+ * Aceita o codigo da janela atual e uma vizinha de cada lado: o relogio do
+ * celular quase nunca bate exatamente com o do servidor.
+ */
+function totpValido(secretBase32, digitado) {
+    const codigo = String(digitado || '').replace(/\D/g, '');
+    if (codigo.length !== 6) return false;
+
+    const agora = Math.floor(Date.now() / 1000 / 30);
+    for (let j = -1; j <= 1; j++) {
+        const esperado = totpCodigo(secretBase32, agora + j);
+        if (esperado && crypto.timingSafeEqual(Buffer.from(esperado), Buffer.from(codigo))) return true;
+    }
+    return false;
+}
 
 // Tipos MIME
 const MIME_TYPES = {
@@ -1058,12 +1122,44 @@ const server = http.createServer((req, res) => {
             };
 
             try {
-                const { senha } = JSON.parse(body || '{}');
+                const { senha, codigo } = JSON.parse(body || '{}');
+                const ip = req.socket.remoteAddress || 'desconhecido';
+
+                // sem senha configurada o painel fica fechado, e nao aberto
+                if (!ADMIN.senha) {
+                    responder(200, { success: false, error: 'Painel sem senha configurada no servidor.' });
+                    return;
+                }
+
+                const tentativas = (adminTentativas.get(ip) || [])
+                    .filter(t => Date.now() - t < ADMIN_JANELA_TENTATIVAS);
+                if (tentativas.length >= ADMIN_MAX_TENTATIVAS) {
+                    responder(429, { success: false, error: 'Muitas tentativas. Aguarde 15 minutos.' });
+                    return;
+                }
+
+                const registrarErro = () => adminTentativas.set(ip, [...tentativas, Date.now()]);
+
                 if (!senha || senha !== ADMIN.senha) {
+                    registrarErro();
                     responder(200, { success: false, error: 'Senha incorreta' });
                     return;
                 }
 
+                // segundo fator: só exigido se houver segredo configurado
+                if (ADMIN.totpSecret) {
+                    if (!codigo) {
+                        responder(200, { success: false, precisa_codigo: true, error: 'Digite o código do autenticador' });
+                        return;
+                    }
+                    if (!totpValido(ADMIN.totpSecret, codigo)) {
+                        registrarErro();
+                        responder(200, { success: false, precisa_codigo: true, error: 'Código inválido' });
+                        return;
+                    }
+                }
+
+                adminTentativas.delete(ip);
                 limparExpirados(adminSessoes, ADMIN_SESSAO_TTL);
                 const token = crypto.randomBytes(24).toString('hex');
                 adminSessoes.set(token, { criadoEm: Date.now() });

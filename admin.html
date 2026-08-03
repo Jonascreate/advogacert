@@ -262,6 +262,12 @@
                         <i class="fas fa-eye"></i>
                     </button>
                 </div>
+                <!-- so aparece quando o servidor avisa que o 2FA esta ligado -->
+                <div class="campo-senha" id="campo-codigo" style="display:none;">
+                    <input type="text" id="codigo" placeholder="Código do autenticador"
+                           inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+                    <i class="fas fa-mobile-screen"></i>
+                </div>
                 <button type="submit" class="btn-entrar" id="btn-entrar">
                     <i class="fas fa-arrow-right-to-bracket"></i>
                     <span id="btn-entrar-texto">Entrar no painel</span>
@@ -333,6 +339,8 @@
         const btnEntrar = document.getElementById('btn-entrar');
         const btnTexto = document.getElementById('btn-entrar-texto');
         const campoSenha = document.getElementById('senha');
+        const campoCodigo = document.getElementById('codigo');
+        const blocoCodigo = document.getElementById('campo-codigo');
         const erroLogin = document.getElementById('erro-login');
 
         function ocupado(sim) {
@@ -359,19 +367,28 @@
             const senha = campoSenha.value;
             if (!senha) { erroLogin.textContent = 'Digite a senha do painel'; return; }
 
+            const codigo = campoCodigo.value.trim();
+
             erroLogin.textContent = '';
             ocupado(true);
 
             fetch('/admin/entrar', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ senha })
+                body: JSON.stringify({ senha, codigo })
             })
             .then(r => r.json())
             .then(d => {
                 ocupado(false);
                 if (!d.success) {
                     erroLogin.textContent = d.error || 'Não foi possível entrar';
+                    // o servidor pede o segundo fator: revela o campo do codigo
+                    if (d.precisa_codigo) {
+                        blocoCodigo.style.display = 'block';
+                        campoCodigo.value = '';
+                        campoCodigo.focus();
+                        return;
+                    }
                     campoSenha.select();
                     return;
                 }

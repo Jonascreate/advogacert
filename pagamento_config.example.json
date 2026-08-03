@@ -13,7 +13,10 @@
   },
 
   "admin": {
-    "_senha": "Senha do painel em /admin.html. TROQUE — o padrao e 'admin'.",
-    "senha": ""
+    "_senha": "Senha do painel em /admin.html. Sem ela o painel fica bloqueado.",
+    "senha": "",
+
+    "_totp_secret": "Opcional: segredo base32 do app autenticador (Google Authenticator, Authy, 1Password). Preenchido, o painel passa a exigir o codigo de 6 digitos alem da senha.",
+    "totp_secret": ""
   }
 }
