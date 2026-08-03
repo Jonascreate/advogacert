@@ -1,0 +1,20 @@
+# Arquivos que NAO devem ser publicados no GitHub Pages.
+#
+# O Pages so serve arquivos estaticos: os .php nao sao executados, seriam
+# baixados como codigo-fonte, e o painel admin nao tem servidor por tras.
+# Nada aqui e segredo (o repositorio e publico), mas tambem nao precisa
+# estar exposto no dominio do site.
+exclude:
+  - admin.html
+  - server.js
+  - db_config.php
+  - gpt.php
+  - login.php
+  - logout.php
+  - process_reset.php
+  - reset.php
+  - lib
+  - package.json
+  - package2.json
+  - iniciar-servidor.bat
+  - claudeignore

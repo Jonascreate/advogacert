@@ -23,7 +23,9 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const PORT = 3000;
+// Hospedagens (Render, Railway, Fly) escolhem a porta e passam por env.
+// Local, sem env, continua sendo 3000.
+const PORT = process.env.PORT || 3000;
 const JSON_DB_PATH = path.join(__dirname, 'usuarios.json');
 
 // ============================================================
@@ -1726,8 +1728,14 @@ server.listen(PORT, () => {
     console.log(`🔑 Login Google:    ${stat(OAUTH.google)}  →  ${oauthRedirectUri('google')}`);
     console.log('📨 Login por código: e-mail ✅ (Brevo, sem custo novo)');
     console.log(`💳 Mercado Pago:    ${MP.link ? '✅ link configurado' : '⚠️  sem link (pagamento_config.json)'}${MP.accessToken ? ' + API' : ''}`);
-    const senhaFraca = ADMIN.senha.length < 8 || ['admin', '1234', '123456'].includes(ADMIN.senha);
-    console.log(`📊 Painel:          http://localhost:${PORT}/admin.html  ${senhaFraca ? `⚠️  senha "${ADMIN.senha}" — só para teste local, troque antes da VPS` : '(senha configurada)'}`);
+    // nunca imprimir a senha: em hospedagem o log fica gravado no painel do provedor
+    const senhaFraca = ADMIN.senha && (ADMIN.senha.length < 8 || ['admin', '1234', '123456'].includes(ADMIN.senha));
+    const estadoAdmin = !ADMIN.senha
+        ? '⛔ bloqueado (defina ADMIN_SENHA)'
+        : senhaFraca
+            ? '⚠️  senha fraca — troque antes de publicar'
+            : `✅ senha forte${ADMIN.totpSecret ? ' + autenticador (2FA)' : ' (2FA desligado)'}`;
+    console.log(`📊 Painel:          /admin.html  ${estadoAdmin}`);
     console.log(`📱 Código por SMS:  ${OTP.canalSms === 'off'
         ? 'desativado (canal pago — ligue em otp_config.json quando quiser)'
         : `canal "${OTP.canalSms}"${OTP.canalSms === 'console' ? ' ⚠️  só aparece no terminal' : ` (remetente ${OTP.remetenteSms})`}`}`);
