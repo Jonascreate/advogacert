@@ -614,6 +614,12 @@ document.addEventListener('DOMContentLoaded', function() {
         frame.style.cssText = `
             position:fixed; bottom:160px; right:24px;
             width:360px; height:520px;
+            /* com os dois botoes (bot + whatsapp) a janela comeca a 160px do
+               rodape; em telas de 13" (~640px uteis) o topo com o botao X
+               ficava fora da tela. O limite abaixo encolhe a janela em vez
+               de deixar o cabecalho escapar para cima. */
+            max-height:calc(100vh - 180px);
+            min-height:260px;
             background:#161618; color:#fff;
             border-radius:14px; display:none;
             flex-direction:column;
@@ -636,13 +642,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     <i class="fa-solid fa-feather-pointed"></i>
                     <span>AssistentePje</span>
                 </div>
-                <button id="close-chat" style="
+                <button id="close-chat" aria-label="Fechar chat" style="
                     background:none;
                     border:none;
                     color:#6ee7c8;
-                    fontSize:20px;
+                    font-size:22px;
                     cursor:pointer;
                     line-height:1;
+                    padding:0 4px;
+                    flex-shrink:0;
                 ">×</button>
             </div>
             <div id="chat-messages" style="flex:1;padding:12px;overflow-y:auto;font-size:14px"></div>
@@ -694,10 +702,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         };
-        frame.querySelector('#close-chat').onclick = () => {
+        function fecharChat() {
             frame.style.display = 'none';
             conversaAtiva = false;
-        };
+        }
+
+        frame.querySelector('#close-chat').onclick = fecharChat;
+
+        // Esc fecha o chat — saida garantida se o cabecalho ficar fora da tela
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && frame.style.display === 'flex') fecharChat();
+        });
 
         function limparMarkdown(text) {
             return text

@@ -699,6 +699,10 @@ document.addEventListener('DOMContentLoaded', function() {
         frame.style.cssText = `
             position:fixed; bottom:95px; right:24px;
             width:360px; height:520px;
+            /* em telas de 13" o topo da janela (com o botao X) saia da tela;
+               o limite abaixo encolhe a janela em vez de cortar o cabecalho */
+            max-height:calc(100vh - 115px);
+            min-height:260px;
             background:#161618; color:#fff;
             border-radius:14px; display:none;
             flex-direction:column;
@@ -721,13 +725,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     <i class="fa-solid fa-feather-pointed"></i>
                     <span>PjeGPT</span>
                 </div>
-                <button id="close-chat" style="
+                <button id="close-chat" aria-label="Fechar chat" style="
                     background:none;
                     border:none;
                     color:#6ee7c8;
-                    font-size:20px;
+                    font-size:22px;
                     cursor:pointer;
                     line-height:1;
+                    padding:0 4px;
+                    flex-shrink:0;
                 ">×</button>
             </div>
             <div id="chat-messages" style="flex:1;padding:12px;overflow-y:auto;font-size:14px"></div>
@@ -754,7 +760,13 @@ document.addEventListener('DOMContentLoaded', function() {
             frame.style.display = frame.style.display === 'flex' ? 'none' : 'flex';
             input.focus();
         };
-        frame.querySelector('#close-chat').onclick = () => frame.style.display = 'none';
+        const fecharChat = () => frame.style.display = 'none';
+        frame.querySelector('#close-chat').onclick = fecharChat;
+
+        // Esc fecha o chat — saida garantida se o cabecalho ficar fora da tela
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && frame.style.display === 'flex') fecharChat();
+        });
 
         function addMsg(text, who, typing = false) {
             const div = document.createElement('div');
