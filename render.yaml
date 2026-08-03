@@ -1,0 +1,50 @@
+# Configuracao do deploy no Render (Blueprint).
+#
+# O server.js nao tem dependencias externas: usa so modulos nativos do Node.
+# Por isso o build e vazio e o start e direto.
+#
+# As chaves NAO ficam aqui. "sync: false" faz o Render pedir o valor de cada
+# uma na hora de criar o servico, e guarda como variavel de ambiente secreta.
+services:
+  - type: web
+    name: advogacert
+    runtime: node
+    plan: free
+    buildCommand: ""
+    startCommand: node server.js
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+
+      # endereco publico — usado para montar o retorno do login social
+      - key: OAUTH_BASE_URL
+        value: https://www.agentej.us
+
+      # envio de e-mail (boas-vindas, recuperacao de senha, codigo de acesso)
+      - key: BREVO_API_KEY
+        sync: false
+
+      # chat PjeGPT
+      - key: DEEPSEEK_API_KEY
+        sync: false
+
+      # painel /admin.html — sem a senha, o painel fica bloqueado
+      - key: ADMIN_SENHA
+        sync: false
+      - key: ADMIN_TOTP_SECRET
+        sync: false
+
+      # login com Google (opcional)
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+
+      # pagamento Mercado Pago (opcional)
+      - key: MP_LINK
+        sync: false
+      - key: MP_ACCESS_TOKEN
+        sync: false
+      - key: MP_EMAIL_AVISO
+        sync: false
