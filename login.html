@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | AdvogaCert</title>
+
+    <!-- Fontes Google -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+    <!-- CSS Principal -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 11rem 1.5rem 4rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-split {
+            display: grid;
+            grid-template-columns: 0.8fr 1fr;
+            gap: 3rem;
+            align-items: center;
+            max-width: 1140px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .login-showcase {
+            padding: 2rem;
+        }
+
+        .login-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 68px;
+            height: 68px;
+            margin-bottom: 1.75rem;
+            border-radius: 18px;
+            background: rgba(110, 231, 200, 0.12);
+            border: 1px solid rgba(110, 231, 200, 0.25);
+            color: var(--accent-mac, #6ee7c8);
+            font-size: 2rem;
+            animation: iconGlow 3.2s ease-in-out infinite;
+        }
+        @keyframes iconGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(110, 231, 200, 0.15); }
+            50% { box-shadow: 0 0 40px rgba(110, 231, 200, 0.4); }
+        }
+
+        .login-showcase h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            font-weight: 600;
+            line-height: 1.3;
+            margin-bottom: 1rem;
+        }
+        .login-showcase h1 span {
+            background: linear-gradient(135deg, var(--accent-mac, #6ee7c8), var(--accent-win, #4fa3ff));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .login-showcase p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 1.75rem;
+        }
+        .login-showcase ul {
+            list-style: none;
+        }
+        .login-showcase ul li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.9rem;
+        }
+        .login-showcase ul li i {
+            color: var(--accent-mac, #6ee7c8);
+        }
+
+        .login-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            max-width: 620px;
+            width: 100%;
+            margin: 0 auto;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2.5rem 3rem;
+            transform: scale(0.88);
+            transform-origin: center;
+        }
+        .form-row {
+            display: flex;
+            gap: 1.25rem;
+        }
+        .form-row .form-group {
+            flex: 1;
+            min-width: 0;
+        }
+        .login-container > * {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+        }
+        @property --border-angle {
+            syntax: '<angle>';
+            inherits: false;
+            initial-value: 0deg;
+        }
+        @keyframes borderRun {
+            to { --border-angle: 360deg; }
+        }
+        .login-container::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            pointer-events: none;
+            animation: borderRun 4s linear infinite;
+            background: conic-gradient(from var(--border-angle),
+                transparent 0deg,
+                transparent 190deg,
+                rgba(79, 163, 255, 0) 210deg,
+                #1f6fd1 250deg,
+                #6ee7c8 300deg,
+                #fff 330deg,
+                #4fa3ff 350deg,
+                rgba(110, 231, 200, 0) 360deg);
+            opacity: 0.6;
+            filter: drop-shadow(0 0 2px rgba(79, 163, 255, 0.5));
+        }
+
+        .login-container h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        #loginForm, #registerForm, #resetForm {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .form-group input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 1rem 1.25rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-mac, #6ee7c8);
+            box-shadow: 0 0 0 3px rgba(110, 231, 200, 0.1);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--accent-mac-dark, #21b98f), var(--accent-mac, #6ee7c8));
+            color: #062018;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(110, 231, 200, 0.3);
+        }
+
+        .form-hint {
+            margin: -1rem 0 1.5rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .login-links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 0.5rem 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .login-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: color 0.3s ease;
+        }
+
+        .login-links a:hover {
+            color: var(--accent-mac, #6ee7c8);
+        }
+
+        .login-divider {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 1.75rem 0 1.25rem;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+        }
+        .login-divider::before,
+        .login-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        .social-login {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        .social-login-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.65rem;
+            flex: 1;
+            min-width: 180px;
+            padding: 0.85rem 1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 0.92rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .social-login-btn i { font-size: 1.05rem; }
+        .social-login-btn.google i { color: #ea4335; }
+        .social-login-btn.codigo i { color: #6ee7c8; }
+        .social-login-btn:hover {
+            transform: translateY(-2px);
+            border-color: rgba(110, 231, 200, 0.4);
+        }
+
+        #otp-codigo {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.6rem;
+            font-weight: 600;
+            text-align: center;
+            letter-spacing: 0.6rem;
+            text-indent: 0.6rem;
+        }
+
+        .otp-hint {
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            text-align: center;
+            margin: -0.75rem 0 1.25rem;
+        }
+
+        .otp-reenviar {
+            background: none;
+            border: none;
+            padding: 0;
+            font: inherit;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        .otp-reenviar:hover:not(:disabled) { color: var(--accent-mac, #6ee7c8); }
+        .otp-reenviar:disabled { cursor: default; opacity: 0.6; }
+
+        @media (min-width: 1600px) {
+            .login-page {
+                padding: 12rem 1.5rem 5rem;
+            }
+            .login-split {
+                max-width: 1400px;
+                gap: 4.5rem;
+            }
+            .login-icon {
+                width: 80px;
+                height: 80px;
+                font-size: 2.4rem;
+            }
+            .login-showcase h1 {
+                font-size: 2.5rem;
+            }
+            .login-showcase p,
+            .login-showcase ul li {
+                font-size: 1.1rem;
+            }
+            .login-container {
+                max-width: 720px;
+                padding: 3rem 3.5rem;
+                transform: scale(1);
+            }
+            .login-container h2 {
+                font-size: 2.3rem;
+            }
+            .login-subtitle {
+                font-size: 1.05rem;
+            }
+            .form-group input {
+                padding: 1.15rem 1.25rem;
+                font-size: 1.05rem;
+            }
+            .login-btn {
+                padding: 1.15rem;
+                font-size: 1.05rem;
+            }
+        }
+
+        @media (max-width: 860px) {
+            .login-split {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            .login-showcase {
+                text-align: center;
+                padding: 0 1rem;
+            }
+            .login-icon { margin: 0 auto 1.75rem; }
+            .login-showcase ul li { justify-content: center; }
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 1.5rem 4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(10, 10, 11, 0.45);
+            backdrop-filter: blur(20px) saturate(150%);
+            -webkit-backdrop-filter: blur(20px) saturate(150%);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        nav {
+            display: flex;
+            gap: 2.5rem;
+            align-items: center;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            letter-spacing: 0.02em;
+        }
+
+        nav a:hover {
+            color: var(--accent-mac, #6ee7c8);
+        }
+
+        .nav-btn {
+            background: rgba(110, 231, 200, 0.12);
+            color: #6ee7c8;
+            border: 1px solid rgba(110, 231, 200, 0.3);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(110, 231, 200, 0.2);
+            border-color: rgba(110, 231, 200, 0.5);
+            color: #6ee7c8;
+            transform: translateY(-2px);
+        }
+
+        footer {
+            position: relative;
+            z-index: 1;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .footer-logo-mask {
+            height: 40px;
+            aspect-ratio: 720 / 232;
+            margin: 0 auto 0.5rem;
+            background: linear-gradient(135deg, var(--accent-mac, #6ee7c8), var(--accent-win, #4fa3ff));
+            -webkit-mask-image: url('assets/img/logo-footer.png');
+            mask-image: url('assets/img/logo-footer.png');
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            mask-position: center;
+            -webkit-mask-size: contain;
+            mask-size: contain;
+        }
+
+        .footer-copy {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            header { padding: 1rem 1.5rem; }
+            nav { display: none; }
+            .login-page { padding: 8rem 1.5rem 3rem; }
+        }
+
+        @media (max-width: 560px) {
+            .form-row { flex-direction: column; gap: 0; }
+        }
+
+        @media (max-width: 480px) {
+            .login-container { padding: 1.75rem; }
+            .login-container h2 { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Blush effect -->
+    <div class="blush-container">
+        <div class="blush blush-1" id="blush1"></div>
+        <div class="blush blush-2" id="blush2"></div>
+        <div class="blush blush-3" id="blush3"></div>
+    </div>
+
+    <header>
+        <a href="index.html" class="logo">
+            <div class="logo-icon">
+                <div class="logo-mask" role="img" aria-label="AdvogaCert"></div>
+            </div>
+        </a>
+        <nav>
+            <a href="index.html">Início</a>
+            <a href="contato.html">Contato</a>
+            <a href="login.html" class="nav-btn">login</a>
+        </nav>
+    </header>
+
+    <section class="login-page">
+        <div class="login-split">
+            <div class="login-showcase">
+                <div class="login-icon"><i class="fas fa-fingerprint"></i></div>
+                <h1>Sua <span>Área do Cliente</span> AdvogaCert</h1>
+                <p>Acesse sua conta para acompanhar chamados, pedidos e cursos com o mesmo suporte especializado que você já conhece.</p>
+                <ul>
+                    <li><i class="fas fa-check-circle"></i> Acompanhe seus chamados de suporte</li>
+                    <li><i class="fas fa-check-circle"></i> Acesse seus cursos PJe</li>
+                    <li><i class="fas fa-check-circle"></i> Histórico de pedidos e certificados</li>
+                </ul>
+            </div>
+
+            <div class="login-container">
+                <h2>Área do Cliente</h2>
+                <p class="login-subtitle">Acesse sua conta para gerenciar pedidos e cursos</p>
+
+                <form id="loginForm" style="display: block;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="login-email">E-mail</label>
+                            <input type="email" id="login-email" placeholder="seu@email.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="login-password">Senha</label>
+                            <input type="password" id="login-password" placeholder="••••••••" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="login-btn">Entrar</button>
+                    <div id="login-message" style="margin-top:15px;text-align:center;font-size:14px;"></div>
+                    <div class="login-links">
+                        <a href="#" onclick="showResetForm(); return false;">Esqueci minha senha</a>
+                        <a href="#" onclick="showRegisterForm(); return false;">Criar conta</a>
+                    </div>
+                    <div class="login-divider">ou entre com</div>
+                    <div class="social-login">
+                        <a href="/auth/google" class="social-login-btn google"><i class="fab fa-google"></i> Entrar com Google</a>
+                        <button type="button" class="social-login-btn codigo" onclick="showOtpForm()"><i class="fas fa-key"></i> Entrar sem senha</button>
+                    </div>
+                </form>
+
+                <form id="registerForm" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="register-email">E-mail</label>
+                            <input type="email" id="register-email" placeholder="seu@email.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-whatsapp">WhatsApp</label>
+                            <input type="tel" id="register-whatsapp" inputmode="numeric" placeholder="(85) 99999-9999" autocomplete="tel" required>
+                        </div>
+                    </div>
+                    <p class="form-hint">É por ele que fazemos o atendimento — informe o número com DDD.</p>
+                    <div class="form-group">
+                        <label for="register-oab">Inscrição na OAB</label>
+                        <input type="text" id="register-oab" placeholder="123456/GO" autocomplete="off" required>
+                    </div>
+                    <p class="form-hint">Sua inscrição identifica o atendimento e controla o chamado gratuito.</p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="register-password">Senha</label>
+                            <input type="password" id="register-password" placeholder="••••••••" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-password-confirm">Confirmar Senha</label>
+                            <input type="password" id="register-password-confirm" placeholder="••••••••" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="login-btn">Criar Conta</button>
+                    <div id="register-message" style="margin-top:15px;text-align:center;font-size:14px;"></div>
+                    <div class="login-links">
+                        <a href="#" onclick="showLoginForm(); return false;">Já tenho conta</a>
+                    </div>
+                    <div class="login-divider">ou cadastre-se com</div>
+                    <div class="social-login">
+                        <a href="/auth/google" class="social-login-btn google"><i class="fab fa-google"></i> Cadastrar com Google</a>
+                        <button type="button" class="social-login-btn codigo" onclick="showOtpForm()"><i class="fas fa-key"></i> Entrar sem senha</button>
+                    </div>
+                </form>
+
+                <!-- Login por código (OTP): passo 1 pede o celular, passo 2 confere o código -->
+                <form id="otpForm" style="display: none;">
+                    <div id="otp-passo-destino">
+                        <div class="form-group">
+                            <label for="otp-destino-input">E-mail</label>
+                            <input type="email" id="otp-destino-input" placeholder="seu@email.com" autocomplete="email" required>
+                        </div>
+                        <p class="otp-hint">Enviamos um código de 6 dígitos. Sem senha para lembrar.</p>
+                        <button type="submit" class="login-btn" id="otp-btn-enviar">Enviar código</button>
+                    </div>
+
+                    <div id="otp-passo-codigo" style="display: none;">
+                        <div class="form-group">
+                            <label for="otp-codigo">Código de 6 dígitos</label>
+                            <input type="text" id="otp-codigo" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code">
+                        </div>
+                        <p class="otp-hint" id="otp-destino"></p>
+                        <button type="submit" class="login-btn" id="otp-btn-confirmar">Confirmar e entrar</button>
+                        <div class="login-links" style="justify-content: center;">
+                            <button type="button" class="otp-reenviar" id="otp-reenviar">Reenviar código</button>
+                        </div>
+                    </div>
+
+                    <div id="otp-message" style="margin-top:15px;text-align:center;font-size:14px;"></div>
+                    <div class="login-links">
+                        <a href="#" onclick="showLoginForm(); return false;">Voltar ao login com e-mail</a>
+                    </div>
+                </form>
+
+                <form id="resetForm" style="display: none;">
+                    <div class="form-group">
+                        <label for="reset-email">E-mail</label>
+                        <input type="email" id="reset-email" placeholder="seu@email.com" required>
+                    </div>
+                    <button type="submit" class="login-btn">Enviar Link de Recuperação</button>
+                    <div id="reset-message" style="margin-top:15px;text-align:center;font-size:14px;"></div>
+                    <div class="login-links">
+                        <a href="#" onclick="showLoginForm(); return false;">Voltar ao login</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-logo-mask" role="img" aria-label="AdvogaCert"></div>
+        <p class="footer-copy">© 2026 AdvogaCert. Todos os direitos reservados.</p>
+    </footer>
+
+    <script src="assets/js/script.js"></script>
+</body>
+</html>

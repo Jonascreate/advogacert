@@ -1,0 +1,9 @@
+{
+  "_comentario": "Copie para otp_config.json para ligar o codigo por SMS. O codigo por E-MAIL ja funciona sem este arquivo (vai pela Brevo, sem custo novo). As variaveis de ambiente (OTP_CANAL_SMS, OTP_REMETENTE_SMS) tem prioridade.",
+
+  "_canal_sms": "off = celular desativado (padrao) | console = imprime o codigo no terminal (APENAS teste local) | brevo = SMS real, exige saldo de SMS na conta Brevo",
+  "canal_sms": "off",
+
+  "_remetente_sms": "Nome que aparece como remetente do SMS. Maximo 11 caracteres, sem acentos.",
+  "remetente_sms": "AdvogaCert"
+}

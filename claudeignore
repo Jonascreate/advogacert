@@ -1,0 +1,56 @@
+# ===================================================
+# .claudeignore
+# Evita que o Claude Code leia/inclua estes arquivos
+# automaticamente no contexto (economiza tokens/quota).
+# Sintaxe igual ao .gitignore.
+# Obs: isso NÃO bloqueia acesso — se você pedir
+# explicitamente "leia o arquivo X", ele ainda lê.
+# ===================================================
+
+# --- Dependências Node (a parte que mais pesa) ---
+node_modules/
+**/node_modules/
+.npm/
+.pnpm-store/
+
+# --- Lock files (podem ter milhares de linhas) ---
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# --- Builds e saídas geradas ---
+dist/
+build/
+out/
+.next/
+.turbo/
+coverage/
+
+# --- Logs e temporários ---
+*.log
+*.tmp
+.cache/
+.DS_Store
+
+# --- Documentos Word (recibos, pedidos) ---
+# Geralmente não precisam ser lidos automaticamente
+# durante sessões de código/automação.
+*.docx
+*.doc
+recibos/
+pedidos/
+
+# --- Outras pastas de documentos que não são código ---
+*.pdf
+*.xlsx
+*.xls
+
+# --- Variáveis de ambiente e segredos (segurança extra) ---
+.env
+.env.*
+*.pem
+*.key
+
+# --- Configs de editor/IDE ---
+.vscode/
+.idea/

@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contato | AdvogaCert</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Bootstrap Icons (ícone do pen drive/token no logo) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+    <style>
+        :root {
+            --bg-primary: #0a0a0b;
+            --bg-secondary: #111113;
+            --bg-card: #161618;
+            --accent-mac: #6ee7c8;
+            --accent-mac-dark: #21b98f;
+            --accent-win: #4fa3ff;
+            --text-primary: #f5f5f5;
+            --text-secondary: #a0a0a5;
+            --text-muted: #6b6b70;
+            --border-color: #2a2a2e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .blush-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .blush {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            transition: transform 0.3s ease-out, opacity 0.3s ease;
+        }
+
+        .blush-1 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, #6ee7c8 0%, transparent 70%);
+        }
+
+        .blush-2 {
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(79, 163, 255, 0.55) 0%, transparent 70%);
+        }
+
+        .blush-3 {
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, rgba(110, 231, 200, 0.4) 0%, transparent 70%);
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 1.5rem 4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(10, 10, 11, 0.45);
+            backdrop-filter: blur(20px) saturate(150%);
+            -webkit-backdrop-filter: blur(20px) saturate(150%);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .logo-mask {
+            height: 100%;
+            aspect-ratio: 768 / 332;
+            background: linear-gradient(135deg, var(--accent-mac, #6ee7c8), var(--accent-win, #4fa3ff));
+            -webkit-mask-image: url('assets/img/logo.png');
+            mask-image: url('assets/img/logo.png');
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            mask-position: center;
+            -webkit-mask-size: contain;
+            mask-size: contain;
+        }
+
+        .footer-logo-mask {
+            height: 40px;
+            aspect-ratio: 720 / 232;
+            margin: 0 auto 0.5rem;
+            background: linear-gradient(135deg, var(--accent-mac, #6ee7c8), var(--accent-win, #4fa3ff));
+            -webkit-mask-image: url('assets/img/logo-footer.png');
+            mask-image: url('assets/img/logo-footer.png');
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            mask-position: center;
+            -webkit-mask-size: contain;
+            mask-size: contain;
+        }
+
+        nav {
+            display: flex;
+            gap: 2.5rem;
+            align-items: center;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            letter-spacing: 0.02em;
+        }
+
+        nav a:hover {
+            color: var(--accent-mac);
+        }
+
+        .nav-btn {
+            background: rgba(110, 231, 200, 0.12);
+            color: #6ee7c8;
+            border: 1px solid rgba(110, 231, 200, 0.3);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(110, 231, 200, 0.2);
+            border-color: rgba(110, 231, 200, 0.5);
+            color: #6ee7c8;
+            transform: translateY(-2px);
+        }
+
+        /* === CSS ESPECÍFICO DA SEÇÃO DE CONTATO === */
+        .contact-section {
+            padding: 11rem 1.5rem 6rem;
+            background: var(--bg-primary);
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* mesmo split do login.html: apresentacao na esquerda, card na direita */
+        .contact-split {
+            display: grid;
+            grid-template-columns: 0.95fr 1fr;
+            gap: 3rem;
+            align-items: center;
+            max-width: 1140px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* bloco alinhado ao centro do card ao lado */
+        .contact-showcase {
+            padding: 2rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .contact-showcase h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            font-weight: 600;
+            line-height: 1.3;
+            margin-bottom: 1rem;
+        }
+        .contact-showcase h1 span {
+            background: linear-gradient(135deg, var(--accent-mac), var(--accent-win));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .contact-showcase p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 1.75rem;
+        }
+        /* itens sempre na mesma linha, um ao lado do outro */
+        .contact-showcase ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: nowrap;
+            justify-content: center;
+            gap: 1.25rem;
+        }
+        .contact-showcase ul li {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        .contact-showcase ul li i {
+            color: var(--accent-mac);
+        }
+
+        .contact-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            max-width: 620px;
+            width: 100%;
+            margin: 0 auto;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2.5rem 2.5rem 2.25rem;
+            text-align: center;
+        }
+        .contact-container > * {
+            position: relative;
+            z-index: 1;
+        }
+        @property --border-angle {
+            syntax: '<angle>';
+            inherits: false;
+            initial-value: 0deg;
+        }
+        @keyframes borderRun {
+            to { --border-angle: 360deg; }
+        }
+        .contact-container::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            pointer-events: none;
+            animation: borderRun 4s linear infinite;
+            background: conic-gradient(from var(--border-angle),
+                transparent 0deg,
+                transparent 190deg,
+                rgba(79, 163, 255, 0) 210deg,
+                #1f6fd1 250deg,
+                #6ee7c8 300deg,
+                #fff 330deg,
+                #4fa3ff 350deg,
+                rgba(110, 231, 200, 0) 360deg);
+            opacity: 0.6;
+            filter: drop-shadow(0 0 2px rgba(79, 163, 255, 0.5));
+        }
+
+
+        .support-highlight {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 68px;
+            height: 68px;
+            margin: 0 auto 1.75rem;
+            border-radius: 18px;
+            background: radial-gradient(circle, rgba(110, 231, 200, 0.18), rgba(110, 231, 200, 0.04));
+            border: 1px solid rgba(110, 231, 200, 0.35);
+            color: var(--accent-mac);
+            font-size: 2rem;
+            animation: supportGlow 3.2s ease-in-out infinite;
+        }
+        @keyframes supportGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(110, 231, 200, 0.15); }
+            50% { box-shadow: 0 0 40px rgba(110, 231, 200, 0.4); }
+        }
+
+        .contact-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.9rem 1.25rem;
+            margin-bottom: 1.75rem;
+        }
+
+        /* sem fundo: icone a esquerda, rotulo e valor empilhados a direita */
+        .info-item {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 0.7rem;
+            text-align: left;
+            padding: 0;
+            background: none;
+            border: none;
+            transition: color 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+        .info-item.destaque .info-valor {
+            color: var(--accent-mac);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .info-icon {
+            width: 30px;
+            height: 30px;
+            flex-shrink: 0;
+            background: rgba(110, 231, 200, 0.1);
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.82rem;
+            color: var(--accent-mac);
+            border: 1px solid rgba(110, 231, 200, 0.25);
+            transition: all 0.3s ease;
+        }
+
+        /* horário não é clicável, por isso não reage ao hover */
+        .info-item:not(.estatico):hover .info-icon {
+            background: rgba(110, 231, 200, 0.2);
+            transform: scale(1.05);
+        }
+        .info-item:not(.estatico):hover .info-valor {
+            color: var(--accent-mac);
+        }
+
+        .info-item h3 {
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-bottom: 0.1rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .info-item .info-texto {
+            min-width: 0;
+        }
+        .info-item .info-valor {
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+
+        /* aviso: o chamado é identificado pela inscrição na OAB */
+        .aviso-oab {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            text-align: left;
+            width: 100%;
+            padding: 0.85rem 1rem;
+            margin-bottom: 1.75rem;
+            border-radius: 12px;
+            border: 1px solid rgba(110, 231, 200, 0.28);
+            background: rgba(110, 231, 200, 0.06);
+        }
+        .aviso-oab i {
+            color: var(--accent-mac);
+            font-size: 1rem;
+            margin-top: 0.15rem;
+        }
+        .aviso-oab p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin-bottom: 0;
+        }
+        .aviso-oab strong { color: var(--text-primary); }
+
+        .planos-resumo {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+        .plano-linha {
+            display: flex;
+            align-items: baseline;
+            gap: 0.75rem;
+            text-align: left;
+        }
+        .plano-nome {
+            flex-shrink: 0;
+            width: 74px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            border-radius: 100px;
+            padding: 0.2rem 0;
+            text-align: center;
+        }
+        .plano-linha.premium .plano-nome {
+            color: var(--accent-mac);
+            border-color: rgba(110, 231, 200, 0.4);
+        }
+        .plano-desc {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.45;
+        }
+
+        .contact-cta {
+            border-top: 1px solid var(--border-color);
+            padding-top: 2rem;
+        }
+
+        .btn-whatsapp {
+            background: #25D366;
+            color: white;
+            padding: 0.9rem 2.25rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            box-shadow: 0 10px 30px rgba(37, 211, 102, 0.2);
+            margin-bottom: 0;
+        }
+
+        .btn-whatsapp:hover {
+            transform: translateY(-4px);
+            background: #128C7E;
+            box-shadow: 0 20px 40px rgba(37, 211, 102, 0.3);
+        }
+
+        .btn-whatsapp i {
+            font-size: 1.5rem;
+        }
+
+        .cta-email {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .cta-email a {
+            color: var(--accent-mac);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.3s ease;
+        }
+
+        .cta-email a:hover {
+            border-color: var(--accent-mac);
+        }
+
+        footer {
+            position: relative;
+            z-index: 1;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .footer-copy {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 860px) {
+            .contact-split {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            .contact-showcase {
+                text-align: center;
+                padding: 0 1rem;
+            }
+            .support-highlight { margin: 0 auto 1.75rem; }
+            .contact-showcase ul { justify-content: center; flex-wrap: wrap; }
+        }
+
+        @media (max-width: 768px) {
+            header { padding: 1rem 1.5rem; }
+            nav { display: none; }
+            .contact-section { padding: 8rem 1.5rem 4rem; }
+            .contact-container { padding: 2rem 1.5rem; }
+            .contact-showcase h1 { font-size: 1.7rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="blush-container">
+        <div class="blush blush-1" id="blush1"></div>
+        <div class="blush blush-2" id="blush2"></div>
+        <div class="blush blush-3" id="blush3"></div>
+    </div>
+
+    <header>
+        <a href="index.html" class="logo">
+            <div class="logo-icon">
+                <div class="logo-mask" role="img" aria-label="AdvogaCert"></div>
+            </div>
+        </a>
+        <nav>
+            <a href="index.html">Início</a>
+            <a href="contato.html">Contato</a>
+            <a href="login.html" class="nav-btn">login</a>
+        </nav>
+    </header>
+
+<section class="contact-section">
+    <div class="contact-split">
+        <div class="contact-showcase">
+            <div class="support-highlight"><i class="fas fa-headset"></i></div>
+            <h1>Fale com o <span>suporte</span> AdvogaCert</h1>
+            <div class="aviso-oab">
+                <i class="fas fa-scale-balanced"></i>
+                <p>O atendimento é feito pelo <strong>número de inscrição na OAB</strong> do advogado: é ele que identifica você e controla os seus chamados.</p>
+            </div>
+            <ul>
+                <li><i class="fas fa-check-circle"></i> Suporte remoto via AnyDesk</li>
+                <li><i class="fas fa-check-circle"></i> Atendimento em todo o Brasil</li>
+            </ul>
+        </div>
+
+        <div class="contact-container">
+        <div class="contact-info">
+            <a href="tel:+5561986241570" class="info-item destaque">
+                <div class="info-icon"><i class="fas fa-phone-volume"></i></div>
+                <div class="info-texto">
+                    <h3>Telefone</h3>
+                    <p class="info-valor">(61) 98624-1570</p>
+                </div>
+            </a>
+
+            <a href="mailto:advogare@agentej.us" class="info-item">
+                <div class="info-icon"><i class="fas fa-envelope"></i></div>
+                <div class="info-texto">
+                    <h3>E-mail</h3>
+                    <p class="info-valor">advogare@agentej.us</p>
+                </div>
+            </a>
+
+            <div class="info-item estatico">
+                <div class="info-icon"><i class="fas fa-clock"></i></div>
+                <div class="info-texto">
+                    <h3>Horário</h3>
+                    <p class="info-valor">Seg. a sex., 9h às 18h</p>
+                </div>
+            </div>
+
+            <a href="https://www.linkedin.com/in/jonas-costa-2a7256393" target="_blank" class="info-item">
+                <div class="info-icon"><i class="fab fa-linkedin"></i></div>
+                <div class="info-texto">
+                    <h3>LinkedIn</h3>
+                    <p class="info-valor">Ver perfil</p>
+                </div>
+            </a>
+        </div>
+
+        <div class="planos-resumo">
+            <div class="plano-linha">
+                <span class="plano-nome">Free</span>
+                <span class="plano-desc">1 chamado grátis, sem cartão — resposta em até 2 horas.</span>
+            </div>
+            <div class="plano-linha premium">
+                <span class="plano-nome">Premium</span>
+                <span class="plano-desc">R$90/mês: chamados ilimitados e prioridade em até 30 minutos.</span>
+            </div>
+        </div>
+
+        <div class="contact-cta">
+            <a href="https://wa.me/5561986241570" class="btn-whatsapp" target="_blank">
+                <i class="fab fa-whatsapp"></i>
+                Falar no WhatsApp
+            </a>
+            <p class="cta-email">Resposta em até 24h nos dias úteis.</p>
+        </div>
+        </div>
+    </div>
+</section>
+
+    <footer>
+        <div class="footer-logo-mask" role="img" aria-label="AdvogaCert"></div>
+        <p class="footer-copy">© 2026 AdvogaCert. Todos os direitos reservados.</p>
+    </footer>
+
+
+
+   <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ========== CÓDIGO DO BLUSH ==========
+    const blush1 = document.getElementById('blush1');
+    const blush2 = document.getElementById('blush2');
+    const blush3 = document.getElementById('blush3');
+
+    let mouseX = 0;
+    let mouseY = 0;
+    let blush1X = 0, blush1Y = 0;
+    let blush2X = 0, blush2Y = 0;
+    let blush3X = 0, blush3Y = 0;
+
+    document.addEventListener('mousemove', function(e) {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+    });
+
+    function animate() {
+        blush1X += (mouseX - blush1X - 200) * 0.05;
+        blush1Y += (mouseY - blush1Y - 200) * 0.05;
+        blush1.style.transform = `translate(${blush1X}px, ${blush1Y}px)`;
+
+        blush2X += (mouseX - blush2X - 150) * 0.03;
+        blush2Y += (mouseY - blush2Y - 150) * 0.03;
+        blush2.style.transform = `translate(${blush2X}px, ${blush2Y}px)`;
+
+        blush3X += (mouseX - blush3X - 125) * 0.02;
+        blush3Y += (mouseY - blush3Y - 125) * 0.02;
+        blush3.style.transform = `translate(${blush3X}px, ${blush3Y}px)`;
+
+        requestAnimationFrame(animate);
+    }
+
+    // ========== CÓDIGO DO CHAT DINÂMICO (como no index.html) ==========
+    (() => {
+        console.log('JurisGPT iniciado');
+
+        const botGlowStyle = document.createElement('style');
+        botGlowStyle.textContent = `
+            @keyframes botGlowPulse {
+                0%, 100% { box-shadow: 0 4px 16px rgba(0,0,0,.3), 0 0 20px rgba(110, 231, 200, 0.15); }
+                50% { box-shadow: 0 4px 16px rgba(0,0,0,.3), 0 0 40px rgba(110, 231, 200, 0.4); }
+            }
+        `;
+        document.head.appendChild(botGlowStyle);
+
+        const btn = document.createElement('button');
+        btn.innerHTML = '<i class="fa-solid fa-robot"></i>';
+        Object.assign(btn.style, {
+            position:'fixed', bottom:'24px', right:'24px',
+            width:'58px', height:'58px',
+            borderRadius:'50%', border:'none',
+            fontSize:'22px', cursor:'pointer',
+            background:'rgba(110, 231, 200, 0.12)', color:'#6ee7c8',
+            border:'1px solid rgba(110, 231, 200, 0.35)',
+            zIndex:'9999', animation:'botGlowPulse 3.2s ease-in-out infinite'
+        });
+
+        // Sem botão flutuante de WhatsApp aqui — a página já tem o botão
+        // "Falar no WhatsApp" no próprio card de contato, evitando duplicar.
+
+        const frame = document.createElement('div');
+        frame.style.cssText = `
+            position:fixed; bottom:95px; right:24px;
+            width:360px; height:520px;
+            background:#161618; color:#fff;
+            border-radius:14px; display:none;
+            flex-direction:column;
+            box-shadow:0 12px 32px rgba(0,0,0,.4);
+            font-family:system-ui,sans-serif;
+            z-index:9998;
+        `;
+
+        frame.innerHTML = `
+            <div style="
+                padding:14px 16px;
+                background:linear-gradient(135deg,#111113,#1b1b1f);
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                color:#6ee7c8;
+                border-bottom:1px solid #2a2a2f;
+            ">
+                <div style="display:flex;align-items:center;gap:10px;font-weight:600">
+                    <i class="fa-solid fa-feather-pointed"></i>
+                    <span>PjeGPT</span>
+                </div>
+                <button id="close-chat" style="
+                    background:none;
+                    border:none;
+                    color:#6ee7c8;
+                    font-size:20px;
+                    cursor:pointer;
+                    line-height:1;
+                ">×</button>
+            </div>
+            <div id="chat-messages" style="flex:1;padding:12px;overflow-y:auto;font-size:14px"></div>
+            <div style="display:flex;padding:10px;border-top:1px solid #2a2a2e">
+                <input id="chat-input" placeholder="Digite sua pergunta..."
+                    style="flex:1;border:none;border-radius:8px;
+                           padding:10px;font-size:14px;
+                           background:#1f1f22;color:#fff;outline:none">
+                <button id="send-btn"
+                    style="margin-left:8px;padding:0 16px;
+                           border:1px solid rgba(110, 231, 200, 0.35);border-radius:8px;
+                           background:rgba(110, 231, 200, 0.12);color:#6ee7c8;
+                           font-size:16px;cursor:pointer">➤</button>
+            </div>
+        `;
+
+        document.body.append(btn, frame);
+
+        const msgs = frame.querySelector('#chat-messages');
+        const input = frame.querySelector('#chat-input');
+        const send = frame.querySelector('#send-btn');
+
+        btn.onclick = () => {
+            frame.style.display = frame.style.display === 'flex' ? 'none' : 'flex';
+            input.focus();
+        };
+        frame.querySelector('#close-chat').onclick = () => frame.style.display = 'none';
+
+        function addMsg(text, who, typing = false) {
+            const div = document.createElement('div');
+            div.style.cssText = `
+                margin:6px 0; max-width:80%;
+                padding:8px 10px;
+                border-radius:10px;
+                white-space:pre-wrap;
+                ${who === 'user'
+                    ? 'margin-left:auto;background:rgba(110, 231, 200, 0.16);border:1px solid rgba(110, 231, 200, 0.3);color:#eafff8'
+                    : 'margin-right:auto;background:#2a2a2e;color:#e5e7eb'}
+            `;
+            msgs.appendChild(div);
+            msgs.scrollTop = msgs.scrollHeight;
+
+            if (!typing) {
+                div.textContent = text;
+                return;
+            }
+
+            let i = 0;
+            const speed = 18;
+            const timer = setInterval(() => {
+                div.textContent += text.charAt(i);
+                i++;
+                msgs.scrollTop = msgs.scrollHeight;
+                if (i >= text.length) clearInterval(timer);
+            }, speed);
+        }
+
+        async function sendMsg() {
+            const text = input.value.trim();
+            if (!text) return;
+
+            addMsg(text, 'user');
+            input.value = '';
+
+            try {
+                const r = await fetch('/gpt.php', {
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({ prompt:text })
+                });
+                const j = await r.json();
+                addMsg(j.reply || 'Sem resposta.', 'bot', true);
+            } catch {
+                addMsg('Erro ao contactar o servidor.', 'bot');
+            }
+        }
+
+        send.onclick = sendMsg;
+        input.onkeydown = e => { if (e.key === 'Enter') sendMsg(); };
+    })();
+
+    animate();
+});
+</script>
+</body>
+</html>

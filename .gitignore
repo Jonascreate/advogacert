@@ -1,0 +1,7 @@
+.aider*
+oauth_config.json
+secrets_config.json
+
+pagamento_config.json
+otp_config.json
+usuarios.json

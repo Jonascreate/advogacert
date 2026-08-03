@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redefinir Senha - AgenteJ.us</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+    <style>
+        :root {
+            --bg-primary: #0a0a0b;
+            --bg-secondary: #111113;
+            --bg-card: #161618;
+            --accent-mac: #6ee7c8;
+            --accent-mac-dark: #21b98f;
+            --accent-win: #4fa3ff;
+            --text-primary: #f5f5f5;
+            --text-secondary: #a0a0a5;
+            --text-muted: #6b6b70;
+            --border-color: #2a2a2e;
+            --glow-color: rgba(110, 231, 200, 0.15);
+            --btn-gradient: linear-gradient(135deg, var(--accent-mac-dark), var(--accent-mac));
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-icon {
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-mask {
+            height: 100%;
+            aspect-ratio: 768 / 332;
+            background: linear-gradient(135deg, #6ee7c8, #4fa3ff);
+            -webkit-mask-image: url('assets/img/logo.png');
+            mask-image: url('assets/img/logo.png');
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            mask-position: center;
+            -webkit-mask-size: contain;
+            mask-size: contain;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 1.5rem 4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(10, 10, 11, 0.45);
+            backdrop-filter: blur(20px) saturate(150%);
+            -webkit-backdrop-filter: blur(20px) saturate(150%);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        nav {
+            display: flex;
+            gap: 2.5rem;
+            align-items: center;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            letter-spacing: 0.02em;
+        }
+
+        nav a:hover {
+            color: var(--accent-mac);
+        }
+
+        .nav-btn {
+            background: rgba(110, 231, 200, 0.12);
+            color: var(--accent-mac);
+            border: 1px solid rgba(110, 231, 200, 0.3);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(110, 231, 200, 0.2);
+            border-color: rgba(110, 231, 200, 0.5);
+            color: var(--accent-mac);
+            transform: translateY(-2px);
+        }
+
+        .reset-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 11rem 1.5rem 4rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .reset-split {
+            display: grid;
+            grid-template-columns: 0.8fr 1fr;
+            gap: 3rem;
+            align-items: center;
+            max-width: 1140px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .reset-showcase {
+            padding: 2rem;
+        }
+
+        .reset-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 68px;
+            height: 68px;
+            margin-bottom: 1.75rem;
+            border-radius: 18px;
+            background: rgba(110, 231, 200, 0.12);
+            border: 1px solid rgba(110, 231, 200, 0.3);
+            color: var(--accent-mac);
+            font-size: 2rem;
+            animation: iconGlow 3.2s ease-in-out infinite;
+        }
+        @keyframes iconGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(110, 231, 200, 0.15); }
+            50% { box-shadow: 0 0 40px rgba(110, 231, 200, 0.4); }
+        }
+
+        .reset-showcase h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            font-weight: 600;
+            line-height: 1.3;
+            margin-bottom: 1rem;
+        }
+        .reset-showcase h1 span {
+            background: linear-gradient(135deg, var(--accent-mac), var(--accent-win));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .reset-showcase p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 1.75rem;
+        }
+        .reset-showcase ul {
+            list-style: none;
+        }
+        .reset-showcase ul li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.9rem;
+        }
+        .reset-showcase ul li i {
+            color: var(--accent-mac);
+        }
+
+        .login-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            max-width: 620px;
+            width: 100%;
+            margin: 0 auto;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2.5rem 3rem;
+        }
+
+        .login-container > * {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+        }
+
+        @property --border-angle {
+            syntax: '<angle>';
+            inherits: false;
+            initial-value: 0deg;
+        }
+        @keyframes borderRun {
+            to { --border-angle: 360deg; }
+        }
+        .login-container::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            pointer-events: none;
+            animation: borderRun 4s linear infinite;
+            background: conic-gradient(from var(--border-angle),
+                transparent 0deg,
+                transparent 190deg,
+                rgba(79, 163, 255, 0) 210deg,
+                #1f6fd1 250deg,
+                var(--accent-mac) 300deg,
+                #fff 330deg,
+                var(--accent-win) 350deg,
+                rgba(110, 231, 200, 0) 360deg);
+            opacity: 0.6;
+            filter: drop-shadow(0 0 2px rgba(79, 163, 255, 0.5));
+        }
+
+        .login-container h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .login-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .login-subtitle strong {
+            color: var(--accent-mac);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-mac);
+            box-shadow: 0 0 0 3px rgba(110, 231, 200, 0.1);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--btn-gradient);
+            color: #062018;
+            border: none;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(110, 231, 200, 0.3);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .message {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 500;
+            font-size: 0.9rem;
+            border: 1px solid var(--border-color);
+        }
+
+        footer {
+            position: relative;
+            z-index: 1;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .footer-logo-mask {
+            height: 40px;
+            aspect-ratio: 720 / 232;
+            margin: 0 auto 0.5rem;
+            background: linear-gradient(135deg, #6ee7c8, #4fa3ff);
+            -webkit-mask-image: url('assets/img/logo-footer.png');
+            mask-image: url('assets/img/logo-footer.png');
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            mask-position: center;
+            -webkit-mask-size: contain;
+            mask-size: contain;
+        }
+
+        .footer-copy {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 860px) {
+            .reset-split {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            .reset-showcase {
+                text-align: center;
+                padding: 0 1rem;
+            }
+            .reset-icon { margin: 0 auto 1.75rem; }
+            .reset-showcase ul li { justify-content: center; }
+        }
+
+        @media (max-width: 768px) {
+            header { padding: 1rem 1.5rem; }
+            nav { display: none; }
+            .reset-page { padding: 8rem 1.5rem 3rem; }
+        }
+
+        @media (max-width: 480px) {
+            .login-container { padding: 1.75rem; }
+            .login-container h2 { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="index.html" class="logo">
+            <div class="logo-icon">
+                <div class="logo-mask" role="img" aria-label="AdvogaCert"></div>
+            </div>
+        </a>
+        <nav>
+            <a href="index.html">Início</a>
+            <a href="contato.html">Contato</a>
+            <a href="login.html" class="nav-btn">login</a>
+        </nav>
+    </header>
+
+    <section class="reset-page">
+        <div class="reset-split">
+            <div class="reset-showcase">
+                <div class="reset-icon"><i class="fas fa-lock"></i></div>
+                <h1>Defina sua <span>Nova Senha</span></h1>
+                <p>Crie uma senha forte para manter sua conta AdvogaCert protegida e continuar acessando seus chamados, cursos e certificados com segurança.</p>
+                <ul>
+                    <li><i class="fas fa-check-circle"></i> Mínimo de 6 caracteres</li>
+                    <li><i class="fas fa-check-circle"></i> As senhas devem ser idênticas</li>
+                </ul>
+            </div>
+
+            <div class="login-container">
+                <h2>Nova Senha</h2>
+                <p class="login-subtitle">Defina uma nova senha para: <strong id="userEmail"></strong></p>
+
+                <form id="resetPasswordForm">
+                    <input type="hidden" name="token" id="tokenField" value="">
+
+                    <div class="form-group">
+                        <label for="nova_senha">Nova Senha</label>
+                        <input type="password" id="nova_senha" name="nova_senha" placeholder="Digite sua nova senha" required minlength="6">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirma_senha">Confirme a Nova Senha</label>
+                        <input type="password" id="confirma_senha" name="confirma_senha" placeholder="Confirme sua nova senha" required minlength="6">
+                    </div>
+
+                    <button type="submit" class="login-btn">Redefinir Senha</button>
+
+                    <div id="message" class="message" style="display: none;"></div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-logo-mask" role="img" aria-label="AdvogaCert"></div>
+        <p class="footer-copy">© 2026 AdvogaCert. Todos os direitos reservados.</p>
+    </footer>
+
+    <script>
+        // Pegar dados passados pelo PHP via window
+        document.getElementById('userEmail').textContent = window.USER_EMAIL || '';
+        document.getElementById('tokenField').value = window.USER_TOKEN || '';
+
+        document.getElementById('resetPasswordForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const token = document.querySelector('input[name="token"]').value;
+            const novaSenha = document.getElementById('nova_senha').value;
+            const confirmaSenha = document.getElementById('confirma_senha').value;
+            const messageDiv = document.getElementById('message');
+
+            if (novaSenha.length < 6) {
+                messageDiv.style.display = 'block';
+                messageDiv.style.background = 'rgba(255, 59, 48, 0.1)';
+                messageDiv.style.color = '#ff3b30';
+                messageDiv.style.borderColor = 'rgba(255, 59, 48, 0.3)';
+                messageDiv.textContent = '✗ A senha deve ter no mínimo 6 caracteres';
+                return;
+            }
+
+            if (novaSenha !== confirmaSenha) {
+                messageDiv.style.display = 'block';
+                messageDiv.style.background = 'rgba(255, 59, 48, 0.1)';
+                messageDiv.style.color = '#ff3b30';
+                messageDiv.style.borderColor = 'rgba(255, 59, 48, 0.3)';
+                messageDiv.textContent = '✗ As senhas não coincidem';
+                return;
+            }
+
+            messageDiv.style.display = 'block';
+            messageDiv.style.background = 'rgba(110, 231, 200, 0.1)';
+            messageDiv.style.color = 'var(--accent-mac)';
+            messageDiv.style.borderColor = 'var(--accent-mac)';
+            messageDiv.textContent = 'Atualizando senha...';
+
+            fetch('/process_reset.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    token: token,
+                    nova_senha: novaSenha
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    messageDiv.style.background = 'rgba(52, 199, 89, 0.1)';
+                    messageDiv.style.color = '#34c759';
+                    messageDiv.style.borderColor = 'rgba(52, 199, 89, 0.3)';
+                    messageDiv.textContent = '✓ Senha alterada com sucesso! Redirecionando...';
+                    setTimeout(() => {
+                       window.location.href = '/index.html';
+                    }, 2000);
+
+                } else {
+                    messageDiv.style.background = 'rgba(255, 59, 48, 0.1)';
+                    messageDiv.style.color = '#ff3b30';
+                    messageDiv.style.borderColor = 'rgba(255, 59, 48, 0.3)';
+                    messageDiv.textContent = '✗ ' + data.error;
+                }
+            })
+            .catch(() => {
+                messageDiv.style.background = 'rgba(255, 59, 48, 0.1)';
+                messageDiv.style.color = '#ff3b30';
+                messageDiv.style.borderColor = 'rgba(255, 59, 48, 0.3)';
+                messageDiv.textContent = '✗ Erro de conexão';
+            });
+        });
+    </script>
+</body>
+</html>

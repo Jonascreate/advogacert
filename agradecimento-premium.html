@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assinatura confirmada - AdvogaCert</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .success-section {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10.5rem 1.5rem 4rem;
+        }
+
+        .success-container {
+            position: relative;
+            display: grid;
+            /* coluna da direita mais larga: é onde ficam os dois instaladores
+               lado a lado, e "Baixar para Windows" é o rótulo mais comprido */
+            grid-template-columns: 1fr 1.2fr;
+            gap: 2.5rem;
+            box-sizing: border-box;
+            max-width: 1080px;
+            width: 100%;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 3rem;
+            animation: slideUp 0.6s ease-out;
+            transform: scale(0.88);
+            transform-origin: center;
+        }
+        .success-container > * {
+            position: relative;
+            z-index: 1;
+        }
+        @property --border-angle {
+            syntax: '<angle>';
+            inherits: false;
+            initial-value: 0deg;
+        }
+        @keyframes borderRun {
+            to { --border-angle: 360deg; }
+        }
+        .success-container::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            pointer-events: none;
+            animation: borderRun 4s linear infinite;
+            background: conic-gradient(from var(--border-angle),
+                transparent 0deg,
+                transparent 190deg,
+                rgba(79, 163, 255, 0) 210deg,
+                #1f6fd1 250deg,
+                #6ee7c8 300deg,
+                #fff 330deg,
+                #4fa3ff 350deg,
+                rgba(110, 231, 200, 0) 360deg);
+            opacity: 0.6;
+            filter: drop-shadow(0 0 2px rgba(79, 163, 255, 0.5));
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: scale(0.88) translateY(30px); }
+            to { opacity: 1; transform: scale(0.88) translateY(0); }
+        }
+
+        .success-main {
+            text-align: left;
+        }
+
+        .success-icon {
+            width: 84px;
+            height: 84px;
+            background: radial-gradient(circle, rgba(110, 231, 200, 0.18), rgba(110, 231, 200, 0.04));
+            border: 1px solid rgba(110, 231, 200, 0.35);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            animation: pulse 3.2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(110, 231, 200, 0.15); }
+            50% { box-shadow: 0 0 40px rgba(110, 231, 200, 0.4); }
+        }
+
+        .success-icon i {
+            font-size: 2.4rem;
+            color: var(--accent-mac);
+        }
+
+        .success-main h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.1rem;
+            font-weight: 600;
+            line-height: 1.3;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .success-main h1 span {
+            background: linear-gradient(135deg, var(--accent-mac), var(--accent-win));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .success-message {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 2rem;
+        }
+
+        /* ações na coluna esquerda: acompanham a largura do texto e se dividem
+           lado a lado; quando não cabem, cada uma ocupa a linha inteira */
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+        .action-buttons .btn {
+            flex: 1 1 160px;
+            min-width: 0;
+        }
+
+        .btn {
+            padding: 0.9rem 1.4rem;
+            white-space: nowrap;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-mac-dark), var(--accent-mac));
+            color: #062018;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(110, 231, 200, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-mac);
+            color: var(--accent-mac);
+            transform: translateY(-2px);
+        }
+
+        /* botão principal: é a ação que a pessoa veio fazer, então usa o
+           gradiente da marca e o ícone de atendimento */
+        .btn-suporte {
+            background: linear-gradient(135deg, var(--accent-mac-dark), var(--accent-mac));
+            color: #062018;
+        }
+        .btn-suporte:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(110, 231, 200, 0.3);
+        }
+        .btn-suporte i { font-size: 1.05rem; }
+
+        /* sem height fit-content, a caixa estica junto com a coluna da esquerda:
+           a base dela fica rente com o botão de suporte */
+        .next-steps {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+        }
+        /* os passos ocupam a sobra da caixa */
+        .next-steps .passos { flex: 1; }
+
+        /* --- selo e resumo do plano --- */
+        .plano-selo {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.35rem 0.9rem;
+            margin-bottom: 1rem;
+            border-radius: 100px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .plano-selo.premium {
+            background: rgba(110, 231, 200, 0.12);
+            border: 1px solid rgba(110, 231, 200, 0.35);
+            color: var(--accent-mac);
+        }
+        .plano-selo.free {
+            background: rgba(79, 163, 255, 0.12);
+            border: 1px solid rgba(79, 163, 255, 0.35);
+            color: var(--accent-win);
+        }
+
+        .plano-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.1rem 1.35rem;
+            margin-bottom: 1.25rem;
+        }
+        .plano-linha {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            padding: 0.4rem 0;
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+        }
+        .plano-linha i { color: var(--accent-mac); font-size: 0.85rem; flex-shrink: 0; }
+
+        .oab-nota {
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            line-height: 1.6;
+        }
+        .oab-nota strong { color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; }
+
+        /* --- passo a passo do atendimento --- */
+        .passos { list-style: none; counter-reset: none; }
+        /* seta fina e reta ligando um número ao próximo, com o degradê da marca:
+           começa abaixo de um círculo e a ponta para antes do seguinte */
+        .passos li {
+            position: relative;
+            display: flex;
+            gap: 1rem;
+            padding: 0.9rem 0;
+        }
+        .passos li:not(:last-child)::before {
+            content: '';
+            position: absolute;
+            left: 12px;                 /* 26px de círculo / 2 - metade da linha */
+            /* 6px abaixo do círculo desta etapa; a ponta para 6px antes do
+               círculo seguinte, então a seta fica centrada entre os dois */
+            top: calc(0.9rem + 32px);
+            bottom: calc(-0.9rem + 14px);
+            width: 2px;
+            z-index: 0;                 /* fica atrás dos círculos */
+            border-radius: 2px;
+            /* base com o degradê da marca + um brilho que desce pela linha,
+               o mesmo efeito que corre na borda do card */
+            background:
+                linear-gradient(180deg,
+                    rgba(255, 255, 255, 0) 0%,
+                    #fff 50%,
+                    rgba(255, 255, 255, 0) 100%),
+                linear-gradient(180deg, var(--accent-mac), var(--accent-win));
+            background-size: 100% 45%, 100% 100%;
+            background-repeat: no-repeat;
+            animation: passoBrilho 4s linear infinite;
+        }
+        @keyframes passoBrilho {
+            from { background-position: 0 -50%, 0 0; }
+            to   { background-position: 0 150%, 0 0; }
+        }
+        /* ponta da seta, na cor em que o degradê termina */
+        .passos li:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            box-sizing: border-box;     /* com a borda dentro, o centro cai nos 13px */
+            left: 9px;
+            /* a ponta girada desce ~1.7px além da caixa: 7.7 - 1.7 = 6px de folga */
+            bottom: calc(-0.9rem + 7.7px);
+            width: 8px; height: 8px;
+            z-index: 0;
+            border-right: 1.5px solid var(--accent-win);
+            border-bottom: 1.5px solid var(--accent-win);
+            transform: rotate(45deg);
+        }
+        .passos li > div { padding-bottom: 0.2rem; }
+        .passo-num {
+            /* acima do trilho: assim a linha nunca passa por cima do número */
+            position: relative;
+            z-index: 1;
+            flex-shrink: 0;
+            box-sizing: border-box;
+            width: 26px; height: 26px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%;
+            /* fundo opaco (tinta sobre a cor da caixa): sem isso a seta
+               aparecia por trás do número */
+            background:
+                linear-gradient(rgba(110, 231, 200, 0.12), rgba(110, 231, 200, 0.12)),
+                var(--bg-card);
+            border: 1px solid rgba(110, 231, 200, 0.3);
+            color: var(--accent-mac);
+            font-size: 0.78rem; font-weight: 700;
+        }
+        .passos strong { font-size: 0.92rem; color: var(--text-primary); }
+        .passos p {
+            color: var(--text-muted);
+            font-size: 0.84rem;
+            line-height: 1.7;
+            margin-top: 0.35rem;
+        }
+        .passo-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-top: 0.5rem;
+            padding: 0.4rem 0.85rem;
+            border-radius: 8px;
+            background: rgba(110, 231, 200, 0.1);
+            border: 1px solid rgba(110, 231, 200, 0.3);
+            color: var(--accent-mac);
+            font-size: 0.78rem; font-weight: 600;
+            text-decoration: none;
+            transition: all 0.25s ease;
+        }
+        .passo-link:hover { background: rgba(110, 231, 200, 0.18); }
+        /* os dois instaladores ficam lado a lado, dividindo a linha */
+        .passo-links {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        /* dividem a linha em partes iguais: os dois ficam do mesmo tamanho,
+           independentemente do rótulo ser maior num deles */
+        .passo-links .passo-link {
+            flex: 1 1 0;
+            min-width: 0;
+            margin-top: 0;
+            justify-content: center;
+            gap: 0.3rem;
+            padding: 0.4rem 0.25rem;
+            font-size: 0.74rem;
+            white-space: nowrap;
+        }
+        /* hover dos dois instaladores do passo 1: sobe um pouco e acende,
+           no mesmo tom do botão de suporte */
+        .passos .passo-links .passo-link:hover {
+            transform: translateY(-2px);
+            border-color: rgba(110, 231, 200, 0.6);
+            box-shadow: 0 8px 18px rgba(110, 231, 200, 0.18);
+        }
+        .passos .passo-links .passo-link.recomendado:hover {
+            box-shadow: 0 10px 22px rgba(110, 231, 200, 0.35);
+        }
+        /* o sistema detectado ganha destaque; o outro fica disponível, mas apagado */
+        .passo-link.recomendado {
+            background: linear-gradient(135deg, var(--accent-mac-dark), var(--accent-mac));
+            border-color: transparent;
+            color: #062018;
+        }
+        .passo-link.outro { opacity: 0.6; }
+        .passo-link.outro:hover { opacity: 1; }
+
+        /* --- guia ilustrado no Drive, no pé da coluna --- */
+        .guia-drive {
+            margin-top: 1.25rem;
+            padding-top: 1.1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .guia-drive strong {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+        .guia-drive strong i { color: var(--accent-mac); font-size: 0.85rem; }
+        .guia-drive p {
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            line-height: 1.6;
+            margin-top: 0.35rem;
+        }
+
+        .next-steps h3 {
+            font-size: 1.05rem;
+            margin-bottom: 1rem;
+            color: var(--accent-mac);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .next-steps ul {
+            list-style: none;
+        }
+
+        /* só a lista simples: a lista de passos (ol) tem geometria própria e
+           era atropelada por esta regra */
+        .next-steps ul li {
+            padding: 0.55rem 0;
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .next-steps ul li i {
+            color: var(--accent-mac);
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 860px) {
+            .success-container {
+                grid-template-columns: 1fr;
+                padding: 2rem;
+            }
+            .success-main { text-align: center; }
+            .success-icon { margin: 0 auto 1.5rem; }
+            .plano-linha { text-align: left; }
+            .action-buttons { justify-content: center; }
+        }
+        @media (max-width: 560px) {
+            .success-section { padding: 7rem 1rem 3rem; }
+            .success-container { padding: 1.75rem 1.25rem; transform: none; }
+            .btn { white-space: normal; padding: 0.9rem 1rem; }
+            .action-buttons .btn { flex: 1 1 100%; }
+        }
+
+        footer {
+            padding: 2rem;
+            text-align: center;
+        }
+        .footer-logo-mask {
+            margin: 0 auto 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="blush-container">
+        <div class="blush blush-1" id="blush1"></div>
+        <div class="blush blush-2" id="blush2"></div>
+        <div class="blush blush-3" id="blush3"></div>
+    </div>
+
+    <header>
+        <a href="index.html" class="logo">
+            <div class="logo-icon">
+                <div class="logo-mask" role="img" aria-label="AdvogaCert"></div>
+            </div>
+        </a>
+        <nav>
+            <a href="index.html">Início</a>
+            <a href="contato.html">Contato</a>
+            <a href="login.html" class="nav-btn">login</a>
+        </nav>
+    </header>
+
+    <section class="success-section">
+        <div class="success-container">
+            <div class="success-main">
+                <div class="success-icon">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+
+                <h1>Assinatura confirmada. <span>Pode chamar quando precisar</span></h1>
+                <p class="success-message">
+                    Seu pagamento foi aprovado e o plano já está valendo. A partir de agora você fala
+                    direto com a equipe, sem limite de chamados.
+                </p>
+
+                <div class="plano-box">
+                    <div class="plano-linha"><i class="fa-solid fa-check"></i> Chamados ilimitados todo mês</div>
+                    <div class="plano-linha"><i class="fa-solid fa-check"></i> Atendimento prioritário em no máximo 30 minutos de espera</div>
+                    <div class="plano-linha"><i class="fa-solid fa-check"></i> Renovação mensal — cancele quando quiser, sem multa</div>
+                </div>
+
+                <p class="oab-nota" id="oab-nota"></p>
+
+                <!-- ações na coluna da esquerda, alinhadas com o texto acima -->
+                <div class="action-buttons">
+                    <a href="https://wa.me/5561986241570" id="btn-whats" class="btn btn-suporte" target="_blank" rel="noopener">
+                        <i class="fa-solid fa-headset"></i>
+                        Chamar o suporte
+                    </a>
+                </div>
+            </div>
+
+            <div class="next-steps">
+                <h3><i class="fa-solid fa-list-check"></i> O que fazer agora</h3>
+                <ol class="passos">
+                    <li>
+                        <span class="passo-num">1</span>
+                        <div>
+                            <strong>Baixe o AnyDesk</strong>
+                            <p>É por ele que acessamos sua máquina para resolver. Instale antes de chamar — assim o atendimento começa direto no problema.</p>
+                            <div class="passo-links">
+                                <a href="https://anydesk.com/pt/downloads/windows" target="_blank" rel="noopener" class="passo-link" id="link-windows">
+                                    <i class="fa-brands fa-windows"></i> Baixar para Windows
+                                </a>
+                                <a href="https://anydesk.com/pt/downloads/mac-os" target="_blank" rel="noopener" class="passo-link" id="link-mac">
+                                    <i class="fa-brands fa-apple"></i> Baixar para Mac
+                                </a>
+                            </div>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="passo-num">2</span>
+                        <div>
+                            <strong>Abra o programa e veja seu código</strong>
+                            <p>Ao abrir, o AnyDesk mostra um número de 9 dígitos — é o seu ID de sessão. Ele fica no alto da tela, em "Este computador".</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="passo-num">3</span>
+                        <div>
+                            <strong>Chame no WhatsApp e passe o código</strong>
+                            <p>Envie o número junto com o que está acontecendo. Nossa equipe pede a conexão a partir dele.</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="passo-num">4</span>
+                        <div>
+                            <strong>Autorize e acompanhe</strong>
+                            <p>Vai aparecer um aviso pedindo permissão: clique em <strong>Aceitar</strong>. Você vê tudo o que fazemos e pode encerrar o acesso quando quiser.</p>
+                        </div>
+                    </li>
+                </ol>
+
+                <!-- Passo a passo em imagens hospedado no Drive. Troque os dois
+                     href pelos links de compartilhamento das pastas ("qualquer
+                     pessoa com o link" pode ver), um para cada sistema. -->
+                <div class="guia-drive">
+                    <strong><i class="fa-solid fa-book-open"></i> Guia de instalação</strong>
+                    <p>Prefere ver antes? Abra o guia de instalação do AnyDesk para o seu sistema.</p>
+                    <div class="passo-links">
+                        <a href="COLE_AQUI_O_LINK_DO_DRIVE_WINDOWS" target="_blank" rel="noopener" class="passo-link" id="guia-windows">
+                            <i class="fa-brands fa-windows"></i> Guia do Windows
+                        </a>
+                        <a href="COLE_AQUI_O_LINK_DO_DRIVE_MAC" target="_blank" rel="noopener" class="passo-link" id="guia-mac">
+                            <i class="fa-brands fa-apple"></i> Guia do Mac
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-logo-mask" role="img" aria-label="AdvogaCert"></div>
+        <p class="footer-copy">© 2026 AdvogaCert. Todos os direitos reservados.</p>
+    </footer>
+
+    <script src="assets/js/script.js"></script>
+    <script>
+    (function () {
+        // Tela do PLANO PREMIUM — destino de quem acabou de pagar.
+        // A versão gratuita fica em agradecimento-free.html.
+        const params = new URLSearchParams(location.search);
+        let usuario = null;
+        try { usuario = JSON.parse(sessionStorage.getItem('user')); } catch {}
+        const oab = params.get('oab') || (usuario && usuario.oab) || '';
+
+        // a contabilidade é pela inscrição, não pelo e-mail — deixamos isso claro
+        document.getElementById('oab-nota').innerHTML = oab
+            ? `Atendimento vinculado à inscrição <strong>${oab}</strong>. É por ela que seus chamados são registrados.`
+            : 'Seus chamados ficam registrados na sua inscrição da OAB.';
+
+        // já leva o contexto na conversa: a equipe não precisa perguntar quem é
+        const texto = `Olá! Acabei de assinar o Plano Premium da AdvogaCert${oab ? ' (OAB ' + oab + ')' : ''} e preciso de suporte.`;
+        document.getElementById('btn-whats').href =
+            'https://wa.me/5561986241570?text=' + encodeURIComponent(texto);
+
+        // Cada sistema tem seu instalador: baixar o errado não roda. Detectamos
+        // e destacamos o certo, mas deixamos os dois visíveis — a pessoa pode
+        // estar no celular pedindo suporte para o computador dela.
+        const ua = navigator.userAgent;
+        const plataforma = navigator.userAgentData?.platform || navigator.platform || '';
+        const ehMac = /Mac|iPhone|iPad|iPod/i.test(plataforma + ua);
+        const ehWindows = /Win/i.test(plataforma + ua);
+
+        const linkWin = document.getElementById('link-windows');
+        const linkMac = document.getElementById('link-mac');
+
+        if (ehMac) {
+            linkMac.classList.add('recomendado');
+            linkWin.classList.add('outro');
+            linkMac.parentNode.prepend(linkMac);
+        } else if (ehWindows) {
+            linkWin.classList.add('recomendado');
+            linkMac.classList.add('outro');
+        }
+
+        // reinicia a animação do ícone de sucesso
+        setTimeout(() => {
+            const icon = document.querySelector('.success-icon i');
+            icon.style.animation = 'none';
+            setTimeout(() => { icon.style.animation = ''; }, 10);
+        }, 100);
+    })();
+    </script>
+</body>
+</html>

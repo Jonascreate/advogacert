@@ -1,0 +1,1100 @@
+/* ==========================================
+   JurisPapel - Estilos Principais
+   Arquivo: assets/css/style.css
+   Descrição: Estilos da página inicial do site JurisPapel
+   ========================================== */
+
+/* === RESET BÁSICO === */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* === VARIÁVEIS CSS (Tema Escuro Premium) === */
+:root {
+    --bg-primary: #0a0a0b;
+    --bg-secondary: #111113;
+    --bg-card: #161618;
+    --accent-gold: #6ee7c8;
+    --accent-gold-light: #4fa3ff;
+    --accent-mac: #6ee7c8;
+    --accent-mac-dark: #21b98f;
+    --accent-win: #4fa3ff;
+    --accent-win-dark: #1f6fd1;
+    --text-primary: #f5f5f5;
+    --text-secondary: #a0a0a5;
+    --text-muted: #6b6b70;
+    --border-color: #2a2a2e;
+    --glow-color: rgba(110, 231, 200, 0.15);
+    --btn-gradient: linear-gradient(135deg, var(--accent-mac-dark), var(--accent-mac));
+}
+
+/* === ESTILOS GLOBAIS === */
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* === FUNDO BLUSH (efeito de luz animada) === */
+.blush-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.blush {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.4;
+    transition: transform 0.3s ease-out, opacity 0.3s ease;
+}
+
+.blush-1 {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, var(--accent-mac) 0%, transparent 70%);
+}
+
+.blush-2 {
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(79, 163, 255, 0.55) 0%, transparent 70%);
+}
+
+.blush-3 {
+    width: 250px;
+    height: 250px;
+    background: radial-gradient(circle, rgba(110, 231, 200, 0.4) 0%, transparent 70%);
+}
+
+/* === HEADER / NAVEGAÇÃO === */
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    padding: 1.5rem 4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(10, 10, 11, 0.45);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.logo-icon {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Logo recolorida com o mesmo degradê do site (mint -> azul), via mask
+   sobre o recorte (alpha) do arquivo original, ignorando as cores dele. */
+.logo-mask {
+    height: 100%;
+    aspect-ratio: 768 / 332;
+    background: linear-gradient(135deg, var(--accent-mac), var(--accent-win));
+    -webkit-mask-image: url('../img/logo.png');
+    mask-image: url('../img/logo.png');
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+}
+
+.footer-logo-mask {
+    height: 40px;
+    aspect-ratio: 720 / 232;
+    background: linear-gradient(135deg, var(--accent-mac), var(--accent-win));
+    -webkit-mask-image: url('../img/logo-footer.png');
+    mask-image: url('../img/logo-footer.png');
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+}
+
+nav {
+    display: flex;
+    gap: 2.5rem;
+    align-items: center;
+}
+
+nav a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    letter-spacing: 0.02em;
+}
+
+nav a:hover {
+    color: var(--accent-gold);
+}
+
+.nav-btn {
+    background: rgba(110, 231, 200, 0.12);
+    color: var(--accent-mac);
+    border: 1px solid rgba(110, 231, 200, 0.3);
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 700;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(110, 231, 200, 0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.nav-btn:hover::before {
+    left: 100%;
+}
+
+.nav-btn:hover {
+    transform: translateY(-4px);
+    background: rgba(110, 231, 200, 0.2);
+    border-color: rgba(110, 231, 200, 0.5);
+    color: var(--accent-mac);
+    box-shadow: 0 8px 35px rgba(110, 231, 200, 0.2);
+}
+
+/* === HERO (SEÇÃO PRINCIPAL) === */
+.hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 8rem 4rem 4rem;
+    position: relative;
+    z-index: 1;
+}
+
+.hero-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    gap: 4rem;
+}
+
+.hero-text {
+    flex: 1;
+    max-width: 600px;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(110, 231, 200, 0.1);
+    border: 1px solid rgba(110, 231, 200, 0.3);
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    color: var(--accent-gold);
+    margin-bottom: 2rem;
+}
+
+.badge::before {
+    content: '⚖️';
+}
+
+h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 4rem;
+    font-weight: 600;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.02em;
+}
+
+h1 span {
+    color: var(--accent-gold);
+}
+
+.hero-description {
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+}
+
+/* === BOTÕES CTA === */
+.cta-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Botão primário (preenchido) */
+.btn-primary {
+    background: var(--btn-gradient);
+    color: var(--bg-primary);
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    box-shadow: 0 4px 20px rgba(110, 231, 200, 0.25);
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+    transition: left 0.6s ease;
+}
+
+.btn-primary:hover::before {
+    left: 100%;
+}
+
+.btn-primary:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 35px rgba(110, 231, 200, 0.45), 0 0 60px rgba(110, 231, 200, 0.15);
+}
+
+.btn-primary .arrow {
+    transition: transform 0.3s ease;
+}
+
+.btn-primary:hover .arrow {
+    transform: translateX(4px);
+}
+
+/* Botão secundário (contorno) */
+.btn-secondary {
+    background: transparent;
+    color: var(--text-primary);
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    background: var(--btn-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    box-shadow: inset 0 0 0 2px rgba(110, 231, 200, 0.5);
+}
+
+.btn-secondary:hover {
+    transform: translateY(-4px);
+    box-shadow: inset 0 0 0 2px var(--accent-gold-light), 0 8px 35px rgba(110, 231, 200, 0.25);
+}
+
+/* === IMAGEM DO TIMBRADO (HERO) === */
+.hero-visual img {
+    max-width: 85%;
+    height: auto;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+/* Ao passar o mouse, aumenta para 100% */
+.hero-visual:hover img {
+    max-width: 100%;
+    transform: scale(1.20);
+}
+
+/* === ESTATÍSTICAS === */
+.stats {
+    display: flex;
+    gap: 3rem;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.stat { text-align: left; }
+
+.stat-number {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--accent-gold);
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+/* === SEÇÃO DE RECURSOS === */
+.features {
+    padding: 4rem 4rem;
+    position: relative;
+    z-index: 1;
+}
+
+.features::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(ellipse at 30% 20%, rgba(110, 231, 200, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 80%, rgba(110, 231, 200, 0.04) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.section-header {
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto 4rem;
+}
+
+.section-header h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.75rem;
+    margin-bottom: 1rem;
+}
+
+.section-header p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    line-height: 1.7;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.feature-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 2.5rem;
+    transition: all 0.4s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--accent-gold);
+    box-shadow: 0 20px 40px rgba(110, 231, 200, 0.1);
+}
+
+.feature-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(110, 231, 200, 0.1);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.feature-card h3 {
+    font-size: 1.35rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+.feature-card p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+/* === SEÇÃO DE PRODUTOS === */
+.products {
+    padding: 6rem 4rem;
+    position: relative;
+    z-index: 1;
+}
+
+.products-cta {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 4rem;
+}
+
+.products-cta-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(110, 231, 200, 0.1);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    margin: 0 auto 2rem;
+}
+
+.products-cta h3 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.products-cta h3 span {
+    color: var(--accent-gold);
+}
+
+.products-cta p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    line-height: 1.7;
+    margin-bottom: 2rem;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Badge gratuito */
+.free-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #22c55e;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+}
+
+.free-badge:hover {
+    background: rgba(34, 197, 94, 0.2);
+    border-color: #22c55e;
+    color: #16a34a;
+    box-shadow: 0 0 20px 4px rgba(34, 197, 94, 0.35);
+    transform: scale(1.05);
+}
+
+/* === SEÇÃO DE CURSOS === */
+.courses {
+    padding: 6rem 4rem;
+    background: var(--bg-secondary);
+    position: relative;
+    z-index: 1;
+}
+
+.courses .section-header {
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto 4rem;
+}
+
+.courses .section-header h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.75rem;
+    margin-bottom: 1rem;
+}
+
+.courses .section-header h2 span {
+    color: var(--accent-gold);
+}
+
+.courses .section-header p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    line-height: 1.7;
+}
+
+/* Badge dos cursos */
+.course-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(110, 231, 200, 0.1);
+    border: 1px solid rgba(110, 231, 200, 0.3);
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    color: var(--accent-gold);
+    margin-bottom: 1.5rem;
+}
+
+/* Grid de cards de cursos */
+.courses-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+    max-width: 1050px;
+    margin: 0 auto;
+}
+
+/* === CARDS DE CURSOS — DESIGN FINO COM SHADOWS LUMINOSOS === */
+.course-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(110, 231, 200, 0.12);
+    border-radius: 14px;
+    padding: 1.5rem 1.4rem;
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    box-shadow:
+        0 0 0 0 rgba(110, 231, 200, 0),
+        0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Efeito de spotlight interno ao mover o mouse */
+.course-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    background: radial-gradient(
+        500px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(110, 231, 200, 0.10),
+        transparent 40%
+    );
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Borda luminosa dourada — efeito de contorno glow */
+.course-card::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 14px;
+    background: radial-gradient(
+        350px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(110, 231, 200, 0.35),
+        transparent 45%
+    );
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+    z-index: 0;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: xor;
+    padding: 1px;
+}
+
+/* Hover do card: levitação + glow externo */
+.course-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(110, 231, 200, 0.30);
+    box-shadow:
+        0 0 18px 4px rgba(110, 231, 200, 0.12),
+        0 0 40px 8px rgba(110, 231, 200, 0.05),
+        0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.course-card:hover::before,
+.course-card:hover::after {
+    opacity: 1;
+}
+
+/* Ícone do card */
+.course-card-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, rgba(110, 231, 200, 0.12), rgba(110, 231, 200, 0.04));
+    border: 1px solid rgba(110, 231, 200, 0.15);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    color: var(--accent-gold);
+    transition: all 0.5s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.course-card:hover .course-card-icon {
+    background: linear-gradient(135deg, rgba(110, 231, 200, 0.22), rgba(110, 231, 200, 0.08));
+    border-color: rgba(110, 231, 200, 0.4);
+    transform: scale(1.08);
+    box-shadow:
+        0 0 16px 4px rgba(110, 231, 200, 0.18),
+        0 0 32px 6px rgba(110, 231, 200, 0.06);
+}
+
+/* Título do card */
+.course-card h3 {
+    font-size: 1.0rem;
+    font-weight: 600;
+    line-height: 1.3;
+    position: relative;
+    z-index: 1;
+    transition: color 0.3s ease;
+}
+
+.course-card:hover h3 {
+    color: var(--accent-gold-light);
+}
+
+/* Descrição do card */
+.course-card p {
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    line-height: 1.55;
+    position: relative;
+    z-index: 1;
+    transition: color 0.3s ease;
+}
+
+.course-card:hover p {
+    color: var(--text-primary);
+}
+
+/* Botão CTA abaixo dos cards */
+.courses-cta-wrapper {
+    text-align: center;
+    margin-top: 2.5rem;
+}
+
+/* Botão degradê — "Veja Todos os Cursos" */
+.btn-gradient {
+    background: var(--btn-gradient);
+    color: var(--bg-primary);
+    padding: 1rem 2.25rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    box-shadow: 0 4px 20px rgba(110, 231, 200, 0.25);
+}
+
+.btn-gradient::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+    transition: left 0.6s ease;
+}
+
+.btn-gradient:hover::before {
+    left: 100%;
+}
+
+.btn-gradient:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 35px rgba(110, 231, 200, 0.45), 0 0 60px rgba(110, 231, 200, 0.15);
+}
+
+.btn-gradient .arrow {
+    transition: transform 0.3s ease;
+}
+
+.btn-gradient:hover .arrow {
+    transform: translateX(4px);
+}
+
+/* Área do QR Code (mantida para compatibilidade) */
+.courses-content {
+    display: flex;
+    gap: 4rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    align-items: center;
+}
+
+.courses-text { flex: 1; }
+
+.courses-text h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.courses-text p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+}
+
+.course-list {
+    list-style: none;
+    margin-bottom: 2rem;
+}
+
+.course-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.course-list li::before {
+    content: '✓';
+    color: var(--accent-gold);
+    font-weight: bold;
+}
+
+.course-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: rgba(110, 231, 200, 0.1);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.course-list li::before {
+    display: none !important;
+}
+
+.course-list li {
+    gap: 0.75rem !important;
+}
+
+.qr-section {
+    flex: 0 0 350px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 2.5rem;
+    text-align: center;
+}
+
+.qr-code {
+    width: 200px;
+    height: 200px;
+    background: white;
+    border-radius: 16px;
+    margin: 0 auto 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.qr-placeholder {
+    width: 160px;
+    height: 160px;
+    background: linear-gradient(45deg, var(--bg-primary) 25%, transparent 25%),
+                linear-gradient(-45deg, var(--bg-primary) 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, var(--bg-primary) 75%),
+                linear-gradient(-45deg, transparent 75%, var(--bg-primary) 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    border-radius: 8px;
+}
+
+.qr-section h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.qr-section p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* === RESPONSIVO — CARDS DE CURSOS === */
+@media (max-width: 1024px) {
+    .courses-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .courses-content {
+        flex-direction: column;
+    }
+    .qr-section {
+        flex: none;
+        width: 100%;
+        max-width: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .courses-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* === SEÇÃO DE LOGIN === */
+.login-section {
+    padding: 6rem 4rem;
+    position: relative;
+    z-index: 1;
+}
+
+.login-container {
+    max-width: 450px;
+    margin: 0 auto;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 3rem;
+}
+
+.login-container h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2rem;
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.login-subtitle {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 0 3px rgba(110, 231, 200, 0.1);
+}
+
+.form-group input::placeholder {
+    color: var(--text-muted);
+}
+
+.login-btn {
+    width: 100%;
+    padding: 1rem;
+    background: var(--accent-gold);
+    color: var(--bg-primary);
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 30px rgba(110, 231, 200, 0.3);
+}
+
+.login-links {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+}
+
+.login-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: color 0.3s ease;
+}
+
+.login-links a:hover {
+    color: var(--accent-gold);
+}
+
+/* === FOOTER (RODAPÉ) === */
+footer {
+    padding: 4rem;
+    border-top: 1px solid var(--border-color);
+    position: relative;
+    z-index: 1;
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.footer-logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.footer-links {
+    display: flex;
+    gap: 2rem;
+}
+
+.footer-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+    color: var(--accent-gold);
+}
+
+.footer-copy {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+/* === BOTÃO FLUTUANTE === */
+.floating-btn {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 60px;
+    height: 60px;
+    background: var(--accent-gold);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 100;
+    box-shadow: 0 10px 30px rgba(110, 231, 200, 0.4);
+    animation: bounce 2s ease-in-out infinite;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--bg-primary);
+    transition: transform 0.3s ease;
+}
+
+.floating-btn:hover {
+    transform: scale(1.1);
+    animation-play-state: paused;
+}
+
+/* Animação de pulsação */
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* === MEDIA QUERIES (RESPONSIVIDADE) === */
+
+/* Tablet */
+@media (max-width: 1024px) {
+    .hero-content { flex-direction: column; text-align: center; }
+    .hero-text { max-width: 100%; }
+    .cta-buttons { justify-content: center; }
+    .stats { justify-content: center; }
+    .features-grid { grid-template-columns: repeat(2, 1fr); }
+    .courses-content { flex-direction: column; }
+    .qr-section { flex: none; width: 100%; max-width: 400px; }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    header { padding: 1rem 1.5rem; }
+    nav { display: none; }
+    .hero { padding: 6rem 1.5rem 3rem; }
+    h1 { font-size: 2.5rem; }
+    .features-grid { grid-template-columns: 1fr; }
+    .cards-container { transform: scale(0.8); }
+    .features, .products, .courses, .login-section { padding: 4rem 1.5rem; }
+    .products-cta { padding: 2.5rem; }
+    .footer-content { flex-direction: column; gap: 1.5rem; text-align: center; }
+}

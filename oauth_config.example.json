@@ -1,0 +1,16 @@
+{
+  "_comentario": "Copie este arquivo para oauth_config.json e preencha com as credenciais reais. As variaveis de ambiente (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, MS_CLIENT_ID, MS_CLIENT_SECRET, MS_TENANT, OAUTH_BASE_URL) tem prioridade sobre este arquivo.",
+
+  "google": {
+    "client_id": "SEU_CLIENT_ID.apps.googleusercontent.com",
+    "client_secret": "SEU_CLIENT_SECRET"
+  },
+
+  "microsoft": {
+    "client_id": "SEU_APPLICATION_CLIENT_ID",
+    "client_secret": "SEU_CLIENT_SECRET_VALUE",
+    "tenant": "common"
+  },
+
+  "base_url": "http://localhost:3000"
+}

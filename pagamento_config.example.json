@@ -1,0 +1,19 @@
+{
+  "_comentario": "Copie para pagamento_config.json e preencha. As variaveis de ambiente (MP_LINK, MP_ACCESS_TOKEN, MP_EMAIL_AVISO, ADMIN_SENHA) tem prioridade sobre este arquivo.",
+
+  "mercadopago": {
+    "_link": "Link de pagamento/assinatura criado no painel do Mercado Pago. E para ele que o botao Assinar leva.",
+    "link": "",
+
+    "_access_token": "Credencial de producao do Mercado Pago (Suas integracoes > Credenciais). Sem ela o webhook anota a venda como 'pendente_confirmacao'.",
+    "access_token": "",
+
+    "_email_aviso": "E-mail que recebe o aviso de venda nova.",
+    "email_aviso": ""
+  },
+
+  "admin": {
+    "_senha": "Senha do painel em /admin.html. TROQUE — o padrao e 'admin'.",
+    "senha": ""
+  }
+}

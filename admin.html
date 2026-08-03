@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Painel de Controle | AdvogaCert</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .admin-page {
+            position: relative;
+            z-index: 1;
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem 5rem;
+        }
+
+        /* ============ TELA DE ENTRADA ============ */
+        .admin-login {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1.5rem;
+        }
+        .login-box {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 3rem 2.75rem 2.5rem;
+            text-align: center;
+            overflow: hidden;
+        }
+        /* mesma borda viva dos cards do site, para o painel não parecer outro produto */
+        @property --border-angle {
+            syntax: '<angle>';
+            inherits: false;
+            initial-value: 0deg;
+        }
+        @keyframes borderRun { to { --border-angle: 360deg; } }
+        .login-box::after {
+            content: '';
+            position: absolute; inset: 0;
+            border-radius: inherit; padding: 1px;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            pointer-events: none;
+            animation: borderRun 4s linear infinite;
+            background: conic-gradient(from var(--border-angle),
+                transparent 0deg, transparent 190deg,
+                rgba(79, 163, 255, 0) 210deg,
+                #1f6fd1 250deg, #6ee7c8 300deg, #fff 330deg, #4fa3ff 350deg,
+                rgba(110, 231, 200, 0) 360deg);
+            opacity: 0.6;
+            filter: drop-shadow(0 0 2px rgba(79, 163, 255, 0.5));
+        }
+        .login-box > * { position: relative; z-index: 1; }
+
+        .login-logo {
+            height: 34px;
+            aspect-ratio: 720 / 232;
+            margin: 0 auto 1.75rem;
+            background: linear-gradient(135deg, var(--accent-mac), var(--accent-win));
+            -webkit-mask-image: url('assets/img/logo-footer.png');
+            mask-image: url('assets/img/logo-footer.png');
+            -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+            -webkit-mask-position: center; mask-position: center;
+            -webkit-mask-size: contain; mask-size: contain;
+        }
+        .login-selo {
+            display: inline-flex; align-items: center; gap: 0.45rem;
+            padding: 0.35rem 0.85rem; margin-bottom: 1.25rem;
+            border-radius: 100px;
+            background: rgba(110, 231, 200, 0.1);
+            border: 1px solid rgba(110, 231, 200, 0.28);
+            color: var(--accent-mac);
+            font-size: 0.72rem; font-weight: 700;
+            letter-spacing: 0.06em; text-transform: uppercase;
+        }
+        .login-box h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.6rem; font-weight: 600; margin-bottom: 0.5rem;
+        }
+        .login-box .desc {
+            color: var(--text-secondary); font-size: 0.9rem;
+            line-height: 1.6; margin-bottom: 2rem;
+        }
+
+        .campo-senha { position: relative; margin-bottom: 1.25rem; }
+        .campo-senha > i {
+            position: absolute; left: 1.1rem; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted); font-size: 0.95rem;
+            transition: color 0.25s ease;
+        }
+        .campo-senha input {
+            width: 100%; box-sizing: border-box;
+            padding: 1rem 3rem 1rem 2.9rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary); font-size: 1rem;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+        .campo-senha input::placeholder { color: var(--text-muted); }
+        .campo-senha input:focus {
+            outline: none;
+            border-color: var(--accent-mac);
+            box-shadow: 0 0 0 3px rgba(110, 231, 200, 0.12);
+        }
+        .campo-senha input:focus ~ i { color: var(--accent-mac); }
+        .ver-senha {
+            position: absolute; right: 0.6rem; top: 50%;
+            transform: translateY(-50%);
+            background: none; border: none; cursor: pointer;
+            color: var(--text-muted); font-size: 0.95rem;
+            padding: 0.5rem; border-radius: 8px;
+            transition: color 0.25s ease;
+        }
+        .ver-senha:hover { color: var(--text-primary); }
+
+        .btn-entrar {
+            width: 100%; padding: 1rem;
+            border: none; border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent-mac-dark), var(--accent-mac));
+            color: #062018;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700; font-size: 1rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 0.55rem;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease;
+        }
+        .btn-entrar:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 28px rgba(33, 185, 143, 0.28);
+        }
+        .btn-entrar:disabled { opacity: 0.65; cursor: default; }
+        .girando {
+            width: 15px; height: 15px;
+            border: 2px solid rgba(6, 32, 24, 0.3);
+            border-top-color: #062018;
+            border-radius: 50%;
+            animation: gira 0.7s linear infinite;
+        }
+        @keyframes gira { to { transform: rotate(360deg); } }
+
+        .login-rodape {
+            margin-top: 1.75rem; padding-top: 1.25rem;
+            border-top: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: center; gap: 0.45rem;
+            color: var(--text-muted); font-size: 0.76rem;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .login-box::after { animation: none; }
+            .btn-entrar:hover:not(:disabled) { transform: none; }
+        }
+
+        .admin-head {
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;
+        }
+        .admin-head h1 { font-family: 'Outfit', sans-serif; font-size: 1.8rem; font-weight: 600; }
+        .admin-head .sub { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.2rem; }
+
+        /* --- números do topo --- */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem; margin-bottom: 2rem;
+        }
+        .stat {
+            background: rgba(22, 22, 24, 0.35);
+            border: 1px solid var(--border-color);
+            border-radius: 14px; padding: 1.25rem;
+        }
+        .stat-num {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.8rem; font-weight: 700; color: var(--accent-mac);
+        }
+        .stat-lbl { color: var(--text-muted); font-size: 0.8rem; margin-top: 0.15rem; }
+
+        /* --- busca --- */
+        .busca { position: relative; margin-bottom: 1.25rem; }
+        .busca i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+        .busca input {
+            width: 100%; box-sizing: border-box;
+            padding: 0.9rem 1rem 0.9rem 2.6rem;
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 12px; color: var(--text-primary); font-size: 0.95rem;
+        }
+        .busca input:focus { outline: none; border-color: var(--accent-mac); }
+
+        /* --- tabela --- */
+        .tabela-wrap {
+            border: 1px solid var(--border-color);
+            border-radius: 14px; overflow-x: auto;
+            background: rgba(22, 22, 24, 0.35);
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+        th {
+            text-align: left; padding: 0.9rem 1rem;
+            color: var(--text-muted); font-weight: 600; font-size: 0.75rem;
+            text-transform: uppercase; letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border-color); white-space: nowrap;
+        }
+        td { padding: 0.9rem 1rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255, 255, 255, 0.02); }
+        .mono { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; }
+
+        .tag {
+            display: inline-block; padding: 0.25rem 0.6rem;
+            border-radius: 100px; font-size: 0.72rem; font-weight: 700; white-space: nowrap;
+        }
+        .tag.ativa { background: rgba(110, 231, 200, 0.15); color: var(--accent-mac); }
+        .tag.sem { background: rgba(255, 255, 255, 0.06); color: var(--text-muted); }
+        .tag.usado { background: rgba(255, 107, 94, 0.15); color: #ff6b5e; }
+        .tag.livre { background: rgba(79, 163, 255, 0.15); color: var(--accent-win); }
+
+        .acao {
+            padding: 0.4rem 0.8rem; border-radius: 8px; cursor: pointer;
+            border: 1px solid var(--border-color); background: transparent;
+            color: var(--text-secondary); font-size: 0.78rem; font-weight: 600;
+            white-space: nowrap; transition: all 0.25s ease;
+        }
+        .acao:hover { border-color: var(--accent-mac); color: var(--accent-mac); }
+
+        .vazio { padding: 3rem 1rem; text-align: center; color: var(--text-muted); font-size: 0.9rem; }
+        .erro { color: #ff6b5e; font-size: 0.85rem; margin-top: 0.5rem; }
+    </style>
+</head>
+<body>
+    <div class="blush-container">
+        <div class="blush blush-1" id="blush1"></div>
+        <div class="blush blush-2" id="blush2"></div>
+        <div class="blush blush-3" id="blush3"></div>
+    </div>
+
+    <!-- Tela de entrada -->
+    <div id="tela-login" class="admin-login">
+        <div class="login-box">
+            <div class="login-logo" role="img" aria-label="AdvogaCert"></div>
+            <div class="login-selo"><i class="fas fa-shield-halved"></i> Acesso restrito</div>
+            <h1>Painel de Controle</h1>
+            <p class="desc">Área interna da AdvogaCert. Aqui ficam os cadastros, os planos ativos e os chamados dos clientes.</p>
+
+            <form id="form-login">
+                <div class="campo-senha">
+                    <input type="password" id="senha" placeholder="Senha do painel" autocomplete="current-password" required>
+                    <i class="fas fa-key"></i>
+                    <button type="button" class="ver-senha" id="ver-senha" aria-label="Mostrar senha">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <button type="submit" class="btn-entrar" id="btn-entrar">
+                    <i class="fas fa-arrow-right-to-bracket"></i>
+                    <span id="btn-entrar-texto">Entrar no painel</span>
+                </button>
+                <div class="erro" id="erro-login"></div>
+            </form>
+
+            <div class="login-rodape">
+                <i class="fas fa-lock"></i> Sessão expira após 8 horas
+            </div>
+        </div>
+    </div>
+
+    <!-- Painel -->
+    <div id="tela-painel" class="admin-page" style="display:none;">
+        <div class="admin-head">
+            <div>
+                <h1>Painel de Controle</h1>
+                <div class="sub" id="atualizado"></div>
+            </div>
+            <button class="acao" id="btn-recarregar"><i class="fas fa-rotate"></i> Atualizar</button>
+        </div>
+
+        <div class="stats" id="stats"></div>
+
+        <div class="busca">
+            <i class="fas fa-magnifying-glass"></i>
+            <input type="search" id="busca" placeholder="Buscar por OAB, WhatsApp, e-mail ou nome — cole o número que chegou na conversa">
+        </div>
+
+        <div class="tabela-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Pessoa</th>
+                        <th>OAB</th>
+                        <th>WhatsApp</th>
+                        <th>Plano</th>
+                        <th>Chamado grátis</th>
+                        <th>Chamados</th>
+                        <th>Último login</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="linhas"></tbody>
+            </table>
+            <div class="vazio" id="vazio" style="display:none;">Nenhum cadastro encontrado.</div>
+        </div>
+    </div>
+
+    <script src="assets/js/script.js"></script>
+    <script>
+    (function () {
+        const telaLogin = document.getElementById('tela-login');
+        const telaPainel = document.getElementById('tela-painel');
+        const campoBusca = document.getElementById('busca');
+        let token = sessionStorage.getItem('adminToken');
+        let dados = null;
+
+        const fmtData = iso => {
+            if (!iso) return '—';
+            const d = new Date(iso);
+            return d.toLocaleDateString('pt-BR') + ' ' +
+                   d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        };
+        const fmtDia = iso => iso ? new Date(iso).toLocaleDateString('pt-BR') : '—';
+
+        // --- entrar ---
+        const btnEntrar = document.getElementById('btn-entrar');
+        const btnTexto = document.getElementById('btn-entrar-texto');
+        const campoSenha = document.getElementById('senha');
+        const erroLogin = document.getElementById('erro-login');
+
+        function ocupado(sim) {
+            btnEntrar.disabled = sim;
+            btnTexto.textContent = sim ? 'Conferindo...' : 'Entrar no painel';
+            btnEntrar.querySelector('i, .girando').outerHTML = sim
+                ? '<span class="girando"></span>'
+                : '<i class="fas fa-arrow-right-to-bracket"></i>';
+        }
+
+        // Aberto com duplo clique no arquivo? Então não há servidor para chamar:
+        // o fetch iria procurar "/admin/entrar" dentro do disco e falhar.
+        const semServidor = location.protocol === 'file:';
+        if (semServidor) {
+            erroLogin.innerHTML =
+                'Esta página precisa ser aberta pelo servidor.<br>' +
+                'Use <strong>http://localhost:3000/admin.html</strong>';
+        }
+
+        function entrar(e) {
+            if (e) e.preventDefault();
+            if (semServidor) return;
+
+            const senha = campoSenha.value;
+            if (!senha) { erroLogin.textContent = 'Digite a senha do painel'; return; }
+
+            erroLogin.textContent = '';
+            ocupado(true);
+
+            fetch('/admin/entrar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ senha })
+            })
+            .then(r => r.json())
+            .then(d => {
+                ocupado(false);
+                if (!d.success) {
+                    erroLogin.textContent = d.error || 'Não foi possível entrar';
+                    campoSenha.select();
+                    return;
+                }
+                token = d.token;
+                sessionStorage.setItem('adminToken', token);
+                carregar();
+            })
+            .catch(err => {
+                ocupado(false);
+                console.error('Falha ao chamar /admin/entrar:', err);
+                erroLogin.textContent =
+                    'Não consegui falar com o servidor. Ele está rodando (node server.js) em ' +
+                    location.origin + '?';
+            });
+        }
+
+        document.getElementById('form-login').addEventListener('submit', entrar);
+
+        // olhinho para conferir o que foi digitado
+        document.getElementById('ver-senha').onclick = function () {
+            const vendo = campoSenha.type === 'text';
+            campoSenha.type = vendo ? 'password' : 'text';
+            this.innerHTML = `<i class="fas fa-eye${vendo ? '' : '-slash'}"></i>`;
+            this.setAttribute('aria-label', vendo ? 'Mostrar senha' : 'Ocultar senha');
+            campoSenha.focus();
+        };
+        document.getElementById('btn-recarregar').onclick = () => carregar();
+
+        // --- carregar dados ---
+        function carregar() {
+            if (!token) return;
+            fetch('/admin/dados', { headers: { Authorization: 'Bearer ' + token } })
+                .then(r => {
+                    if (r.status === 401) {          // sessão caiu: volta para a senha
+                        sessionStorage.removeItem('adminToken');
+                        token = null;
+                        telaPainel.style.display = 'none';
+                        telaLogin.style.display = 'flex';
+                        throw new Error('sessao');
+                    }
+                    return r.json();
+                })
+                .then(d => {
+                    dados = d;
+                    telaLogin.style.display = 'none';
+                    telaPainel.style.display = 'block';
+                    document.getElementById('atualizado').textContent =
+                        'Atualizado às ' + new Date().toLocaleTimeString('pt-BR');
+                    montarStats(d.resumo);
+                    montarLinhas();
+                })
+                .catch(() => {});
+        }
+
+        function montarStats(r) {
+            const itens = [
+                [r.usuarios, 'Cadastros'],
+                [r.ativos, 'Planos ativos'],
+                ['R$ ' + Number(r.receita_mes).toLocaleString('pt-BR'), 'Receita/mês'],
+                [r.free_usados, 'Grátis usados'],
+                [r.chamados, 'Chamados'],
+                [r.logins_30d, 'Logins (30d)']
+            ];
+            document.getElementById('stats').innerHTML = itens.map(([n, l]) =>
+                `<div class="stat"><div class="stat-num">${n}</div><div class="stat-lbl">${l}</div></div>`
+            ).join('');
+        }
+
+        function montarLinhas() {
+            // busca só por dígitos quando o termo é numérico: assim "85 99999-9999",
+            // "(85) 99999-9999" e "5585999999999" encontram a mesma pessoa
+            const termo = campoBusca.value.trim().toLowerCase();
+            const digitos = termo.replace(/\D/g, '');
+
+            const lista = dados.pessoas.filter(p => {
+                if (!termo) return true;
+                if (digitos.length >= 4 && (p.telefone || '').replace(/\D/g, '').includes(digitos)) return true;
+                if (digitos.length >= 3 && (p.oab || '').replace(/\D/g, '').includes(digitos)) return true;
+                return (p.email || '').toLowerCase().includes(termo) ||
+                       (p.oab || '').toLowerCase().includes(termo) ||
+                       (p.nome || '').toLowerCase().includes(termo);
+            });
+
+            document.getElementById('vazio').style.display = lista.length ? 'none' : 'block';
+            document.getElementById('linhas').innerHTML = lista.map(p => `
+                <tr>
+                    <td>
+                        <div style="font-weight:600;">${p.nome || p.email || '—'}</div>
+                        <div style="color:var(--text-muted);font-size:0.78rem;">${p.email || ''}</div>
+                    </td>
+                    <td class="mono">${p.oab || '—'}</td>
+                    <td class="mono">${p.telefone || '—'}</td>
+                    <td>
+                        ${p.status === 'ativa'
+                            ? `<span class="tag ativa">Premium</span><div style="color:var(--text-muted);font-size:0.72rem;margin-top:0.2rem;">até ${fmtDia(p.valida_ate)}</div>`
+                            : '<span class="tag sem">Sem plano</span>'}
+                    </td>
+                    <td>${p.free_usado ? '<span class="tag usado">Usado</span>' : '<span class="tag livre">Disponível</span>'}</td>
+                    <td>${p.chamados_total}</td>
+                    <td class="mono" style="font-size:0.78rem;">${fmtData(p.ultimo_login)}</td>
+                    <td>
+                        <button class="acao" data-id="${p.id}" data-acao="${p.status === 'ativa' ? 'cancelar' : 'liberar'}">
+                            ${p.status === 'ativa' ? 'Cancelar' : 'Liberar 1 mês'}
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            document.querySelectorAll('.acao[data-id]').forEach(btn => {
+                btn.onclick = () => mudarPlano(Number(btn.dataset.id), btn.dataset.acao);
+            });
+        }
+
+        function mudarPlano(usuario_id, acao) {
+            const pergunta = acao === 'cancelar'
+                ? 'Cancelar o plano desta pessoa?'
+                : 'Liberar 1 mês de Premium para esta pessoa?';
+            if (!confirm(pergunta)) return;
+
+            fetch('/admin/assinatura', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+                body: JSON.stringify({ usuario_id, acao, meses: 1 })
+            })
+            .then(r => r.json())
+            .then(() => carregar())
+            .catch(() => alert('Erro de conexão'));
+        }
+
+        campoBusca.addEventListener('input', () => { if (dados) montarLinhas(); });
+
+        if (token) carregar();
+    })();
+    </script>
+</body>
+</html>

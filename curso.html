@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curso de PJe e IA Claude para advogados | AdvogaCert</title>
+    <meta name="description" content="Curso online ao vivo para advogados: PJe do login ao protocolo e IA Claude aplicada à rotina do escritório, com segurança e sigilo.">
+
+    <!-- Fontes Google -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome (ícones) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+    <!-- CSS Principal -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        :root {
+            --accent-mac: #6ee7c8;
+            --accent-mac-dark: #21b98f;
+            --accent-win: #4fa3ff;
+            --accent-win-dark: #1f6fd1;
+        }
+
+        /* === TOPO === */
+        .curso-hero {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 9.5rem 1.5rem 3rem;
+        }
+        .curso-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.4rem 1rem;
+            margin-bottom: 1.25rem;
+            border-radius: 100px;
+            background: rgba(110, 231, 200, 0.12);
+            border: 1px solid rgba(110, 231, 200, 0.35);
+            color: var(--accent-mac);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .curso-hero h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.6rem;
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 1.1rem;
+        }
+        .curso-hero h1 span {
+            background: linear-gradient(135deg, var(--accent-mac), var(--accent-win));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .curso-hero p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            line-height: 1.75;
+        }
+
+        /* linha de fatos: formato, carga horária, turma */
+        .curso-fatos {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.6rem;
+            margin-top: 1.75rem;
+        }
+        .curso-fato {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.55rem 1rem;
+            border-radius: 100px;
+            background: rgba(22, 22, 24, 0.5);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        .curso-fato i { color: var(--accent-mac); font-size: 0.85rem; }
+
+        /* === BLOCOS DE SEÇÃO === */
+        .curso-secao {
+            position: relative;
+            z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem;
+        }
+        .curso-secao > h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.7rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 0.6rem;
+        }
+        .curso-secao > h2 span {
+            background: linear-gradient(135deg, var(--accent-mac), var(--accent-win));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .curso-secao > .sub {
+            text-align: center;
+            color: var(--text-secondary);
+            max-width: 640px;
+            margin: 0 auto 2.25rem;
+            line-height: 1.7;
+        }
+
+        /* === OS DOIS MÓDULOS === */
+        .modulos {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            align-items: stretch;
+        }
+        .modulo {
+            position: relative;
+            background: rgba(22, 22, 24, 0.35);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2.25rem 2rem;
+            overflow: hidden;
+            transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), border-color 0.35s ease;
+        }
+        .modulo:hover { transform: translateY(-4px); }
+        .modulo.pje:hover { border-color: rgba(79, 163, 255, 0.5); }
+        .modulo.ia:hover { border-color: rgba(110, 231, 200, 0.5); }
+        .modulo-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        .modulo-icone {
+            width: 52px;
+            height: 52px;
+            margin: 0.9rem 0 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 14px;
+            font-size: 1.4rem;
+        }
+        .modulo.pje .modulo-icone {
+            background: rgba(79, 163, 255, 0.12);
+            border: 1px solid rgba(79, 163, 255, 0.32);
+            color: var(--accent-win);
+        }
+        .modulo.ia .modulo-icone {
+            background: rgba(110, 231, 200, 0.12);
+            border: 1px solid rgba(110, 231, 200, 0.32);
+            color: var(--accent-mac);
+        }
+        .modulo h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .modulo > p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.7;
+            margin-bottom: 1.25rem;
+        }
+        .modulo ul { list-style: none; }
+        .modulo li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.7rem;
+            padding: 0.5rem 0;
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            line-height: 1.6;
+        }
+        .modulo li i {
+            flex-shrink: 0;
+            margin-top: 0.3rem;
+            font-size: 0.78rem;
+        }
+        .modulo.pje li i { color: var(--accent-win); }
+        .modulo.ia li i { color: var(--accent-mac); }
+
+        /* === PARA QUEM É === */
+        .publico {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+        }
+        .publico-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.6rem 1.5rem;
+        }
+        .publico-item i {
+            color: var(--accent-mac);
+            font-size: 1.2rem;
+            margin-bottom: 0.8rem;
+            display: block;
+        }
+        .publico-item h4 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+        }
+        .publico-item p {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            line-height: 1.65;
+        }
+
+        /* === AVISO DE SIGILO === */
+        .curso-aviso {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 1.4rem 1.6rem;
+            border-radius: 16px;
+            border: 1px solid rgba(79, 163, 255, 0.3);
+            background: linear-gradient(135deg, rgba(79, 163, 255, 0.08), rgba(110, 231, 200, 0.05));
+        }
+        .curso-aviso i { color: var(--accent-win); font-size: 1.1rem; margin-top: 0.2rem; }
+        .curso-aviso p { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.7; }
+        .curso-aviso strong { color: var(--text-primary); }
+
+        /* === INSCRIÇÃO === */
+        .inscricao {
+            max-width: 720px;
+            margin: 0 auto;
+            text-align: center;
+            background: rgba(22, 22, 24, 0.5);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+        }
+        .inscricao h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-bottom: 0.6rem;
+        }
+        .inscricao > p {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+        .inscricao-linhas {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.6rem 2rem;
+            margin-bottom: 1.75rem;
+            padding: 1.1rem 1rem;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .inscricao-linha {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .inscricao-linha i { color: var(--accent-mac); font-size: 0.85rem; }
+        .inscricao-linha strong { color: var(--text-primary); }
+        .btn-inscrever {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent-mac-dark), var(--accent-mac));
+            color: #062018;
+            font-weight: 700;
+            font-size: 0.98rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .btn-inscrever:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(110, 231, 200, 0.3);
+        }
+        .inscricao-nota {
+            margin-top: 1rem;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+        }
+
+        /* === PERGUNTAS === */
+        .faq-curso {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+        }
+        .faq-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.4rem 1.5rem;
+        }
+        .faq-item h4 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.98rem;
+            font-weight: 600;
+            margin-bottom: 0.45rem;
+        }
+        .faq-item p {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            line-height: 1.7;
+        }
+
+        @media (max-width: 860px) {
+            .curso-hero { padding: 8rem 1.25rem 2rem; }
+            .curso-hero h1 { font-size: 2rem; }
+            .modulos,
+            .publico,
+            .faq-curso { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="blush-container">
+        <div class="blush blush-1" id="blush1"></div>
+        <div class="blush blush-2" id="blush2"></div>
+        <div class="blush blush-3" id="blush3"></div>
+    </div>
+
+    <header>
+        <a href="index.html" class="logo">
+            <div class="logo-icon">
+                <div class="logo-mask" role="img" aria-label="AdvogaCert"></div>
+            </div>
+        </a>
+        <nav>
+            <a href="index.html">Início</a>
+            <a href="contato.html">Contato</a>
+            <a href="login.html" class="nav-btn">login</a>
+        </nav>
+    </header>
+
+    <section class="curso-hero">
+        <div class="curso-eyebrow"><i class="fa-solid fa-graduation-cap"></i> Curso online ao vivo</div>
+        <h1>Domine o <span>PJe</span> e coloque a <span>IA Claude</span> para trabalhar no seu escritório</h1>
+        <p>
+            Duas frentes numa turma só: peticionar no PJe sem travar em erro de certificado
+            e usar a inteligência artificial da Anthropic para ler, resumir e redigir — com o
+            cuidado que o sigilo profissional exige.
+        </p>
+        <div class="curso-fatos">
+            <span class="curso-fato"><i class="fa-solid fa-video"></i> Ao vivo, em turmas</span>
+            <span class="curso-fato"><i class="fa-solid fa-users"></i> Turmas pequenas, com perguntas</span>
+            <span class="curso-fato"><i class="fa-solid fa-certificate"></i> Certificado de participação</span>
+            <span class="curso-fato"><i class="fa-solid fa-rotate-left"></i> Gravação liberada depois</span>
+        </div>
+    </section>
+
+    <section class="curso-secao">
+        <h2>O que você vai <span>aprender</span></h2>
+        <p class="sub">
+            O curso é dividido em dois módulos independentes, dados na mesma turma. Um resolve o
+            processo eletrônico; o outro, o tempo que você perde escrevendo e lendo.
+        </p>
+
+        <div class="modulos">
+            <div class="modulo pje">
+                <div class="modulo-num">Módulo 1</div>
+                <div class="modulo-icone"><i class="fa-solid fa-scale-balanced"></i></div>
+                <h3>PJe na prática, do login ao protocolo</h3>
+                <p>
+                    Do certificado que o navegador não reconhece até a petição protocolada com
+                    o comprovante no lugar certo.
+                </p>
+                <ul>
+                    <li><i class="fa-solid fa-check"></i> Certificado A1 e A3 no navegador: instalar, testar e descobrir por que ele não aparece</li>
+                    <li><i class="fa-solid fa-check"></i> PJe Office e Shodō: instalação, atualização e os erros de Java que travam a assinatura</li>
+                    <li><i class="fa-solid fa-check"></i> Cadastro e habilitação nos autos, procuração e substabelecimento</li>
+                    <li><i class="fa-solid fa-check"></i> Peticionamento inicial e intercorrente, anexos, tipos de documento e tamanho de arquivo</li>
+                    <li><i class="fa-solid fa-check"></i> Assinatura digital: em lote, com token e com certificado em nuvem</li>
+                    <li><i class="fa-solid fa-check"></i> Intimações, prazos e o painel: onde o prazo aparece e onde ele se esconde</li>
+                    <li><i class="fa-solid fa-check"></i> Audiência e sessão virtual: o que testar antes de entrar</li>
+                    <li><i class="fa-solid fa-check"></i> Diferenças entre tribunais: TRF, TRT, TJ e as variações que mais confundem</li>
+                </ul>
+            </div>
+
+            <div class="modulo ia">
+                <div class="modulo-num">Módulo 2</div>
+                <div class="modulo-icone"><i class="fa-solid fa-robot"></i></div>
+                <h3>IA Claude aplicada à rotina jurídica</h3>
+                <p>
+                    Claude é a IA da Anthropic. Aqui ela deixa de ser curiosidade e vira ferramenta
+                    de trabalho — com método, não com sorte.
+                </p>
+                <ul>
+                    <li><i class="fa-solid fa-check"></i> Primeiros passos: conta, planos, limites e quando compensa pagar</li>
+                    <li><i class="fa-solid fa-check"></i> Como escrever um bom pedido: contexto, papel, formato e exemplo</li>
+                    <li><i class="fa-solid fa-check"></i> Ler processo grande: resumo de PDF extenso, linha do tempo e pontos controvertidos</li>
+                    <li><i class="fa-solid fa-check"></i> Redigir com seus modelos: petições, contratos e e-mails no seu estilo</li>
+                    <li><i class="fa-solid fa-check"></i> Projects: uma base fixa com seus modelos e teses para não repetir contexto</li>
+                    <li><i class="fa-solid fa-check"></i> Revisão de contrato: cláusulas de risco, prazos e obrigações em tabela</li>
+                    <li><i class="fa-solid fa-check"></i> Alucinação: por que a IA inventa jurisprudência e como conferir antes de protocolar</li>
+                    <li><i class="fa-solid fa-check"></i> Sigilo e LGPD: o que nunca colar, como anonimizar e o que a OAB já orienta</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="curso-secao">
+        <div class="curso-aviso">
+            <i class="fa-solid fa-shield-halved"></i>
+            <p>
+                <strong>Duas coisas que o curso trata como regra, não como detalhe.</strong>
+                A IA erra com confiança: toda citação de lei, súmula ou acórdão sai da aula com
+                a instrução de ser conferida na fonte antes de ir para os autos. E dado de cliente
+                é sigilo profissional — você vai aprender o que pode e o que não pode ser colado
+                numa ferramenta de terceiro, e como anonimizar quando precisar.
+            </p>
+        </div>
+    </section>
+
+    <section class="curso-secao">
+        <h2>Para quem <span>é</span></h2>
+        <div class="publico">
+            <div class="publico-item">
+                <i class="fa-solid fa-user-tie"></i>
+                <h4>Advogado que atua sozinho</h4>
+                <p>Você é o escritório inteiro: peticiona, lê, redige e ainda resolve o token que parou de funcionar.</p>
+            </div>
+            <div class="publico-item">
+                <i class="fa-solid fa-building"></i>
+                <h4>Equipe de escritório</h4>
+                <p>Estagiários e secretaria que protocolam todo dia e precisam parar de perder tempo com o mesmo erro.</p>
+            </div>
+            <div class="publico-item">
+                <i class="fa-solid fa-seedling"></i>
+                <h4>Quem está começando agora</h4>
+                <p>Recém-inscrito na OAB que nunca protocolou sozinho e quer entrar no PJe sem medo de perder prazo.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="curso-secao">
+        <div class="inscricao">
+            <h2>Próxima turma</h2>
+            <p>As turmas são pequenas para caber pergunta de todo mundo. Chame no WhatsApp para garantir a vaga.</p>
+
+            <!-- TROCAR a cada turma: data, horário, carga horária e valor -->
+            <div class="inscricao-linhas">
+                <span class="inscricao-linha"><i class="fa-solid fa-calendar-day"></i> <strong>Data a definir</strong></span>
+                <span class="inscricao-linha"><i class="fa-regular fa-clock"></i> <strong>Horário a definir</strong></span>
+                <span class="inscricao-linha"><i class="fa-solid fa-hourglass-half"></i> <strong>Carga horária a definir</strong></span>
+                <span class="inscricao-linha"><i class="fa-solid fa-tag"></i> <strong>Valor a definir</strong></span>
+            </div>
+
+            <a href="https://wa.me/5561986241570?text=Ol%C3%A1!%20Quero%20me%20inscrever%20no%20curso%20de%20PJe%20e%20IA%20Claude%20da%20AdvogaCert."
+               class="btn-inscrever" target="_blank" rel="noopener">
+                <i class="fa-brands fa-whatsapp"></i>
+                Quero minha vaga
+            </a>
+            <p class="inscricao-nota">Sem compromisso: a gente confirma data, valor e forma de pagamento pelo WhatsApp.</p>
+        </div>
+    </section>
+
+    <section class="curso-secao">
+        <h2>Perguntas <span>frequentes</span></h2>
+        <div class="faq-curso">
+            <div class="faq-item">
+                <h4>Preciso saber mexer em computador?</h4>
+                <p>Não. O módulo de PJe começa do zero, incluindo a instalação do certificado. Se travar no meio, a gente para e resolve.</p>
+            </div>
+            <div class="faq-item">
+                <h4>Serve para Mac?</h4>
+                <p>Serve. As diferenças de Mac e Windows aparecem na aula, especialmente na parte de token e assinatura.</p>
+            </div>
+            <div class="faq-item">
+                <h4>Preciso pagar o Claude?</h4>
+                <p>A aula funciona com a versão gratuita. Mostramos onde o plano pago faz diferença para você decidir depois.</p>
+            </div>
+            <div class="faq-item">
+                <h4>E se eu faltar na aula?</h4>
+                <p>A gravação fica disponível para quem se inscreveu, então dá para assistir depois e voltar com as dúvidas.</p>
+            </div>
+            <div class="faq-item">
+                <h4>Usar IA em petição é permitido?</h4>
+                <p>Sim, como ferramenta de apoio: a responsabilidade pelo conteúdo continua sendo sua. O curso trata disso na prática.</p>
+            </div>
+            <div class="faq-item">
+                <h4>Emite certificado?</h4>
+                <p>Sim, certificado de participação ao final, com a carga horária da turma.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo-mask" role="img" aria-label="AdvogaCert"></div>
+            <div class="footer-links">
+                <a href="index.html">Início</a>
+                <a href="contato.html">Falar com Suporte</a>
+            </div>
+            <div class="footer-copy">© 2026 AdvogaCert. Todos os direitos reservados.</div>
+        </div>
+    </footer>
+
+    <!-- JavaScript Principal -->
+    <script src="assets/js/script.js"></script>
+</body>
+</html>
