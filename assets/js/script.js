@@ -760,8 +760,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 .replace(/\*(.+?)\*/g, '$1')
                 .replace(/`([^`]+)`/g, '$1')
                 .replace(/^\s*[-*]\s+/gm, '- ')
-                .replace(/\*/g, '')
-                .replace(/\b([a-z0-9_-]+)\.html\b/gi, (_, nome) => 'aba ' + nome.charAt(0).toUpperCase() + nome.slice(1));
+                .replace(/\*/g, '');
+            // NÃO troque "algo.html" por "aba Algo" aqui. Essa regra existia
+            // de quando o bot citava nomes de arquivo, e passou a destruir os
+            // endereços: "www.agentej.us/contato.html" virava
+            // "www.agentej.us/aba Contato", que não abre nada.
         }
 
         function addMsg(text, who, typing = false) {
@@ -779,8 +782,18 @@ document.addEventListener('DOMContentLoaded', function() {
             msgs.appendChild(div);
             msgs.scrollTop = msgs.scrollHeight;
 
+            // escreverComLinks vem do api.js: transforma endereço em link
+            // clicável sem usar innerHTML. Só é aplicado no texto do bot.
+            const escrever = (alvo, txt) => {
+                if (who === 'bot' && window.escreverComLinks) {
+                    window.escreverComLinks(alvo, txt);
+                } else {
+                    alvo.textContent = txt;
+                }
+            };
+
             if (!typing) {
-                div.textContent = text;
+                escrever(div, text);
                 return;
             }
 
@@ -790,7 +803,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 div.textContent += text.charAt(i);
                 i++;
                 msgs.scrollTop = msgs.scrollHeight;
-                if (i >= text.length) clearInterval(timer);
+                if (i >= text.length) {
+                    clearInterval(timer);
+                    // só no fim: durante a digitação o endereço está pela
+                    // metade, e viraria um link quebrado a cada letra
+                    escrever(div, text);
+                    msgs.scrollTop = msgs.scrollHeight;
+                }
             }, speed);
         }
 

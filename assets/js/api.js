@@ -60,6 +60,84 @@
     };
 
     /**
+     * Escreve o texto do bot num elemento, transformando endereços em links.
+     *
+     * POR QUE NÃO innerHTML: o texto vem de um modelo de linguagem, e o que
+     * o cliente digita entra no que o modelo responde. Com innerHTML, bastaria
+     * alguém pedir ao bot para repetir uma tag <script> e ela rodaria dentro
+     * do site. Aqui cada pedaço de texto entra por textContent (que nunca
+     * interpreta HTML) e só os links viram elementos de verdade.
+     *
+     * E o href passa por uma lista: mesmo que o modelo invente um endereço,
+     * ele só vira link se apontar para o site, o WhatsApp ou um e-mail —
+     * nunca para um domínio qualquer.
+     */
+    var PADRAO_LINK = /(https?:\/\/[^\s<>()]+|www\.[^\s<>()]+|wa\.me\/[0-9]+|mailto:[^\s<>()]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+
+    var HOSTS_PERMITIDOS = ['agentej.us', 'www.agentej.us', 'wa.me', 'advogacert.onrender.com'];
+
+    function hrefSeguro(bruto) {
+        var texto = bruto.replace(/[.,;:!?]+$/, '');   // pontuação final não faz parte do endereço
+
+        // e-mail solto vira mailto:
+        if (/^[a-zA-Z0-9._%+-]+@/.test(texto)) return 'mailto:' + texto;
+        if (/^mailto:/i.test(texto)) return texto;
+
+        var comEsquema = /^https?:\/\//i.test(texto) ? texto : 'https://' + texto;
+
+        try {
+            var u = new URL(comEsquema);
+            if (u.protocol !== 'https:' && u.protocol !== 'http:') return null;
+            return HOSTS_PERMITIDOS.indexOf(u.hostname) === -1 ? null : u.href;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    window.escreverComLinks = function (el, texto) {
+        el.textContent = '';
+
+        var ultimo = 0;
+        var m;
+        PADRAO_LINK.lastIndex = 0;
+
+        while ((m = PADRAO_LINK.exec(texto)) !== null) {
+            if (m.index > ultimo) {
+                el.appendChild(document.createTextNode(texto.slice(ultimo, m.index)));
+            }
+
+            var href = hrefSeguro(m[0]);
+
+            if (href) {
+                // a pontuação que veio grudada fica fora do link
+                var visivel = m[0].replace(/[.,;:!?]+$/, '');
+                var sobra = m[0].slice(visivel.length);
+
+                var a = document.createElement('a');
+                a.href = href;
+                a.textContent = visivel;
+                a.target = '_blank';
+                // sem isto, a página aberta ganha acesso a esta pela window.opener
+                a.rel = 'noopener noreferrer';
+                a.style.color = '#6ee7c8';
+                a.style.textDecoration = 'underline';
+                el.appendChild(a);
+
+                if (sobra) el.appendChild(document.createTextNode(sobra));
+            } else {
+                // endereço fora da lista: fica como texto, sem virar link
+                el.appendChild(document.createTextNode(m[0]));
+            }
+
+            ultimo = m.index + m[0].length;
+        }
+
+        if (ultimo < texto.length) {
+            el.appendChild(document.createTextNode(texto.slice(ultimo)));
+        }
+    };
+
+    /**
      * Aponta os botões de login social para o servidor.
      *
      * O href fica "/auth/google" no HTML de propósito: se o JS não carregar,
