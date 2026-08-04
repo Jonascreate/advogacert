@@ -1257,10 +1257,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
         botoesPlano.forEach(btn => {
             btn.addEventListener('click', () => {
-                // Abre o pagamento direto. Antes, quem não estava logado era
-                // mandado para login.html?checkout=1 e só voltava ao checkout
-                // depois de entrar ou criar conta — um passo a mais entre a
-                // vontade de assinar e o pagamento, que fazia perder venda.
+                const usuario = getUsuarioLogado();
+                if (!usuario) {
+                    // Guarda o plano escolhido para retomar o checkout
+                    // automaticamente assim que a pessoa logar ou se cadastrar.
+                    sessionStorage.setItem('checkoutPendente', JSON.stringify({
+                        plano: btn.dataset.plano,
+                        valor: btn.dataset.valor,
+                        em: Date.now()
+                    }));
+                    window.location.href = 'login.html?checkout=1';
+                    return;
+                }
                 abrirCheckout(btn.dataset.plano, btn.dataset.valor);
             });
         });
