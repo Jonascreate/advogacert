@@ -678,8 +678,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 border-radius:10px;
                 white-space:pre-wrap;
                 ${who === 'user'
-                    ? 'margin-left:auto;background:rgba(110, 231, 200, 0.16);border:1px solid rgba(110, 231, 200, 0.3);color:#eafff8'
-                    : 'margin-right:auto;background:#2a2a2e;color:#e5e7eb'}
+                    ? 'margin-left:auto;background:#005c4b;color:#e9edef'
+                    : 'margin-right:auto;background:#202c33;color:#e9edef'}
             `;
             msgs.appendChild(div);
             msgs.scrollTop = msgs.scrollHeight;
