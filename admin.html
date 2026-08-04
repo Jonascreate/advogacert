@@ -318,6 +318,8 @@
         </div>
     </div>
 
+    <script src="assets/js/api.js"></script>
+
     <script src="assets/js/script.js"></script>
     <script>
     (function () {
@@ -372,7 +374,7 @@
             erroLogin.textContent = '';
             ocupado(true);
 
-            fetch('/admin/entrar', {
+            fetch(apiUrl('/admin/entrar'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ senha, codigo })
@@ -420,7 +422,7 @@
         // --- carregar dados ---
         function carregar() {
             if (!token) return;
-            fetch('/admin/dados', { headers: { Authorization: 'Bearer ' + token } })
+            fetch(apiUrl('/admin/dados'), { headers: { Authorization: 'Bearer ' + token } })
                 .then(r => {
                     if (r.status === 401) {          // sessão caiu: volta para a senha
                         sessionStorage.removeItem('adminToken');
@@ -508,7 +510,7 @@
                 : 'Liberar 1 mês de Premium para esta pessoa?';
             if (!confirm(pergunta)) return;
 
-            fetch('/admin/assinatura', {
+            fetch(apiUrl('/admin/assinatura'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
                 body: JSON.stringify({ usuario_id, acao, meses: 1 })

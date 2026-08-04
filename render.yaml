@@ -17,9 +17,26 @@ services:
       - key: NODE_VERSION
         value: "20"
 
-      # endereco publico — usado para montar o retorno do login social
+      # Endereco DESTE servidor. E com ele que se monta o redirect_uri
+      # mandado ao Google (.../auth/google/callback), entao tem de ser o
+      # dominio que realmente responde /auth/google/callback — o do Render.
+      #
+      # Nao troque por www.agentej.us: aquele dominio e GitHub Pages, so serve
+      # arquivos, e o Google devolveria o login num 404. O cliente e levado de
+      # volta a www.agentej.us pelo parametro ?retorno=, no fim do fluxo.
+      #
+      # Este mesmo valor precisa estar cadastrado no Google Cloud Console, em
+      # "Authorized redirect URIs".
       - key: OAUTH_BASE_URL
-        value: https://www.agentej.us
+        value: https://advogacert.onrender.com
+
+      # Banco de dados (Supabase). Sem isto o servidor cai no usuarios.json,
+      # que no Render e apagado a cada deploy — cadastros e assinaturas somem.
+      # A service_key ignora o RLS: e chave de servidor, nunca vai para o HTML.
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
 
       # envio de e-mail (boas-vindas, recuperacao de senha, codigo de acesso)
       - key: BREVO_API_KEY

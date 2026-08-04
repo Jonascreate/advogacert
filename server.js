@@ -22,6 +22,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { normalizarLista } = require('./db_colunas');
 
 // Hospedagens (Render, Railway, Fly) escolhem a porta e passam por env.
 // Local, sem env, continua sendo 3000.
@@ -185,7 +186,7 @@ function oauthRedirectUri(provider) {
 }
 
 // Estados pendentes (anti-CSRF) e tickets de sessao — memoria, com validade curta
-const oauthStates = new Map();   // state -> { provider, criadoEm }
+const oauthStates = new Map();   // state -> { provider, retorno, criadoEm }
 const oauthTickets = new Map();  // ticket -> { user, criadoEm }
 const OAUTH_STATE_TTL = 10 * 60 * 1000;
 const OAUTH_TICKET_TTL = 2 * 60 * 1000;
@@ -195,8 +196,36 @@ function limparExpirados(mapa, ttl) {
     for (const [k, v] of mapa) if (agora - v.criadoEm > ttl) mapa.delete(k);
 }
 
-function redirecionarComErro(res, motivo) {
-    res.writeHead(302, { Location: `/login.html?oauth_erro=${encodeURIComponent(motivo)}` });
+// ------------------------------------------------------------
+// Para onde devolver a pessoa depois do login social
+// ------------------------------------------------------------
+// O site publico fica no GitHub Pages (www.agentej.us) e o servidor no Render.
+// Quem clica em "Entrar com Google" sai de www.agentej.us, passa pelo Render e
+// pelo Google — e, sem isto, era largado em advogacert.onrender.com, um
+// dominio que nao e o do site, justo na hora de pagar.
+//
+// O endereco de origem chega em ?retorno=. Ele NAO pode ser usado como veio:
+// seria um open redirect, e daria para mandar a vitima (com o ticket de sessao
+// na URL) para um site qualquer. Por isso so vale o que esta nesta lista.
+const RETORNOS_PERMITIDOS = [
+    'https://www.agentej.us',
+    'https://agentej.us',
+    'https://advogacert.onrender.com',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000'
+];
+
+function retornoSeguro(bruto) {
+    if (!bruto) return '';
+    const limpo = String(bruto).replace(/\/$/, '');
+    return RETORNOS_PERMITIDOS.includes(limpo) ? limpo : '';
+}
+
+function redirecionarComErro(res, motivo, retorno = '') {
+    const base = retornoSeguro(retorno);
+    res.writeHead(302, {
+        Location: `${base}/login.html?oauth_erro=${encodeURIComponent(motivo)}`
+    });
     res.end();
 }
 
@@ -585,7 +614,7 @@ const MIME_TYPES = {
 };
 
 // ============================================================
-// BANCO EM ARQUIVO (usuarios.json)
+// BANCO DE DADOS (Supabase em produção, arquivo local no desenvolvimento)
 // ============================================================
 // Quatro coleções, no lugar da lista solta de usuários que existia antes:
 //   usuarios    — quem é a pessoa (e-mail, WhatsApp, senha)
@@ -593,12 +622,46 @@ const MIME_TYPES = {
 //   chamados    — cada atendimento aberto, inclusive o gratuito de teste
 //   logins      — histórico de entradas, para saber quem anda usando
 //
-// ⚠️ LIMITE CONHECIDO: arquivo JSON não tem transação. Dois pedidos ao mesmo
-// tempo podem se sobrescrever. Serve para começar; quando o movimento crescer,
-// migrar para o MySQL do db_config.php.
+// POR QUE SUPABASE: no plano free do Render o disco é efêmero. A cada deploy —
+// e a cada vez que o serviço acorda depois de dormir — o usuarios.json voltava
+// ao que estava no commit, apagando cadastros e assinaturas reais. O Supabase
+// é um Postgres de verdade, fora do container, então os dados sobrevivem.
+//
+// COMO FUNCIONA: as mesmas quatro coleções viram quatro tabelas. O servidor
+// carrega tudo para a memória no boot e mantém `loadJsonDb`/`saveJsonDb`
+// SÍNCRONOS — foi de propósito: as ~24 chamadas espalhadas pelas rotas não
+// precisaram mudar, e nenhuma lógica que já funcionava foi mexida. A gravação
+// no Postgres acontece logo depois, em segundo plano e uma de cada vez.
+//
+// Sem SUPABASE_URL configurado, tudo continua no usuarios.json como antes,
+// que é o que se quer rodando na sua máquina.
 const COLECOES = ['usuarios', 'assinaturas', 'chamados', 'logins'];
 
-function loadJsonDb() {
+const SUPABASE_URL = (process.env.SUPABASE_URL || SECRETS.supabase?.url || '').replace(/\/$/, '');
+// service_role: ignora as políticas de RLS. Só pode viver no servidor —
+// nunca no HTML, ou qualquer visitante lê e escreve a base inteira.
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || SECRETS.supabase?.service_key || '';
+const SUPABASE_ATIVO = Boolean(SUPABASE_URL && SUPABASE_KEY);
+
+function supabaseHeaders(extra = {}) {
+    return {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        ...extra
+    };
+}
+
+/** Espelho em memória do banco. É ele que as rotas leem. */
+let memDb = null;
+
+function dbVazio() {
+    const vazio = {};
+    for (const c of COLECOES) vazio[c] = [];
+    return vazio;
+}
+
+function lerArquivoLocal() {
     let dados = {};
     try {
         if (fs.existsSync(JSON_DB_PATH)) {
@@ -613,12 +676,104 @@ function loadJsonDb() {
     return dados;
 }
 
-function saveJsonDb(data) {
+function gravarArquivoLocal(data) {
     // grava num temporário e renomeia: se o processo morrer no meio,
     // o arquivo antigo continua íntegro em vez de virar um JSON pela metade
     const tmp = JSON_DB_PATH + '.tmp';
     fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf-8');
     fs.renameSync(tmp, JSON_DB_PATH);
+}
+
+/**
+ * Lê as quatro tabelas do Supabase para a memória. Roda uma vez, no boot,
+ * ANTES de o servidor aceitar requisição — se subisse antes, os primeiros
+ * acessos veriam um banco vazio e criariam usuários duplicados.
+ */
+async function carregarDoSupabase() {
+    const dados = dbVazio();
+
+    for (const tabela of COLECOES) {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/${tabela}?select=*&order=id.asc`, {
+            headers: supabaseHeaders()
+        });
+        if (!r.ok) {
+            throw new Error(`${tabela}: ${r.status} ${(await r.text()).slice(0, 200)}`);
+        }
+        dados[tabela] = await r.json();
+    }
+    return dados;
+}
+
+// Uma gravação de cada vez. Sem esta fila, dois saves quase simultâneos
+// disparariam upserts fora de ordem e o registro mais novo poderia perder
+// para o mais velho.
+let filaGravacao = Promise.resolve();
+let gravacoesComErro = 0;
+
+async function enviarAoSupabase(data) {
+    for (const tabela of COLECOES) {
+        const linhas = data[tabela];
+        if (!linhas || !linhas.length) continue;
+
+        // merge-duplicates = INSERT ... ON CONFLICT (id) DO UPDATE.
+        // Nenhuma rota apaga registro (cancelar assinatura só muda o status),
+        // então reenviar tudo basta para deixar a tabela igual à memória.
+        //
+        // normalizarLista é obrigatório: os registros têm chaves diferentes
+        // entre si (quem entrou pelo Google não tem `senha`, quem nunca voltou
+        // não tem `ultimo_login`), e o PostgREST recusa o lote inteiro nesse
+        // caso — veja db_colunas.js.
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/${tabela}`, {
+            method: 'POST',
+            headers: supabaseHeaders({ Prefer: 'resolution=merge-duplicates,return=minimal' }),
+            body: JSON.stringify(normalizarLista(tabela, linhas))
+        });
+
+        if (!r.ok) {
+            throw new Error(`${tabela}: ${r.status} ${(await r.text()).slice(0, 300)}`);
+        }
+    }
+}
+
+/**
+ * Devolve o banco. Síncrono de propósito — veja o comentário do bloco.
+ */
+function loadJsonDb() {
+    if (!memDb) memDb = SUPABASE_ATIVO ? dbVazio() : lerArquivoLocal();
+    return memDb;
+}
+
+/**
+ * Guarda o banco. A memória é atualizada na hora (a resposta ao usuário já
+ * sai correta); o Postgres recebe logo em seguida, em segundo plano.
+ */
+function saveJsonDb(data) {
+    memDb = data;
+
+    if (!SUPABASE_ATIVO) {
+        gravarArquivoLocal(data);
+        return;
+    }
+
+    // cópia rasa das listas: o handler pode continuar mexendo no objeto
+    // depois deste retorno, e a fila gravaria um estado meio editado
+    const snapshot = {};
+    for (const c of COLECOES) snapshot[c] = (data[c] || []).map(x => ({ ...x }));
+
+    filaGravacao = filaGravacao
+        .then(() => enviarAoSupabase(snapshot))
+        .then(() => { gravacoesComErro = 0; })
+        .catch(err => {
+            gravacoesComErro++;
+            console.error(`❌ Falha ao gravar no Supabase (${gravacoesComErro}x):`, err.message);
+            // rede de segurança: o dado não some enquanto o Postgres não volta
+            try {
+                gravarArquivoLocal(data);
+                console.error('   ↳ cópia de emergência salva em usuarios.json');
+            } catch (e2) {
+                console.error('   ↳ e o arquivo local também falhou:', e2.message);
+            }
+        });
 }
 
 /**
@@ -708,7 +863,9 @@ const server = http.createServer((req, res) => {
 
     // CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    // Authorization entra aqui por causa do painel: o navegador so deixa o
+    // cabecalho passar numa chamada de outro dominio se ele estiver listado.
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
 
     if (method === 'OPTIONS') {
@@ -724,14 +881,21 @@ const server = http.createServer((req, res) => {
         const provider = authMatch[1];
         const cred = oauthCredenciais(provider);
 
+        // de que dominio a pessoa saiu — para devolver nele no fim
+        const retorno = retornoSeguro(
+            new URL(req.url, `http://${req.headers.host}`).searchParams.get('retorno')
+        );
+
         if (!cred.clientId || !cred.clientSecret) {
-            redirecionarComErro(res, `${provider}_nao_configurado`);
+            redirecionarComErro(res, `${provider}_nao_configurado`, retorno);
             return;
         }
 
         limparExpirados(oauthStates, OAUTH_STATE_TTL);
         const state = crypto.randomBytes(24).toString('hex');
-        oauthStates.set(state, { provider, criadoEm: Date.now() });
+        // o retorno viaja no state, guardado no servidor: o Google devolve o
+        // state intacto, e assim ele nao pode ser trocado no meio do caminho
+        oauthStates.set(state, { provider, retorno, criadoEm: Date.now() });
 
         const p = OAUTH_PROVIDERS[provider];
         const params = new URLSearchParams({
@@ -758,15 +922,18 @@ const server = http.createServer((req, res) => {
         const state = query.get('state');
 
         (async () => {
+            limparExpirados(oauthStates, OAUTH_STATE_TTL);
+            const pendente = oauthStates.get(state);
+            // so o state diz de onde a pessoa veio; sem ele o erro cai aqui mesmo
+            const retorno = pendente ? pendente.retorno : '';
+
             if (query.get('error')) {
-                redirecionarComErro(res, query.get('error'));
+                redirecionarComErro(res, query.get('error'), retorno);
                 return;
             }
 
-            limparExpirados(oauthStates, OAUTH_STATE_TTL);
-            const pendente = oauthStates.get(state);
             if (!code || !pendente || pendente.provider !== provider) {
-                redirecionarComErro(res, 'state_invalido');
+                redirecionarComErro(res, 'state_invalido', retorno);
                 return;
             }
             oauthStates.delete(state);
@@ -790,18 +957,18 @@ const server = http.createServer((req, res) => {
                 const token = await tokenRes.json();
                 if (!tokenRes.ok || !token.access_token) {
                     console.error(`❌ Token ${provider}:`, token.error_description || token.error);
-                    redirecionarComErro(res, 'falha_token');
+                    redirecionarComErro(res, 'falha_token', retorno);
                     return;
                 }
 
                 const conta = await p.buscarConta(token.access_token);
 
                 if (!conta.email) {
-                    redirecionarComErro(res, 'conta_sem_email');
+                    redirecionarComErro(res, 'conta_sem_email', retorno);
                     return;
                 }
                 if (!conta.emailVerificado) {
-                    redirecionarComErro(res, 'email_nao_verificado');
+                    redirecionarComErro(res, 'email_nao_verificado', retorno);
                     return;
                 }
 
@@ -815,12 +982,14 @@ const server = http.createServer((req, res) => {
                 const ticket = crypto.randomBytes(24).toString('hex');
                 oauthTickets.set(ticket, { user, criadoEm: Date.now() });
 
-                res.writeHead(302, { Location: `/login.html?oauth_ticket=${ticket}` });
+                // volta para o dominio de onde a pessoa saiu (www.agentej.us),
+                // e nao para o do servidor
+                res.writeHead(302, { Location: `${retorno}/login.html?oauth_ticket=${ticket}` });
                 res.end();
 
             } catch (err) {
                 console.error(`❌ OAuth ${provider}:`, err.message);
-                redirecionarComErro(res, 'falha_provedor');
+                redirecionarComErro(res, 'falha_provedor', retorno);
             }
         })();
         return;
@@ -1711,7 +1880,33 @@ REGRAS CRÍTICAS DE ENCERRAMENTO DE CONVERSA:
     });
 });
 
-server.listen(PORT, () => {
+/**
+ * Sobe o servidor. Quando há Supabase, o banco é carregado ANTES do listen:
+ * atender requisição com a memória ainda vazia criaria usuários duplicados.
+ */
+async function iniciar() {
+    if (SUPABASE_ATIVO) {
+        try {
+            memDb = await carregarDoSupabase();
+            const total = COLECOES.map(c => `${memDb[c].length} ${c}`).join(', ');
+            console.log(`🗄️  Supabase conectado — ${total}`);
+        } catch (err) {
+            // Subir com banco vazio gravaria por cima do que está no Postgres.
+            // Melhor não subir e deixar o erro visível no log do Render.
+            console.error('⛔ Não foi possível ler o Supabase:', err.message);
+            console.error('   Confira SUPABASE_URL e SUPABASE_SERVICE_KEY, e se o projeto');
+            console.error('   não está pausado (o plano free pausa após ~7 dias parado).');
+            process.exit(1);
+        }
+    } else {
+        memDb = lerArquivoLocal();
+        console.log('🗄️  Banco em arquivo (usuarios.json) — sem SUPABASE_URL configurado');
+    }
+
+    server.listen(PORT, aoSubir);
+}
+
+function aoSubir() {
     console.log('========================================');
     console.log('🚀 Servidor de teste rodando!');
     console.log(`📁 Abra: http://localhost:${PORT}`);
@@ -1740,4 +1935,6 @@ server.listen(PORT, () => {
         ? 'desativado (canal pago — ligue em otp_config.json quando quiser)'
         : `canal "${OTP.canalSms}"${OTP.canalSms === 'console' ? ' ⚠️  só aparece no terminal' : ` (remetente ${OTP.remetenteSms})`}`}`);
     console.log('========================================');
-});
+}
+
+iniciar();

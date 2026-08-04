@@ -393,7 +393,6 @@
         <nav>
             <a href="index.html">Início</a>
             <a href="contato.html">Contato</a>
-            <a href="login.html" class="nav-btn">login</a>
         </nav>
     </header>
 
@@ -439,6 +438,7 @@
         <p class="footer-copy">© 2026 AdvogaCert. Todos os direitos reservados.</p>
     </footer>
 
+    <script src="assets/js/api.js"></script>
     <script>
         // Pegar dados passados pelo PHP via window
         document.getElementById('userEmail').textContent = window.USER_EMAIL || '';
@@ -476,7 +476,7 @@
             messageDiv.style.borderColor = 'var(--accent-mac)';
             messageDiv.textContent = 'Atualizando senha...';
 
-            fetch('/process_reset.php', {
+            fetch(apiUrl('/process_reset.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

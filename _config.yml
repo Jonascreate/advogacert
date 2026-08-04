@@ -18,3 +18,6 @@ exclude:
   - package2.json
   - iniciar-servidor.bat
   - claudeignore
+  - supabase_schema.sql
+  - migrar_para_supabase.js
+  - render.yaml

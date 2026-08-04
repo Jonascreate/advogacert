@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
             messageDiv.textContent = 'Conferindo sua conta...';
         }
 
-        fetch('/oauth/exchange', {
+        fetch(apiUrl('/oauth/exchange'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ticket: ticket })
@@ -240,7 +240,7 @@ document.addEventListener('DOMContentLoaded', function() {
             botao.disabled = true;
             aviso(reenvio ? 'Reenviando código...' : 'Enviando código...');
 
-            return fetch('/otp/enviar', {
+            return fetch(apiUrl('/otp/enviar'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ destino: inputDestino.value })
@@ -289,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function() {
             btnConfirmar.disabled = true;
             aviso('Conferindo o código...');
 
-            fetch('/otp/verificar', {
+            fetch(apiUrl('/otp/verificar'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ destino: destinoEnviado, codigo: codigo })
@@ -338,7 +338,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            fetch('http://localhost:3000/login.php', {
+            fetch(apiUrl('/login.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'login', email: email, senha: senha })
@@ -422,7 +422,7 @@ document.addEventListener('DOMContentLoaded', function() {
             messageDiv.style.color = '#333';
             messageDiv.textContent = 'Criando conta...';
 
-            fetch('http://localhost:3000/login.php', {
+            fetch(apiUrl('/login.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -443,7 +443,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (checkoutPendente) {
                         // Havia um pagamento pendente: loga automaticamente com as
                         // credenciais recém-criadas para voltar direto ao checkout.
-                        fetch('http://localhost:3000/login.php', {
+                        fetch(apiUrl('/login.php'), {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ action: 'login', email: email, senha: senha })
@@ -505,9 +505,9 @@ document.addEventListener('DOMContentLoaded', function() {
             };
 
             console.log('🔵 Payload enviado:', payload);
-            console.log('🔵 URL destino:', 'http://localhost:3000/login.php');
+            console.log('🔵 URL destino:', apiUrl('/login.php'));
 
-            fetch('http://localhost:3000/login.php', {
+            fetch(apiUrl('/login.php'), {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json'
@@ -774,7 +774,7 @@ document.addEventListener('DOMContentLoaded', function() {
             chatHistory.push({ role: 'user', content: text });
 
             try {
-                const r = await fetch('http://localhost:3000/gpt.php', {
+                const r = await fetch(apiUrl('/gpt.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ messages: chatHistory })
@@ -1202,18 +1202,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         botoesPlano.forEach(btn => {
             btn.addEventListener('click', () => {
-                const usuario = getUsuarioLogado();
-                if (!usuario) {
-                    // Guarda o plano escolhido para retomar o checkout
-                    // automaticamente assim que a pessoa logar ou se cadastrar.
-                    sessionStorage.setItem('checkoutPendente', JSON.stringify({
-                        plano: btn.dataset.plano,
-                        valor: btn.dataset.valor,
-                        em: Date.now()
-                    }));
-                    window.location.href = 'login.html?checkout=1';
-                    return;
-                }
+                // Abre o pagamento direto. Antes, quem não estava logado era
+                // mandado para login.html?checkout=1 e só voltava ao checkout
+                // depois de entrar ou criar conta — um passo a mais entre a
+                // vontade de assinar e o pagamento, que fazia perder venda.
                 abrirCheckout(btn.dataset.plano, btn.dataset.valor);
             });
         });

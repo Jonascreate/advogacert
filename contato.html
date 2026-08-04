@@ -550,7 +550,6 @@
         <nav>
             <a href="index.html">Início</a>
             <a href="contato.html">Contato</a>
-            <a href="login.html" class="nav-btn">login</a>
         </nav>
     </header>
 
@@ -633,6 +632,7 @@
 
 
 
+   <script src="assets/js/api.js"></script>
    <script>
 document.addEventListener('DOMContentLoaded', function() {
     // ========== CÓDIGO DO BLUSH ==========
@@ -805,7 +805,7 @@ document.addEventListener('DOMContentLoaded', function() {
             input.value = '';
 
             try {
-                const r = await fetch('/gpt.php', {
+                const r = await fetch(apiUrl('/gpt.php'), {
                     method:'POST',
                     headers:{'Content-Type':'application/json'},
                     body:JSON.stringify({ prompt:text })
