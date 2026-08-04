@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     window.showLoginForm = function() {
-        mostrarFormulario('loginForm', 'Área do Cliente');
+        mostrarFormulario('loginForm', 'Cadastro');
     };
 
     window.showRegisterForm = function() {
@@ -319,50 +319,38 @@ document.addEventListener('DOMContentLoaded', function() {
         btnReenviar.addEventListener('click', function () {
             pedirCodigo(btnReenviar, true);
         });
+
+        // Ponte para o formulário de entrada, que agora pede só o celular:
+        // ele reaproveita este mesmo fluxo em vez de ter um envio próprio, para
+        // o limite de tentativas, o reenvio e a conferência ficarem num lugar só.
+        window.iniciarOtp = function (valor, botao) {
+            inputDestino.value = valor;
+            showOtpForm();
+            return pedirCodigo(botao || btnEnviar, false);
+        };
     }
 
     // ==========================================
-    // LOGIN (fetch para login.php)
+    // ENTRADA PELO CELULAR (manda o código, sem senha)
+    // O campo aceita e-mail também: quem normaliza o que foi digitado é o
+    // servidor, em /otp/enviar, então aqui não se tenta adivinhar o formato.
     // ==========================================
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            const email = document.getElementById('login-email').value.trim();
-            const senha = document.getElementById('login-password').value;
+            const campo = document.getElementById('login-telefone');
             const messageDiv = document.getElementById('login-message');
+            const destino = campo.value.trim();
 
-            if (senha.length < 6) {
+            if (!destino) {
                 messageDiv.style.color = '#ef4444';
-                messageDiv.textContent = '✗ A senha deve ter no mínimo 6 caracteres';
+                messageDiv.textContent = '✗ Informe seu celular com DDD';
                 return;
             }
 
-            fetch(apiUrl('/login.php'), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'login', email: email, senha: senha })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    messageDiv.style.color = '#10b981';
-                    messageDiv.textContent = '✓ Login realizado com sucesso!';
-                    sessionStorage.setItem('user', JSON.stringify(data.user));
-                    setTimeout(() => {
-                        // Se veio de um "Assinar agora" sem estar logado, volta para
-                        // a página inicial para retomar o pagamento de onde parou.
-                        window.location.href = destinoPosLogin();
-                    }, 1500);
-                } else {
-                    messageDiv.style.color = '#ef4444';
-                    messageDiv.textContent = '✗ ' + (data.error || 'Erro ao fazer login');
-                }
-            })
-            .catch(err => {
-                messageDiv.style.color = '#ef4444';
-                messageDiv.textContent = '✗ Erro de conexão';
-            });
+            messageDiv.textContent = '';
+            iniciarOtp(destino, document.getElementById('login-btn-codigo'));
         });
     }
 
