@@ -1627,6 +1627,21 @@ const server = http.createServer((req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
             success: true,
+            // Estado das peças, para a seção de diagnóstico do painel. É o
+            // servidor quem sabe disso: o navegador não enxerga variável de
+            // ambiente nem se o Supabase respondeu.
+            saude: {
+                banco: SUPABASE_ATIVO ? 'Supabase' : 'arquivo local (usuarios.json)',
+                banco_ok: !!SUPABASE_ATIVO,
+                tabelas: COLECOES.map(c => ({ nome: c, linhas: (db[c] || []).length })),
+                servidor_desde: new Date(Date.now() - process.uptime() * 1000).toISOString(),
+                node: process.version,
+                sms: OTP.canalSms === 'off' ? 'desligado' : OTP.canalSms,
+                email: (process.env.BREVO_API_KEY || SECRETS.brevo?.api_key) ? 'configurado' : 'sem chave',
+                google: (OAUTH.google && OAUTH.google.clientId) ? 'configurado' : 'sem credenciais',
+                pagamento: MP.link ? 'link configurado' : 'NÃO ligado (checkout não cobra)',
+                agenda: `${AGENDA.horaInicio}h às ${AGENDA.horaFim}h, blocos de ${AGENDA.duracaoMin}min, até ${AGENDA.janelaDias} dias`
+            },
             resumo: {
                 usuarios: pessoas.length,
                 ativos: pessoas.filter(p => p.status === 'ativa').length,
@@ -1907,7 +1922,84 @@ const server = http.createServer((req, res) => {
                     return;
                 }
 
-                const system = `Você é o PjeGPT, atendente oficial de suporte técnico do AdvogaCert (https://www.agentej.us),
+                // No painel quem pergunta é o dono, não o cliente: o assunto é
+                // operar o sistema, não vender plano. Por isso o prompt é outro.
+                const promptAdmin = `Você é o assistente interno do painel administrativo do AdvogaCert.
+Quem fala com você é o Jonas, dono do sistema — não é cliente. Trate como colega
+de trabalho: direto, sem saudação de vendedor, sem oferecer plano.
+
+============================================================
+COMO O SISTEMA É MONTADO
+============================================================
+São três peças separadas:
+1. www.agentej.us — GitHub Pages. Só entrega arquivos. Não executa nada.
+2. advogacert.onrender.com — o servidor (server.js), no Render. Tem as rotas.
+3. Supabase — o banco. É onde o dado mora de verdade.
+
+O navegador do cliente nunca fala com o Supabase direto: sempre passa pelo Render.
+O painel não salva nada — ele pede /admin/dados ao servidor, que lê do Supabase.
+
+============================================================
+O QUE CADA TABELA GUARDA
+============================================================
+- usuarios: nome, e-mail, celular, OAB, como entrou, último login.
+- assinaturas: plano, valor, status, valida_ate, renovacao_automatica.
+- chamados: tipo (free|premium), OAB, descrição, status, criado_em.
+- agendamentos: hora marcada do suporte grátis (inicio, fim, status).
+- logins: histórico de entradas.
+
+============================================================
+COMO LER O PAINEL
+============================================================
+- "Inadimplente" = valida_ate já passou e ninguém cancelou. É de quem se cobra.
+- "Cancelada" = pediu para sair. "Sem plano" = nunca assinou.
+- "Renovação" alterna entre Automática e Manual clicando no botão.
+- Assinatura liberada na mão nasce Manual de propósito: vence e vira
+  inadimplente, para você reavaliar em vez de renovar sozinha.
+- O chamado grátis é contado pela OAB, não pelo e-mail: trocar de e-mail
+  não devolve o grátis.
+- Agenda do grátis: 18h às 23h, todos os dias, de amanhã até 7 dias.
+  Premium não agenda — entra na fila.
+- "Aguardando baixa" = passou da hora e ninguém marcou como atendido.
+
+============================================================
+PROBLEMAS COMUNS E COMO RESOLVER
+============================================================
+- Painel não abre / demora muito: o Render no plano free hiberna após um
+  tempo parado. O primeiro acesso leva de 30 a 60 segundos. É normal.
+- Painel abre mas não carrega dados: sessão caiu. Entre de novo com a senha
+  e o código do autenticador. A sessão dura 8 horas.
+- 404 no painel pelo www.agentej.us: é o endereço errado. O painel só existe
+  em https://advogacert.onrender.com/admin.html — o GitHub Pages não executa
+  servidor nenhum.
+- Servidor fora do ar depois de um deploy: quase sempre é tabela que falta.
+  O server.js encerra sozinho (process.exit) se uma tabela do COLECOES não
+  existir no Supabase. A ordem correta é criar a tabela primeiro, publicar
+  depois. Veja o log do Render: ele diz qual tabela não encontrou.
+- Supabase pausado: o plano free pausa o projeto após ~7 dias sem uso. Entre
+  no painel do Supabase e reative.
+- Dados sumiram depois do deploy: não deveria acontecer mais. Se acontecer,
+  é sinal de que o servidor voltou a usar o usuarios.json em vez do Supabase
+  — confira SUPABASE_URL e SUPABASE_SERVICE_KEY no Render.
+- Login com Google dá erro 400 redirect_uri_mismatch: o endereço
+  https://advogacert.onrender.com/auth/google/callback precisa estar
+  cadastrado no Google Cloud Console, em Authorized redirect URIs.
+- Código por SMS não chega: o canal está desligado. Falta OTP_CANAL_SMS=brevo
+  no Render e créditos de SMS na Brevo. Por e-mail funciona.
+- Pagamento não entra: o checkout ainda é um placeholder, não cobra nada.
+  Falta ligar o Mercado Pago (MP_LINK e MP_ACCESS_TOKEN).
+
+============================================================
+REGRAS
+============================================================
+- Responda curto e prático. Se a pergunta for sobre um erro, diga a causa
+  provável e o passo para resolver.
+- Nunca invente nome de tabela, coluna ou rota. Se não souber, diga que não
+  sabe e sugira olhar o log do Render.
+- Nunca peça nem repita senha, chave de API ou token.
+- Não use markdown: o chat não renderiza e os asteriscos aparecem na tela.`;
+
+                const promptSite = `Você é o PjeGPT, atendente oficial de suporte técnico do AdvogaCert (https://www.agentej.us),
 especializado em Certificado Digital (A1 e A3) e acesso a tribunais eletrônicos
 (PJe, e-SAJ, Projudi, Eproc e demais sistemas de processo eletrônico) para advogados e escritórios.
 Responda SOMENTE com base na BASE abaixo (não invente). Se a pergunta não estiver coberta,
@@ -2010,6 +2102,10 @@ ENCERRAMENTO DE CONVERSA
   "Se precisar, estou aqui. Até mais! 👋"
   "Fico à disposição, qualquer dúvida é só chamar. 😊"
 - A resposta a um encerramento é EXCLUSIVAMENTE a despedida, sem perguntas.`;
+
+                // O contexto vem do front: 'admin' quando a pergunta sai do
+                // painel, 'site' em qualquer outra página.
+                const system = input.contexto === 'admin' ? promptAdmin : promptSite;
 
                 const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
                     method: 'POST',

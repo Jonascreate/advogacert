@@ -607,9 +607,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Nas páginas que já têm um botão de WhatsApp próprio na página
         // (agradecimento, contato), não duplica o botão flutuante.
-        const paginasComWhatsAppProprio = ['agradecimento-free.html', 'agradecimento-premium.html', 'contato.html'];
+        // No painel também não: lá você é o atendente, não o cliente — falar
+        // com o próprio WhatsApp não serve para nada.
+        const paginasComWhatsAppProprio = [
+            'agradecimento-free.html', 'agradecimento-premium.html', 'contato.html', 'admin.html'
+        ];
         const paginaAtual = location.pathname.split('/').pop();
         const temWhatsFlutuante = !paginasComWhatsAppProprio.includes(paginaAtual);
+        // No painel o bot muda de assunto: em vez de vender plano, ele explica
+        // o painel, o banco e o servidor. Quem decide isso é o servidor, pelo
+        // "contexto" que vai junto da pergunta.
+        const contextoChat = paginaAtual === 'admin.html' ? 'admin' : 'site';
 
         if (temWhatsFlutuante) {
             document.body.append(btn, waBtn, frame);
@@ -739,7 +747,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const r = await fetch(apiUrl('/gpt.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ messages: chatHistory })
+                    body: JSON.stringify({ messages: chatHistory, contexto: contextoChat })
                 });
                 const j = await r.json();
                 const reply = j.reply || 'Sem resposta.';
@@ -1190,36 +1198,177 @@ document.addEventListener('DOMContentLoaded', function() {
         // ------------------------------------------
         const btnFree = document.getElementById('btn-suporte-free');
         if (btnFree) {
+            // O visual segue o card da tela de login: mesma moldura, mesma
+            // borda em degradê correndo, mesmos campos. Assim a pessoa que veio
+            // do login não sente que caiu noutro site.
+            const estiloFree = document.createElement('style');
+            estiloFree.textContent = `
+                /* a borda animada depende destes dois, que só existiam no
+                   login.html — aqui a caixa é montada por JS em outra página */
+                @property --border-angle {
+                    syntax: '<angle>';
+                    inherits: false;
+                    initial-value: 0deg;
+                }
+                @keyframes borderRun { to { --border-angle: 360deg; } }
+
+                .free-overlay {
+                    position: fixed; inset: 0; z-index: 10000;
+                    display: none; align-items: center; justify-content: center;
+                    padding: 1.5rem;
+                    background: rgba(6, 6, 8, 0.72);
+                    backdrop-filter: blur(6px);
+                    overflow-y: auto;
+                }
+                .free-overlay.aberto { display: flex; }
+
+                .free-card {
+                    position: relative;
+                    display: flex;
+                    flex-direction: column;
+                    box-sizing: border-box;
+                    max-width: 480px;
+                    width: 100%;
+                    background: var(--bg-secondary, #161618);
+                    border: 1px solid var(--border-color, #2a2a2e);
+                    border-radius: 16px;
+                    padding: 2.5rem 2.5rem 2rem;
+                }
+                .free-card > * { position: relative; z-index: 1; width: 100%; }
+
+                /* a mesma borda que corre no card do login */
+                .free-card::after {
+                    content: '';
+                    position: absolute; inset: 0;
+                    border-radius: inherit;
+                    padding: 1px;
+                    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                    -webkit-mask-composite: xor;
+                    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                    mask-composite: exclude;
+                    pointer-events: none;
+                    animation: borderRun 4s linear infinite;
+                    background: conic-gradient(from var(--border-angle),
+                        transparent 0deg, transparent 190deg,
+                        rgba(79, 163, 255, 0) 210deg,
+                        #1f6fd1 250deg, #6ee7c8 300deg, #fff 330deg,
+                        #4fa3ff 350deg, rgba(110, 231, 200, 0) 360deg);
+                    opacity: 0.6;
+                    filter: drop-shadow(0 0 2px rgba(79, 163, 255, 0.5));
+                }
+
+                .free-icone {
+                    display: flex; align-items: center; justify-content: center;
+                    width: 60px; height: 60px;
+                    margin: 0 auto 1.4rem;
+                    border-radius: 18px;
+                    background: rgba(110, 231, 200, 0.12);
+                    border: 1px solid rgba(110, 231, 200, 0.25);
+                    color: #6ee7c8; font-size: 1.7rem;
+                }
+                .free-card h2 {
+                    font-family: 'Outfit', sans-serif;
+                    font-size: 1.9rem; text-align: center;
+                    margin-bottom: 0.5rem;
+                }
+                .free-card h2 span {
+                    background: linear-gradient(135deg, #6ee7c8, #4fa3ff);
+                    -webkit-background-clip: text; background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                }
+                .free-sub {
+                    text-align: center;
+                    color: var(--text-secondary, #a1a1a8);
+                    font-size: 0.92rem;
+                    margin-bottom: 1.8rem;
+                }
+
+                .free-grupo { display: flex; flex-direction: column; margin-bottom: 1.2rem; flex: 1; min-width: 0; }
+                .free-grupo label {
+                    margin-bottom: 0.5rem; font-size: 0.9rem;
+                    color: var(--text-secondary, #a1a1a8);
+                }
+                .free-grupo input, .free-grupo select {
+                    width: 100%; box-sizing: border-box;
+                    padding: 1rem 1.25rem;
+                    background: var(--bg-card, #1c1c1f);
+                    border: 1px solid var(--border-color, #2a2a2e);
+                    border-radius: 12px;
+                    color: var(--text-primary, #fff);
+                    font-size: 1rem; font-family: inherit;
+                    transition: all 0.3s ease;
+                }
+                .free-grupo input::placeholder { color: var(--text-muted, #55555c); }
+                .free-grupo input:focus, .free-grupo select:focus {
+                    outline: none; border-color: #6ee7c8;
+                    box-shadow: 0 0 0 3px rgba(110, 231, 200, 0.1);
+                }
+                .free-linha { display: flex; gap: 1.25rem; }
+
+                .free-btn {
+                    width: 100%; padding: 1rem;
+                    background: linear-gradient(135deg, #21b98f, #6ee7c8);
+                    color: #062018; border: none; border-radius: 12px;
+                    font-size: 1rem; font-weight: 700; cursor: pointer;
+                    font-family: inherit;
+                    transition: all 0.3s ease;
+                }
+                .free-btn:hover:not(:disabled) {
+                    transform: translateY(-2px);
+                    box-shadow: 0 15px 30px rgba(110, 231, 200, 0.3);
+                }
+                .free-btn:disabled { opacity: 0.6; cursor: default; }
+
+                .free-msg {
+                    margin-top: 1rem; text-align: center;
+                    font-size: 0.86rem; min-height: 1.2em;
+                }
+                .free-fechar {
+                    position: absolute; top: 1rem; right: 1.2rem;
+                    background: none; border: none;
+                    color: #8a8a90; font-size: 1.6rem;
+                    line-height: 1; cursor: pointer; padding: 0 4px;
+                    z-index: 2;
+                }
+                .free-fechar:hover { color: #f5f5f5; }
+
+                @media (max-width: 560px) {
+                    .free-card { padding: 2rem 1.5rem 1.5rem; }
+                    .free-linha { flex-direction: column; gap: 0; }
+                }
+            `;
+            document.head.appendChild(estiloFree);
+
             const overlayFree = document.createElement('div');
-            overlayFree.className = 'pay-overlay';
+            overlayFree.className = 'free-overlay';
             overlayFree.innerHTML = `
-                <div class="pay-modal" role="dialog" aria-modal="true" aria-labelledby="free-titulo">
-                    <div class="pay-head">
-                        <div class="pay-head-marca" id="free-titulo">1 suporte grátis</div>
-                        <button type="button" class="pay-fechar" id="free-close" aria-label="Fechar">&times;</button>
-                    </div>
-                    <div class="pay-corpo">
-                        <form id="free-form" novalidate>
-                            <div class="pay-campo">
-                                <label for="free-nome">Nome completo</label>
-                                <input id="free-nome" placeholder="Como está na sua inscrição" autocomplete="name" required>
-                            </div>
-                            <div class="pay-campo">
-                                <label for="free-oab">Inscrição na OAB</label>
-                                <input id="free-oab" placeholder="123456/GO" autocomplete="off" required>
-                            </div>
-                            <div class="pay-campo">
+                <div class="free-card" role="dialog" aria-modal="true" aria-labelledby="free-titulo">
+                    <button type="button" class="free-fechar" id="free-close" aria-label="Fechar">&times;</button>
+                    <div class="free-icone"><i class="fas fa-headset"></i></div>
+                    <h2 id="free-titulo">1 <span>suporte grátis</span></h2>
+                    <p class="free-sub">É um por inscrição na OAB. Escolha o dia e a hora do seu atendimento.</p>
+                    <form id="free-form" novalidate>
+                        <div class="free-grupo">
+                            <label for="free-nome">Nome completo</label>
+                            <input id="free-nome" placeholder="Como está na sua inscrição" autocomplete="name" required>
+                        </div>
+                        <div class="free-grupo">
+                            <label for="free-oab">Inscrição na OAB</label>
+                            <input id="free-oab" placeholder="123456/GO" autocomplete="off" required>
+                        </div>
+                        <div class="free-linha">
+                            <div class="free-grupo">
                                 <label for="free-dia">Dia</label>
                                 <select id="free-dia"></select>
                             </div>
-                            <div class="pay-campo">
+                            <div class="free-grupo">
                                 <label for="free-hora">Horário</label>
                                 <select id="free-hora"></select>
                             </div>
-                            <button type="submit" class="pay-btn" id="free-enviar">Marcar meu atendimento</button>
-                            <div class="pay-msg" id="free-msg">É um por inscrição. Depois de registrar, abrimos o WhatsApp.</div>
-                        </form>
-                    </div>
+                        </div>
+                        <button type="submit" class="free-btn" id="free-enviar">Marcar meu atendimento</button>
+                        <div class="free-msg" id="free-msg"></div>
+                    </form>
                 </div>
             `;
             document.body.appendChild(overlayFree);

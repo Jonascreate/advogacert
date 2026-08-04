@@ -229,6 +229,55 @@
         /* vencida e não cancelada: é de quem se cobra */
         .tag.atrasada { background: rgba(255, 176, 32, 0.16); color: #ffb020; }
 
+        /* --- seção servidor e banco --- */
+        .diag-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 0.9rem;
+        }
+        .diag-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem 1.15rem;
+        }
+        .diag-rot {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: 0.35rem;
+        }
+        .diag-val { font-size: 0.95rem; font-weight: 600; }
+        .diag-val.bom { color: var(--accent-mac); }
+        .diag-val.alerta { color: #ffb020; }
+
+        .diag-ajuda {
+            margin-top: 1.25rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+        }
+        .diag-ajuda summary {
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .diag-ajuda dl { margin-top: 1rem; }
+        .diag-ajuda dt {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            color: var(--accent-mac);
+        }
+        .diag-ajuda dd {
+            margin: 0.3rem 0 0;
+            font-size: 0.88rem;
+            line-height: 1.65;
+            color: var(--text-secondary);
+        }
+
         .acao {
             padding: 0.4rem 0.8rem; border-radius: 8px; cursor: pointer;
             border: 1px solid var(--border-color); background: transparent;
@@ -319,6 +368,54 @@
             </table>
             <div class="vazio" id="vazio" style="display:none;">Nenhum cadastro encontrado.</div>
         </div>
+
+        <!-- Servidor e banco: o que está de pé, o que falta ligar, e o que
+             fazer quando algo quebra. Antes isso só existia no terminal. -->
+        <h2 style="margin:2.5rem 0 1rem;font-family:'Outfit',sans-serif;font-size:1.2rem;">Servidor e banco</h2>
+        <div class="diag-grid" id="diag"></div>
+
+        <details class="diag-ajuda">
+            <summary>Quando algo quebra — o que fazer</summary>
+            <dl>
+                <dt>O painel demora muito para abrir</dt>
+                <dd>O Render no plano free hiberna quando fica parado. O primeiro
+                    acesso leva de 30 a 60 segundos. É normal, não é erro.</dd>
+
+                <dt>Abre, mas não carrega os dados</dt>
+                <dd>A sessão caiu — ela dura 8 horas. Entre de novo com a senha e
+                    o código do autenticador.</dd>
+
+                <dt>404 ao abrir o painel</dt>
+                <dd>Endereço errado. O painel só existe em
+                    <span class="mono">advogacert.onrender.com/admin.html</span>.
+                    No <span class="mono">www.agentej.us</span> não há servidor —
+                    o GitHub Pages só entrega arquivos.</dd>
+
+                <dt>O servidor caiu depois de uma publicação</dt>
+                <dd>Quase sempre é tabela faltando: o servidor encerra sozinho se
+                    uma tabela não existir no Supabase. Abra o log do Render — ele
+                    diz qual. Crie a tabela e o servidor volta no próximo deploy.
+                    A ordem certa é sempre: <strong>Supabase primeiro, publicar depois</strong>.</dd>
+
+                <dt>O Supabase está pausado</dt>
+                <dd>O plano free pausa o projeto após cerca de 7 dias sem uso.
+                    Entre no painel do Supabase e reative.</dd>
+
+                <dt>Login com Google dá erro 400</dt>
+                <dd><span class="mono">redirect_uri_mismatch</span>: o endereço
+                    <span class="mono">advogacert.onrender.com/auth/google/callback</span>
+                    precisa estar cadastrado no Google Cloud Console, em
+                    <em>Authorized redirect URIs</em>.</dd>
+
+                <dt>O código não chega por SMS</dt>
+                <dd>O canal está desligado. Falta <span class="mono">OTP_CANAL_SMS=brevo</span>
+                    no Render e créditos de SMS na Brevo. Por e-mail funciona.</dd>
+
+                <dt>Precisa de ajuda com outra coisa</dt>
+                <dd>Use o robô no canto da tela. Aqui dentro do painel ele responde
+                    sobre o sistema, o banco e o servidor — não sobre certificado digital.</dd>
+            </dl>
+        </details>
 
         <!-- A agenda do suporte gratuito, em ordem de quem vem primeiro. -->
         <h2 style="margin:2.5rem 0 1rem;font-family:'Outfit',sans-serif;font-size:1.2rem;">Agenda do suporte grátis</h2>
@@ -490,6 +587,7 @@
                         'Atualizado às ' + new Date().toLocaleTimeString('pt-BR');
                     montarStats(d.resumo);
                     montarLinhas();
+                    montarDiag(d.saude);
                     montarAgenda();
                     montarChamados();
                 })
@@ -510,6 +608,29 @@
             document.getElementById('stats').innerHTML = itens.map(([n, l]) =>
                 `<div class="stat"><div class="stat-num">${n}</div><div class="stat-lbl">${l}</div></div>`
             ).join('');
+        }
+
+        function montarDiag(s) {
+            if (!s) return;
+            // "alerta" não é erro: é coisa que ainda não foi ligada e você
+            // precisa saber que está assim.
+            const itens = [
+                ['Banco', s.banco, s.banco_ok ? 'bom' : 'alerta'],
+                ['Servidor no ar desde', fmtData(s.servidor_desde), ''],
+                ['Node', s.node, ''],
+                ['E-mail', s.email, s.email === 'configurado' ? 'bom' : 'alerta'],
+                ['SMS', s.sms, s.sms === 'desligado' ? 'alerta' : 'bom'],
+                ['Login Google', s.google, s.google === 'configurado' ? 'bom' : 'alerta'],
+                ['Pagamento', s.pagamento, s.pagamento.startsWith('link') ? 'bom' : 'alerta'],
+                ['Agenda do grátis', s.agenda, ''],
+                ['Tabelas', (s.tabelas || []).map(t => `${t.nome}: ${t.linhas}`).join(' · '), '']
+            ];
+            document.getElementById('diag').innerHTML = itens.map(([rot, val, cls]) => `
+                <div class="diag-item">
+                    <div class="diag-rot">${esc(rot)}</div>
+                    <div class="diag-val ${cls}">${esc(val)}</div>
+                </div>
+            `).join('');
         }
 
         function montarAgenda() {
