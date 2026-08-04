@@ -86,6 +86,31 @@ CREATE INDEX IF NOT EXISTS chamados_usuario_idx ON public.chamados (usuario_id);
 CREATE INDEX IF NOT EXISTS chamados_oab_idx     ON public.chamados (oab);
 
 -- ------------------------------------------------------------
+-- agendamentos — hora marcada do suporte gratuito
+-- O premium nao agenda: entra na fila e e atendido a qualquer momento.
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.agendamentos (
+    id         integer PRIMARY KEY,
+    chamado_id integer REFERENCES public.chamados(id) ON DELETE CASCADE,
+    usuario_id integer REFERENCES public.usuarios(id) ON DELETE SET NULL,
+    oab        text,
+    nome       text,
+    inicio     timestamptz,      -- comeco do bloco reservado
+    fim        timestamptz,
+    status     text,             -- marcado | atendido | faltou | cancelado
+    criado_em  timestamptz
+);
+
+-- Duas pessoas nao podem marcar o mesmo horario. A trava fica no banco, e
+-- nao so no codigo: dois pedidos simultaneos passariam pela conferencia do
+-- servidor ao mesmo tempo e gravariam os dois.
+CREATE UNIQUE INDEX IF NOT EXISTS agendamentos_inicio_unico
+    ON public.agendamentos (inicio)
+    WHERE status IN ('marcado', 'atendido');
+
+CREATE INDEX IF NOT EXISTS agendamentos_inicio_idx ON public.agendamentos (inicio);
+
+-- ------------------------------------------------------------
 -- logins — histórico de entradas
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.logins (

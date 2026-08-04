@@ -884,7 +884,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 display: block; font-size: 0.82rem; color: #8a8a90;
                 margin-bottom: 0.4rem;
             }
-            .pay-campo input {
+            .pay-campo input, .pay-campo select {
                 width: 100%; box-sizing: border-box;
                 padding: 0.9rem 1rem;
                 background: #1c1c1f;
@@ -895,7 +895,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 transition: border-color 0.2s ease, box-shadow 0.2s ease;
             }
             .pay-campo input::placeholder { color: #55555c; }
-            .pay-campo input:focus {
+            .pay-campo input:focus, .pay-campo select:focus {
                 outline: none;
                 border-color: #6ee7c8;
                 box-shadow: 0 0 0 3px rgba(110, 231, 200, 0.12);
@@ -1201,10 +1201,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="pay-corpo">
                         <form id="free-form" novalidate>
                             <div class="pay-campo">
+                                <label for="free-nome">Nome completo</label>
+                                <input id="free-nome" placeholder="Como está na sua inscrição" autocomplete="name" required>
+                            </div>
+                            <div class="pay-campo">
                                 <label for="free-oab">Inscrição na OAB</label>
                                 <input id="free-oab" placeholder="123456/GO" autocomplete="off" required>
                             </div>
-                            <button type="submit" class="pay-btn" id="free-enviar">Liberar meu suporte</button>
+                            <div class="pay-campo">
+                                <label for="free-dia">Dia</label>
+                                <select id="free-dia"></select>
+                            </div>
+                            <div class="pay-campo">
+                                <label for="free-hora">Horário</label>
+                                <select id="free-hora"></select>
+                            </div>
+                            <button type="submit" class="pay-btn" id="free-enviar">Marcar meu atendimento</button>
                             <div class="pay-msg" id="free-msg">É um por inscrição. Depois de registrar, abrimos o WhatsApp.</div>
                         </form>
                     </div>
@@ -1217,16 +1229,57 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.body.style.overflow = '';
             };
 
+            const selDia = overlayFree.querySelector('#free-dia');
+            const selHora = overlayFree.querySelector('#free-hora');
+            let agenda = [];
+
+            // Preenche as horas do dia escolhido. A lista vem inteira do
+            // servidor de uma vez, então trocar de dia não faz nova consulta.
+            function mostrarHorasDoDia() {
+                const dia = agenda.find(d => d.dia === selDia.value);
+                selHora.innerHTML = (dia ? dia.horarios : [])
+                    .map(h => `<option value="${h.inicio}">${h.rotulo}</option>`).join('');
+            }
+            selDia.addEventListener('change', mostrarHorasDoDia);
+
+            function carregarAgenda() {
+                const m = overlayFree.querySelector('#free-msg');
+                selDia.innerHTML = '<option>carregando...</option>';
+                selHora.innerHTML = '';
+
+                return fetch(apiUrl('/agenda/horarios'))
+                    .then(r => r.json())
+                    .then(d => {
+                        agenda = (d && d.dias) || [];
+                        if (!agenda.length) {
+                            selDia.innerHTML = '<option>sem horário livre</option>';
+                            m.style.color = '#ff6b5e';
+                            m.textContent = 'Não há horário livre nos próximos dias. Fale conosco pelo WhatsApp.';
+                            return;
+                        }
+                        selDia.innerHTML = agenda
+                            .map(d2 => `<option value="${d2.dia}">${d2.rotulo}</option>`).join('');
+                        mostrarHorasDoDia();
+                    })
+                    .catch(() => {
+                        selDia.innerHTML = '<option>erro ao carregar</option>';
+                        m.style.color = '#ff6b5e';
+                        m.textContent = 'Não foi possível carregar a agenda. Tente de novo.';
+                    });
+            }
+
             btnFree.addEventListener('click', () => {
                 const u = getUsuarioLogado();
-                // quem já entrou tem a inscrição na conta: vem preenchida
+                // quem já entrou tem a inscrição e o nome na conta: vêm preenchidos
                 if (u && u.oab) overlayFree.querySelector('#free-oab').value = u.oab;
+                if (u && u.nome) overlayFree.querySelector('#free-nome').value = u.nome;
                 const m = overlayFree.querySelector('#free-msg');
                 m.style.color = '#8a8a90';
-                m.textContent = 'É um por inscrição. Depois de registrar, abrimos o WhatsApp.';
+                m.textContent = 'É um por inscrição. Escolha dia e hora do seu atendimento.';
                 overlayFree.classList.add('aberto');
                 document.body.style.overflow = 'hidden';
-                setTimeout(() => overlayFree.querySelector('#free-oab').focus(), 60);
+                carregarAgenda();
+                setTimeout(() => overlayFree.querySelector('#free-nome').focus(), 60);
             });
 
             overlayFree.querySelector('#free-close').onclick = fecharFree;
@@ -1240,10 +1293,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 const msg = overlayFree.querySelector('#free-msg');
                 const botao = overlayFree.querySelector('#free-enviar');
                 const oab = campo.value.trim().toUpperCase();
+                const nome = overlayFree.querySelector('#free-nome').value.trim();
 
+                if (nome.length < 5) {
+                    msg.style.color = '#ff6b5e';
+                    msg.textContent = 'Informe seu nome completo, como está na inscrição.';
+                    return;
+                }
                 if (!/^\d{2,7}\s*\/?\s*[A-Z]{2}$/.test(oab.replace(/\s+/g, ''))) {
                     msg.style.color = '#ff6b5e';
                     msg.textContent = 'Informe a inscrição no formato 123456/GO.';
+                    return;
+                }
+                if (!selHora.value) {
+                    msg.style.color = '#ff6b5e';
+                    msg.textContent = 'Escolha o dia e o horário do atendimento.';
                     return;
                 }
 
@@ -1257,6 +1321,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         oab: oab,
+                        nome: nome,
+                        inicio: selHora.value,
                         usuario_id: u ? u.id : null,
                         descricao: 'Suporte gratuito pedido pela página de planos'
                     })
@@ -1267,15 +1333,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (!data.success) {
                         msg.style.color = '#ff6b5e';
                         msg.textContent = data.error || 'Não foi possível registrar.';
+                        // o horário foi tomado enquanto ela preenchia: a lista
+                        // volta atualizada, senão ela tentaria a mesma vaga
+                        if (data.recarregar_agenda) carregarAgenda();
                         return;
                     }
                     msg.style.color = '#6ee7c8';
-                    msg.textContent = '✓ Registrado! Abrindo o WhatsApp...';
+                    msg.textContent = '✓ Atendimento marcado! Abrindo o WhatsApp...';
                     setTimeout(() => {
                         fecharFree();
                         // a página de confirmação já monta o link do WhatsApp
                         // com a inscrição no texto da conversa
-                        window.location.href = 'agradecimento-free.html?oab=' + encodeURIComponent(oab.replace(/\s+/g, ''));
+                        window.location.href = 'agradecimento-free.html'
+                            + '?oab=' + encodeURIComponent(oab.replace(/\s+/g, ''))
+                            + '&quando=' + encodeURIComponent(data.inicio);
                     }, 1200);
                 })
                 .catch(() => {

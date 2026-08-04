@@ -320,6 +320,23 @@
             <div class="vazio" id="vazio" style="display:none;">Nenhum cadastro encontrado.</div>
         </div>
 
+        <!-- A agenda do suporte gratuito, em ordem de quem vem primeiro. -->
+        <h2 style="margin:2.5rem 0 1rem;font-family:'Outfit',sans-serif;font-size:1.2rem;">Agenda do suporte grátis</h2>
+        <div class="tabela-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Quando</th>
+                        <th>Quem</th>
+                        <th>OAB</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="linhas-agenda"></tbody>
+            </table>
+            <div class="vazio" id="vazio-agenda" style="display:none;">Nenhum atendimento marcado.</div>
+        </div>
+
         <!-- Os chamados um a um. Antes o painel só mostrava a contagem, então
              não dava para ler o que a pessoa pediu nem quando. -->
         <h2 style="margin:2.5rem 0 1rem;font-family:'Outfit',sans-serif;font-size:1.2rem;">Chamados abertos</h2>
@@ -473,6 +490,7 @@
                         'Atualizado às ' + new Date().toLocaleTimeString('pt-BR');
                     montarStats(d.resumo);
                     montarLinhas();
+                    montarAgenda();
                     montarChamados();
                 })
                 .catch(() => {});
@@ -492,6 +510,32 @@
             document.getElementById('stats').innerHTML = itens.map(([n, l]) =>
                 `<div class="stat"><div class="stat-num">${n}</div><div class="stat-lbl">${l}</div></div>`
             ).join('');
+        }
+
+        function montarAgenda() {
+            const corpo = document.getElementById('linhas-agenda');
+            const vazio = document.getElementById('vazio-agenda');
+            const lista = (dados && dados.agendamentos) || [];
+
+            vazio.style.display = lista.length ? 'none' : 'block';
+            corpo.innerHTML = lista.map(a => {
+                // já passou da hora e ninguém marcou como atendido: fica em
+                // destaque, é o que precisa da sua ação
+                const passou = new Date(a.inicio) < new Date() && a.status === 'marcado';
+                return `
+                <tr>
+                    <td class="mono" style="font-size:0.78rem;">${fmtData(a.inicio)}</td>
+                    <td>${esc(a.nome) || '—'}</td>
+                    <td class="mono">${esc(a.oab) || '—'}</td>
+                    <td>${
+                        a.status === 'atendido' ? '<span class="tag ativa">Atendido</span>'
+                        : a.status === 'faltou' ? '<span class="tag usado">Faltou</span>'
+                        : a.status === 'cancelado' ? '<span class="tag sem">Cancelado</span>'
+                        : passou ? '<span class="tag atrasada">Aguardando baixa</span>'
+                        : '<span class="tag livre">Marcado</span>'
+                    }</td>
+                </tr>`;
+            }).join('');
         }
 
         function montarChamados() {

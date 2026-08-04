@@ -650,8 +650,23 @@
             ? `Atendimento vinculado à inscrição <strong>${oab}</strong>. É por ela que seus chamados são registrados.`
             : 'Seus chamados ficam registrados na sua inscrição da OAB.';
 
+        // hora marcada, quando veio do agendamento
+        const quando = params.get('quando');
+        const quandoTexto = quando
+            ? new Date(quando).toLocaleString('pt-BR', {
+                  weekday: 'long', day: '2-digit', month: '2-digit',
+                  hour: '2-digit', minute: '2-digit'
+              })
+            : '';
+
+        if (quandoTexto) {
+            document.getElementById('oab-nota').innerHTML +=
+                `<br>Seu atendimento está marcado para <strong>${quandoTexto}</strong>.`;
+        }
+
         // já leva o contexto na conversa: a equipe não precisa perguntar quem é
-        const texto = `Olá! Quero usar meu chamado de suporte gratuito da AdvogaCert${oab ? ' (OAB ' + oab + ')' : ''}.`;
+        const texto = `Olá! Quero usar meu chamado de suporte gratuito da AdvogaCert${oab ? ' (OAB ' + oab + ')' : ''}`
+            + (quandoTexto ? `, marcado para ${quandoTexto}` : '') + '.';
         document.getElementById('btn-whats').href =
             'https://wa.me/5561986241570?text=' + encodeURIComponent(texto);
 

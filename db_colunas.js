@@ -35,6 +35,10 @@ const COLUNAS = {
     chamados: [
         'id', 'usuario_id', 'oab', 'tipo', 'descricao', 'status', 'criado_em'
     ],
+    agendamentos: [
+        'id', 'chamado_id', 'usuario_id', 'oab', 'nome',
+        'inicio', 'fim', 'status', 'criado_em'
+    ],
     logins: [
         'id', 'usuario_id', 'metodo', 'ip', 'criado_em'
     ]

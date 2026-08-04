@@ -631,7 +631,7 @@ const MIME_TYPES = {
 //
 // Sem SUPABASE_URL configurado, tudo continua no usuarios.json como antes,
 // que é o que se quer rodando na sua máquina.
-const COLECOES = ['usuarios', 'assinaturas', 'chamados', 'logins'];
+const COLECOES = ['usuarios', 'assinaturas', 'chamados', 'logins', 'agendamentos'];
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || SECRETS.supabase?.url || '').replace(/\/$/, '');
 // service_role: ignora as políticas de RLS. Só pode viver no servidor —
@@ -864,6 +864,99 @@ function freeUsadoPelaOab(db, oab) {
     if (!oab) return false;
     const idsDaOab = db.usuarios.filter(u => u.oab === oab).map(u => u.id);
     return db.chamados.some(c => c.tipo === 'free' && idsDaOab.includes(c.usuario_id));
+}
+
+// ============================================================
+// AGENDA DO SUPORTE GRATUITO
+//
+// O premium não agenda: entra na fila e é atendido a qualquer momento. O
+// gratuito marca hora, e por isso precisa de uma lista de horários livres.
+//
+// Mudar as regras abaixo muda a agenda inteira — é o único lugar a mexer.
+// ============================================================
+const AGENDA = {
+    // 0 = domingo ... 6 = sábado. Todos os dias.
+    dias: [0, 1, 2, 3, 4, 5, 6],
+    horaInicio: 9,          // primeiro bloco começa às 9h
+    horaFim: 18,            // último bloco termina às 18h
+    almoco: [12, 13],       // nada entre 12h e 13h
+    duracaoMin: 60,         // cada atendimento reserva 1 hora
+    anteceMinDias: 1,       // só a partir de amanhã
+    janelaDias: 7           // até 7 dias à frente
+};
+
+// O Render roda em UTC; o atendimento é no horário de Brasília. O Brasil não
+// tem mais horário de verão, então o deslocamento é fixo e não precisa de
+// biblioteca de fuso.
+const FUSO_BR = -3;
+
+/** 'YYYY-MM-DD' + hora local → instante real (Date em UTC). */
+function instanteBR(dia, hora) {
+    const [a, m, d] = dia.split('-').map(Number);
+    return new Date(Date.UTC(a, m - 1, d, hora - FUSO_BR, 0, 0));
+}
+
+/** Os dias que a pessoa pode escolher, em 'YYYY-MM-DD'. */
+function diasDaAgenda() {
+    const lista = [];
+    const hoje = new Date();
+    for (let i = AGENDA.anteceMinDias; i <= AGENDA.janelaDias; i++) {
+        const d = new Date(hoje.getTime() + i * 86400000);
+        // o dia da semana é o de Brasília, não o do servidor
+        const local = new Date(d.getTime() + FUSO_BR * 3600000);
+        if (!AGENDA.dias.includes(local.getUTCDay())) continue;
+        lista.push(local.toISOString().slice(0, 10));
+    }
+    return lista;
+}
+
+/**
+ * Horários livres de um dia.
+ * Livre = dentro do expediente, fora do almoço, ainda no futuro e sem
+ * agendamento vivo em cima. É consultado ao montar a tela E de novo ao
+ * gravar: entre ver e confirmar, alguém pode ter pego o horário.
+ */
+function horariosLivres(db, dia) {
+    const ocupados = new Set(
+        (db.agendamentos || [])
+            .filter(a => a.status === 'marcado' || a.status === 'atendido')
+            .map(a => new Date(a.inicio).toISOString())
+    );
+
+    const livres = [];
+    const passoHoras = AGENDA.duracaoMin / 60;
+
+    for (let h = AGENDA.horaInicio; h + passoHoras <= AGENDA.horaFim; h += passoHoras) {
+        if (h >= AGENDA.almoco[0] && h < AGENDA.almoco[1]) continue;
+
+        const inicio = instanteBR(dia, h);
+        if (inicio.getTime() <= Date.now()) continue;          // hora que já passou
+        if (ocupados.has(inicio.toISOString())) continue;      // já tem gente
+
+        livres.push({
+            inicio: inicio.toISOString(),
+            rotulo: String(h).padStart(2, '0') + ':00'
+        });
+    }
+    return livres;
+}
+
+/** O horário pedido é válido e continua livre? */
+function horarioValido(db, inicioISO) {
+    if (!inicioISO) return { ok: false, erro: 'Escolha um horário.' };
+
+    const quando = new Date(inicioISO);
+    if (isNaN(quando)) return { ok: false, erro: 'Horário inválido.' };
+
+    const dia = new Date(quando.getTime() + FUSO_BR * 3600000).toISOString().slice(0, 10);
+    if (!diasDaAgenda().includes(dia)) {
+        return { ok: false, erro: 'Este dia está fora da agenda.' };
+    }
+    const livre = horariosLivres(db, dia).some(h => h.inicio === quando.toISOString());
+    if (!livre) {
+        return { ok: false, erro: 'Esse horário acabou de ser ocupado. Escolha outro.' };
+    }
+    return { ok: true, quando };
 }
 
 /** Situação consolidada de uma pessoa — é o que o painel mostra. */
@@ -1188,6 +1281,28 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // ============ AGENDA: GET /agenda/horarios ============
+    // Devolve os dias e as horas ainda livres. É calculado aqui, no servidor,
+    // porque só ele enxerga o que já foi marcado — no navegador, duas pessoas
+    // veriam a mesma vaga como livre.
+    if (method === 'GET' && url.split('?')[0] === '/agenda/horarios') {
+        const db = loadJsonDb();
+        const dias = diasDaAgenda().map(dia => {
+            const d = new Date(dia + 'T12:00:00Z');
+            return {
+                dia,
+                rotulo: d.toLocaleDateString('pt-BR', {
+                    weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'UTC'
+                }),
+                horarios: horariosLivres(db, dia)
+            };
+        }).filter(d => d.horarios.length);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, dias }));
+        return;
+    }
+
     // ============ CHAMADO GRATUITO: POST /chamado/free ============
     // Registra o chamado de teste. Cada conta tem direito a um só.
     if (method === 'POST' && url === '/chamado/free') {
@@ -1234,8 +1349,17 @@ const server = http.createServer((req, res) => {
                     return;
                 }
 
+                // A hora marcada é conferida agora, de novo: entre a pessoa ver
+                // a lista e clicar em confirmar, alguém pode ter pego a vaga.
+                const vaga = horarioValido(db, entrada.inicio);
+                if (!vaga.ok) {
+                    responder(200, { success: false, error: vaga.erro, recarregar_agenda: true });
+                    return;
+                }
+
+                const chamadoId = proximoId(db.chamados);
                 db.chamados.push({
-                    id: proximoId(db.chamados),
+                    id: chamadoId,
                     usuario_id: user ? user.id : null,   // sem conta o chamado fica só pela OAB
                     oab: oabLimpa,              // guardado junto: a contabilidade é por inscrição
                     tipo: 'free',
@@ -1243,10 +1367,27 @@ const server = http.createServer((req, res) => {
                     status: 'aberto',
                     criado_em: new Date().toISOString()
                 });
+
+                const fim = new Date(vaga.quando.getTime() + AGENDA.duracaoMin * 60000);
+                db.agendamentos.push({
+                    id: proximoId(db.agendamentos),
+                    chamado_id: chamadoId,
+                    usuario_id: user ? user.id : null,
+                    oab: oabLimpa,
+                    nome: String(entrada.nome || (user && user.nome) || '').slice(0, 120),
+                    inicio: vaga.quando.toISOString(),
+                    fim: fim.toISOString(),
+                    status: 'marcado',
+                    criado_em: new Date().toISOString()
+                });
                 saveJsonDb(db);
 
-                console.log(`🆓 Suporte gratuito aberto: OAB ${oabLimpa}`);
-                responder(200, { success: true, msg: 'Chamado gratuito registrado. Atendemos em até 2 horas.' });
+                console.log(`🆓 Suporte gratuito marcado: OAB ${oabLimpa} → ${vaga.quando.toISOString()}`);
+                responder(200, {
+                    success: true,
+                    msg: 'Atendimento marcado.',
+                    inicio: vaga.quando.toISOString()
+                });
 
             } catch (err) {
                 console.error('Erro no chamado free:', err.message);
@@ -1498,6 +1639,11 @@ const server = http.createServer((req, res) => {
                     .reduce((soma, a) => soma + Number(a.valor || 0), 0)
             },
             pessoas,
+            // agenda em ordem cronológica: é uma lista do que vem pela frente,
+            // não um histórico — por isso não vai invertida como as outras
+            agendamentos: (db.agendamentos || [])
+                .slice()
+                .sort((a, b) => new Date(a.inicio) - new Date(b.inicio)),
             assinaturas: db.assinaturas.slice().reverse(),
             // vai com o nome e o contato de quem abriu: o painel lista os
             // chamados um a um, e só o usuario_id não diz nada na tela
