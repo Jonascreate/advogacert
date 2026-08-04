@@ -821,6 +821,42 @@ function assinaturaAtiva(db, usuarioId) {
 }
 
 /**
+ * A última assinatura da pessoa, valendo ou não.
+ * É ela que separa "nunca assinou" de "assinou e venceu": sem isso o painel
+ * mostraria os dois como "sem plano" e você não saberia de quem cobrar.
+ */
+function assinaturaMaisRecente(db, usuarioId) {
+    return db.assinaturas
+        .filter(a => a.usuario_id === usuarioId)
+        .sort((x, y) => new Date(y.criado_em || 0) - new Date(x.criado_em || 0))[0] || null;
+}
+
+/**
+ * Situação de cobrança da inscrição, em uma palavra só:
+ *
+ *   ativa         — pagou e está dentro do prazo
+ *   inadimplente  — o prazo venceu e ninguém cancelou: é aqui que se cobra
+ *   cancelada     — pediu para sair; não se cobra
+ *   sem plano     — nunca assinou
+ *
+ * "Inadimplente" nasce do vencimento, não de um campo: o gateway ainda não
+ * está ligado, então não há aviso de falha de pagamento chegando de fora.
+ */
+function situacaoDeCobranca(db, usuarioId) {
+    if (assinaturaAtiva(db, usuarioId)) return { estado: 'ativa', dias_atraso: 0 };
+
+    const ultima = assinaturaMaisRecente(db, usuarioId);
+    if (!ultima) return { estado: 'sem plano', dias_atraso: 0 };
+    if (ultima.status === 'cancelada') return { estado: 'cancelada', dias_atraso: 0 };
+
+    const venceu = ultima.valida_ate ? new Date(ultima.valida_ate) : null;
+    const dias = venceu
+        ? Math.max(0, Math.floor((Date.now() - venceu.getTime()) / 86400000))
+        : 0;
+    return { estado: 'inadimplente', dias_atraso: dias };
+}
+
+/**
  * O chamado grátis é contado pela OAB, não pela conta.
  * Se a mesma inscrição já usou o dela em qualquer cadastro, acabou.
  */
@@ -833,7 +869,12 @@ function freeUsadoPelaOab(db, oab) {
 /** Situação consolidada de uma pessoa — é o que o painel mostra. */
 function situacaoDoUsuario(db, u) {
     const assinatura = assinaturaAtiva(db, u.id);
+    // a referência para prazo e renovação é a última assinatura, mesmo vencida:
+    // é dela que sai "vence em" e "venceu há", que o painel mostra
+    const referencia = assinatura || assinaturaMaisRecente(db, u.id);
     const chamados = db.chamados.filter(c => c.usuario_id === u.id);
+    const cobranca = situacaoDeCobranca(db, u.id);
+
     return {
         id: u.id,
         nome: u.nome || '',
@@ -842,10 +883,15 @@ function situacaoDoUsuario(db, u) {
         oab: u.oab || '',
         criado_em: u.created_at || null,
         ultimo_login: u.ultimo_login || null,
-        plano: assinatura ? assinatura.plano : null,
-        status: assinatura ? 'ativa' : 'sem plano',
-        valida_ate: assinatura ? assinatura.valida_ate : null,
+        plano: referencia ? referencia.plano : null,
+        status: cobranca.estado,              // ativa | inadimplente | cancelada | sem plano
+        dias_atraso: cobranca.dias_atraso,
+        valida_ate: referencia ? referencia.valida_ate : null,
+        // sem assinatura não há o que renovar: fica null e o painel mostra "—"
+        renovacao_automatica: referencia ? referencia.renovacao_automatica !== false : null,
         chamados_total: chamados.length,
+        chamados_free: chamados.filter(c => c.tipo === 'free').length,
+        chamados_premium: chamados.filter(c => c.tipo === 'premium').length,
         // contabilizado pela OAB: vale para todos os cadastros da mesma inscrição
         free_usado: freeUsadoPelaOab(db, u.oab) || chamados.some(c => c.tipo === 'free')
     };
@@ -1154,6 +1200,76 @@ const server = http.createServer((req, res) => {
             };
 
             try {
+                const entrada = JSON.parse(body || '{}');
+                const db = loadJsonDb();
+                const user = db.usuarios.find(u => u.id === entrada.usuario_id) || null;
+
+                // A OAB pode vir da conta (quem já entrou) ou digitada na hora
+                // (quem clicou em "1 suporte grátis" sem cadastro). É ela, e não
+                // a conta, que responde se o free ainda está disponível.
+                const oab = String(entrada.oab || (user && user.oab) || '').trim().toUpperCase();
+
+                if (!oab) {
+                    responder(400, { success: false, error: 'Informe sua inscrição na OAB.' });
+                    return;
+                }
+                // formato: números, barra e a sigla do estado — 123456/GO
+                if (!/^\d{2,7}\s*\/?\s*[A-Z]{2}$/.test(oab.replace(/\s+/g, ''))) {
+                    responder(400, { success: false, error: 'Inscrição inválida. Use o formato 123456/GO.' });
+                    return;
+                }
+
+                const oabLimpa = oab.replace(/\s+/g, '');
+
+                // conta pela inscrição: trocar de e-mail não devolve o free
+                const jaUsou = freeUsadoPelaOab(db, oabLimpa) ||
+                               db.chamados.some(c => c.tipo === 'free' && c.oab === oabLimpa) ||
+                               (user && db.chamados.some(c => c.usuario_id === user.id && c.tipo === 'free'));
+                if (jaUsou) {
+                    responder(200, {
+                        success: false,
+                        error: `O suporte gratuito da inscrição ${oabLimpa} já foi usado.`,
+                        free_usado: true
+                    });
+                    return;
+                }
+
+                db.chamados.push({
+                    id: proximoId(db.chamados),
+                    usuario_id: user ? user.id : null,   // sem conta o chamado fica só pela OAB
+                    oab: oabLimpa,              // guardado junto: a contabilidade é por inscrição
+                    tipo: 'free',
+                    descricao: String(entrada.descricao || '').slice(0, 500),
+                    status: 'aberto',
+                    criado_em: new Date().toISOString()
+                });
+                saveJsonDb(db);
+
+                console.log(`🆓 Suporte gratuito aberto: OAB ${oabLimpa}`);
+                responder(200, { success: true, msg: 'Chamado gratuito registrado. Atendemos em até 2 horas.' });
+
+            } catch (err) {
+                console.error('Erro no chamado free:', err.message);
+                responder(400, { success: false, error: 'Erro interno' });
+            }
+        });
+        return;
+    }
+
+    // ============ CHAMADO DE ASSINANTE: POST /chamado/premium ============
+    // Rota separada da free de propósito: as regras não são as mesmas. Aqui não
+    // há limite de quantidade, mas há exigência de plano valendo — e é a recusa
+    // por vencimento que faz o painel saber quem está inadimplente.
+    if (method === 'POST' && url === '/chamado/premium') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            const responder = (status, payload) => {
+                res.writeHead(status, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(payload));
+            };
+
+            try {
                 const { usuario_id, descricao } = JSON.parse(body || '{}');
                 const db = loadJsonDb();
                 const user = db.usuarios.find(u => u.id === usuario_id);
@@ -1163,14 +1279,22 @@ const server = http.createServer((req, res) => {
                     return;
                 }
 
-                // conta pela inscrição da OAB: trocar de e-mail não devolve o free
-                const jaUsou = freeUsadoPelaOab(db, user.oab) ||
-                               db.chamados.some(c => c.usuario_id === user.id && c.tipo === 'free');
-                if (jaUsou) {
+                const cobranca = situacaoDeCobranca(db, user.id);
+
+                if (cobranca.estado !== 'ativa') {
+                    // a mensagem muda conforme o motivo: quem venceu precisa
+                    // renovar, quem nunca assinou precisa assinar
+                    const motivo = {
+                        'inadimplente': `Seu plano venceu há ${cobranca.dias_atraso} dia(s). Renove para abrir chamados.`,
+                        'cancelada': 'Seu plano foi cancelado. Assine novamente para abrir chamados.',
+                        'sem plano': 'Este atendimento é do Plano Premium. Assine para abrir chamados.'
+                    }[cobranca.estado];
+
                     responder(200, {
                         success: false,
-                        error: `O chamado gratuito da inscrição ${user.oab || 'desta conta'} já foi usado.`,
-                        free_usado: true
+                        error: motivo,
+                        situacao: cobranca.estado,
+                        dias_atraso: cobranca.dias_atraso
                     });
                     return;
                 }
@@ -1178,19 +1302,19 @@ const server = http.createServer((req, res) => {
                 db.chamados.push({
                     id: proximoId(db.chamados),
                     usuario_id: user.id,
-                    oab: user.oab || null,      // guardado junto: a contabilidade é por inscrição
-                    tipo: 'free',
+                    oab: user.oab || null,
+                    tipo: 'premium',
                     descricao: String(descricao || '').slice(0, 500),
                     status: 'aberto',
                     criado_em: new Date().toISOString()
                 });
                 saveJsonDb(db);
 
-                console.log(`🆓 Chamado gratuito aberto: ${user.email || user.telefone}`);
-                responder(200, { success: true, msg: 'Chamado gratuito registrado. Atendemos em até 2 horas.' });
+                console.log(`⭐ Chamado premium aberto: ${user.email || user.telefone}`);
+                responder(200, { success: true, msg: 'Chamado registrado. Atendimento prioritário.' });
 
             } catch (err) {
-                console.error('Erro no chamado free:', err.message);
+                console.error('Erro no chamado premium:', err.message);
                 responder(400, { success: false, error: 'Erro interno' });
             }
         });
@@ -1247,6 +1371,9 @@ const server = http.createServer((req, res) => {
                     email_pagador: pagador,
                     inicio: new Date().toISOString(),
                     valida_ate: validaAte.toISOString(),
+                    // assinatura do gateway nasce como recorrente; se o cliente
+                    // desligar a recorrência lá, isto vira false pelo painel
+                    renovacao_automatica: true,
                     criado_em: new Date().toISOString()
                 });
                 saveJsonDb(db);
@@ -1361,6 +1488,8 @@ const server = http.createServer((req, res) => {
             resumo: {
                 usuarios: pessoas.length,
                 ativos: pessoas.filter(p => p.status === 'ativa').length,
+                inadimplentes: pessoas.filter(p => p.status === 'inadimplente').length,
+                sem_renovacao: pessoas.filter(p => p.status === 'ativa' && p.renovacao_automatica === false).length,
                 free_usados: pessoas.filter(p => p.free_usado).length,
                 chamados: db.chamados.length,
                 logins_30d: db.logins.filter(l => new Date(l.criado_em).getTime() > trintaDias).length,
@@ -1370,7 +1499,16 @@ const server = http.createServer((req, res) => {
             },
             pessoas,
             assinaturas: db.assinaturas.slice().reverse(),
-            chamados: db.chamados.slice().reverse()
+            // vai com o nome e o contato de quem abriu: o painel lista os
+            // chamados um a um, e só o usuario_id não diz nada na tela
+            chamados: db.chamados.slice().reverse().map(c => {
+                const dono = db.usuarios.find(u => u.id === c.usuario_id);
+                return {
+                    ...c,
+                    nome: dono ? (dono.nome || dono.email || dono.telefone || '') : '',
+                    contato: dono ? (dono.telefone || dono.email || '') : ''
+                };
+            })
         }));
         return;
     }
@@ -1404,6 +1542,24 @@ const server = http.createServer((req, res) => {
                     return;
                 }
 
+                if (acao === 'renovacao') {
+                    // liga ou desliga a renovação da assinatura mais recente.
+                    // Enquanto o gateway não está ligado, quem sabe da
+                    // recorrência é você: este campo é o registro disso.
+                    const alvo = assinaturaMaisRecente(db, user.id);
+                    if (!alvo) {
+                        responder(404, { success: false, error: 'Esta pessoa não tem assinatura' });
+                        return;
+                    }
+                    alvo.renovacao_automatica = alvo.renovacao_automatica === false;
+                    saveJsonDb(db);
+                    responder(200, {
+                        success: true,
+                        msg: alvo.renovacao_automatica ? 'Renovação automática ligada' : 'Renovação automática desligada'
+                    });
+                    return;
+                }
+
                 if (acao === 'cancelar') {
                     db.assinaturas
                         .filter(a => a.usuario_id === user.id && a.status === 'ativa')
@@ -1426,6 +1582,9 @@ const server = http.createServer((req, res) => {
                     gateway_ref: null,
                     inicio: new Date().toISOString(),
                     valida_ate: validaAte.toISOString(),
+                    // liberado na mão não renova sozinho: vence e vira
+                    // inadimplente no painel, para você reavaliar
+                    renovacao_automatica: false,
                     criado_em: new Date().toISOString()
                 });
                 saveJsonDb(db);

@@ -51,9 +51,16 @@ CREATE TABLE IF NOT EXISTS public.assinaturas (
     email_pagador text,
     inicio        timestamptz,
     valida_ate    timestamptz,
+    -- true = renova sozinha no vencimento; false = vence e vira inadimplente.
+    -- Assinatura liberada na mao nasce false; a do gateway nasce true.
+    renovacao_automatica boolean DEFAULT true,
     criado_em     timestamptz,
     cancelada_em  timestamptz
 );
+
+-- Para bancos criados antes desta coluna existir.
+ALTER TABLE public.assinaturas
+    ADD COLUMN IF NOT EXISTS renovacao_automatica boolean DEFAULT true;
 
 -- o webhook do Mercado Pago reenvia o mesmo evento quando não recebe 200.
 -- Sem esta trava, um reenvio viraria uma segunda assinatura para a mesma venda.
@@ -69,7 +76,7 @@ CREATE TABLE IF NOT EXISTS public.chamados (
     id         integer PRIMARY KEY,
     usuario_id integer REFERENCES public.usuarios(id) ON DELETE SET NULL,
     oab        text,             -- copiada na abertura: a conta é por inscrição
-    tipo       text,             -- free | pago
+    tipo       text,             -- free | premium
     descricao  text,
     status     text,             -- aberto | fechado
     criado_em  timestamptz

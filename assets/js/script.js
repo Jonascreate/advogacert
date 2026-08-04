@@ -1181,6 +1181,112 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // ------------------------------------------
+        // SUPORTE GRÁTIS — pede a OAB e registra antes de mandar ao WhatsApp
+        //
+        // Antes o botão levava direto para contato.html: a pessoa ia embora
+        // para a conversa e nada ficava registrado, então não havia como saber
+        // quem já tinha usado o free. Agora a inscrição é gravada primeiro; o
+        // WhatsApp abre depois, na página de confirmação, já com a OAB no texto.
+        // ------------------------------------------
+        const btnFree = document.getElementById('btn-suporte-free');
+        if (btnFree) {
+            const overlayFree = document.createElement('div');
+            overlayFree.className = 'pay-overlay';
+            overlayFree.innerHTML = `
+                <div class="pay-modal" role="dialog" aria-modal="true" aria-labelledby="free-titulo">
+                    <div class="pay-head">
+                        <div class="pay-head-marca" id="free-titulo">1 suporte grátis</div>
+                        <button type="button" class="pay-fechar" id="free-close" aria-label="Fechar">&times;</button>
+                    </div>
+                    <div class="pay-corpo">
+                        <form id="free-form" novalidate>
+                            <div class="pay-campo">
+                                <label for="free-oab">Inscrição na OAB</label>
+                                <input id="free-oab" placeholder="123456/GO" autocomplete="off" required>
+                            </div>
+                            <button type="submit" class="pay-btn" id="free-enviar">Liberar meu suporte</button>
+                            <div class="pay-msg" id="free-msg">É um por inscrição. Depois de registrar, abrimos o WhatsApp.</div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlayFree);
+
+            const fecharFree = () => {
+                overlayFree.classList.remove('aberto');
+                document.body.style.overflow = '';
+            };
+
+            btnFree.addEventListener('click', () => {
+                const u = getUsuarioLogado();
+                // quem já entrou tem a inscrição na conta: vem preenchida
+                if (u && u.oab) overlayFree.querySelector('#free-oab').value = u.oab;
+                const m = overlayFree.querySelector('#free-msg');
+                m.style.color = '#8a8a90';
+                m.textContent = 'É um por inscrição. Depois de registrar, abrimos o WhatsApp.';
+                overlayFree.classList.add('aberto');
+                document.body.style.overflow = 'hidden';
+                setTimeout(() => overlayFree.querySelector('#free-oab').focus(), 60);
+            });
+
+            overlayFree.querySelector('#free-close').onclick = fecharFree;
+            overlayFree.addEventListener('click', e => {
+                if (e.target === overlayFree) fecharFree();
+            });
+
+            overlayFree.querySelector('#free-form').addEventListener('submit', function (e) {
+                e.preventDefault();
+                const campo = overlayFree.querySelector('#free-oab');
+                const msg = overlayFree.querySelector('#free-msg');
+                const botao = overlayFree.querySelector('#free-enviar');
+                const oab = campo.value.trim().toUpperCase();
+
+                if (!/^\d{2,7}\s*\/?\s*[A-Z]{2}$/.test(oab.replace(/\s+/g, ''))) {
+                    msg.style.color = '#ff6b5e';
+                    msg.textContent = 'Informe a inscrição no formato 123456/GO.';
+                    return;
+                }
+
+                const u = getUsuarioLogado();
+                botao.disabled = true;
+                msg.style.color = '#8a8a90';
+                msg.textContent = 'Registrando...';
+
+                fetch(apiUrl('/chamado/free'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        oab: oab,
+                        usuario_id: u ? u.id : null,
+                        descricao: 'Suporte gratuito pedido pela página de planos'
+                    })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    botao.disabled = false;
+                    if (!data.success) {
+                        msg.style.color = '#ff6b5e';
+                        msg.textContent = data.error || 'Não foi possível registrar.';
+                        return;
+                    }
+                    msg.style.color = '#6ee7c8';
+                    msg.textContent = '✓ Registrado! Abrindo o WhatsApp...';
+                    setTimeout(() => {
+                        fecharFree();
+                        // a página de confirmação já monta o link do WhatsApp
+                        // com a inscrição no texto da conversa
+                        window.location.href = 'agradecimento-free.html?oab=' + encodeURIComponent(oab.replace(/\s+/g, ''));
+                    }, 1200);
+                })
+                .catch(() => {
+                    botao.disabled = false;
+                    msg.style.color = '#ff6b5e';
+                    msg.textContent = 'Erro de conexão com o servidor.';
+                });
+            });
+        }
+
+        // ------------------------------------------
         // RETOMADA DO CHECKOUT — três travas
         // ------------------------------------------
         // A tela de pagamento só pode aparecer por um clique em "Assinar" ou

@@ -226,6 +226,8 @@
         .tag.sem { background: rgba(255, 255, 255, 0.06); color: var(--text-muted); }
         .tag.usado { background: rgba(255, 107, 94, 0.15); color: #ff6b5e; }
         .tag.livre { background: rgba(79, 163, 255, 0.15); color: var(--accent-win); }
+        /* vencida e não cancelada: é de quem se cobra */
+        .tag.atrasada { background: rgba(255, 176, 32, 0.16); color: #ffb020; }
 
         .acao {
             padding: 0.4rem 0.8rem; border-radius: 8px; cursor: pointer;
@@ -306,6 +308,7 @@
                         <th>OAB</th>
                         <th>WhatsApp</th>
                         <th>Plano</th>
+                        <th>Renovação</th>
                         <th>Chamado grátis</th>
                         <th>Chamados</th>
                         <th>Último login</th>
@@ -315,6 +318,26 @@
                 <tbody id="linhas"></tbody>
             </table>
             <div class="vazio" id="vazio" style="display:none;">Nenhum cadastro encontrado.</div>
+        </div>
+
+        <!-- Os chamados um a um. Antes o painel só mostrava a contagem, então
+             não dava para ler o que a pessoa pediu nem quando. -->
+        <h2 style="margin:2.5rem 0 1rem;font-family:'Outfit',sans-serif;font-size:1.2rem;">Chamados abertos</h2>
+        <div class="tabela-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Quando</th>
+                        <th>Quem</th>
+                        <th>OAB</th>
+                        <th>Tipo</th>
+                        <th>Pedido</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="linhas-chamados"></tbody>
+            </table>
+            <div class="vazio" id="vazio-chamados" style="display:none;">Nenhum chamado registrado.</div>
         </div>
     </div>
 
@@ -336,6 +359,15 @@
                    d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         };
         const fmtDia = iso => iso ? new Date(iso).toLocaleDateString('pt-BR') : '—';
+
+        /**
+         * A descrição do chamado é texto que o cliente escreveu, e as linhas da
+         * tabela são montadas com innerHTML: sem escapar, um "<img onerror=...>"
+         * no pedido viraria código rodando dentro do painel logado.
+         */
+        const esc = v => String(v == null ? '' : v)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
         // --- entrar ---
         const btnEntrar = document.getElementById('btn-entrar');
@@ -441,6 +473,7 @@
                         'Atualizado às ' + new Date().toLocaleTimeString('pt-BR');
                     montarStats(d.resumo);
                     montarLinhas();
+                    montarChamados();
                 })
                 .catch(() => {});
         }
@@ -449,6 +482,8 @@
             const itens = [
                 [r.usuarios, 'Cadastros'],
                 [r.ativos, 'Planos ativos'],
+                [r.inadimplentes, 'Inadimplentes'],
+                [r.sem_renovacao, 'Sem renovação'],
                 ['R$ ' + Number(r.receita_mes).toLocaleString('pt-BR'), 'Receita/mês'],
                 [r.free_usados, 'Grátis usados'],
                 [r.chamados, 'Chamados'],
@@ -457,6 +492,31 @@
             document.getElementById('stats').innerHTML = itens.map(([n, l]) =>
                 `<div class="stat"><div class="stat-num">${n}</div><div class="stat-lbl">${l}</div></div>`
             ).join('');
+        }
+
+        function montarChamados() {
+            const corpo = document.getElementById('linhas-chamados');
+            const vazio = document.getElementById('vazio-chamados');
+            const lista = (dados && dados.chamados) || [];
+
+            vazio.style.display = lista.length ? 'none' : 'block';
+            corpo.innerHTML = lista.map(c => `
+                <tr>
+                    <td class="mono" style="font-size:0.78rem;">${fmtData(c.criado_em)}</td>
+                    <td>
+                        <div style="font-weight:600;">${esc(c.nome) || '—'}</div>
+                        <div style="color:var(--text-muted);font-size:0.78rem;">${esc(c.contato)}</div>
+                    </td>
+                    <td class="mono">${esc(c.oab) || '—'}</td>
+                    <td>${c.tipo === 'premium'
+                        ? '<span class="tag ativa">Premium</span>'
+                        : '<span class="tag livre">Grátis</span>'}</td>
+                    <td style="max-width:320px;">${esc(c.descricao) || '—'}</td>
+                    <td>${c.status === 'fechado'
+                        ? '<span class="tag sem">Fechado</span>'
+                        : '<span class="tag usado">Aberto</span>'}</td>
+                </tr>
+            `).join('');
         }
 
         function montarLinhas() {
@@ -486,10 +546,21 @@
                     <td>
                         ${p.status === 'ativa'
                             ? `<span class="tag ativa">Premium</span><div style="color:var(--text-muted);font-size:0.72rem;margin-top:0.2rem;">até ${fmtDia(p.valida_ate)}</div>`
+                            : p.status === 'inadimplente'
+                            ? `<span class="tag atrasada">Inadimplente</span><div style="color:var(--text-muted);font-size:0.72rem;margin-top:0.2rem;">venceu há ${p.dias_atraso} dia(s)</div>`
+                            : p.status === 'cancelada'
+                            ? '<span class="tag sem">Cancelada</span>'
                             : '<span class="tag sem">Sem plano</span>'}
                     </td>
+                    <td>
+                        ${p.renovacao_automatica === null
+                            ? '<span style="color:var(--text-muted);">—</span>'
+                            : `<button class="acao" data-id="${p.id}" data-acao="renovacao" title="Clique para inverter">
+                                   ${p.renovacao_automatica ? '🔁 Automática' : '⏸ Manual'}
+                               </button>`}
+                    </td>
                     <td>${p.free_usado ? '<span class="tag usado">Usado</span>' : '<span class="tag livre">Disponível</span>'}</td>
-                    <td>${p.chamados_total}</td>
+                    <td title="${p.chamados_free} grátis · ${p.chamados_premium} premium">${p.chamados_total}</td>
                     <td class="mono" style="font-size:0.78rem;">${fmtData(p.ultimo_login)}</td>
                     <td>
                         <button class="acao" data-id="${p.id}" data-acao="${p.status === 'ativa' ? 'cancelar' : 'liberar'}">
@@ -507,6 +578,8 @@
         function mudarPlano(usuario_id, acao) {
             const pergunta = acao === 'cancelar'
                 ? 'Cancelar o plano desta pessoa?'
+                : acao === 'renovacao'
+                ? 'Inverter a renovação automática desta assinatura?'
                 : 'Liberar 1 mês de Premium para esta pessoa?';
             if (!confirm(pergunta)) return;
 

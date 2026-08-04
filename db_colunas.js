@@ -29,7 +29,8 @@ const COLUNAS = {
     assinaturas: [
         'id', 'usuario_id', 'plano', 'valor', 'status',
         'gateway', 'gateway_ref', 'email_pagador',
-        'inicio', 'valida_ate', 'criado_em', 'cancelada_em'
+        'inicio', 'valida_ate', 'renovacao_automatica',
+        'criado_em', 'cancelada_em'
     ],
     chamados: [
         'id', 'usuario_id', 'oab', 'tipo', 'descricao', 'status', 'criado_em'
