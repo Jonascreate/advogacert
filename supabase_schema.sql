@@ -137,6 +137,8 @@ ALTER TABLE public.usuarios    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.assinaturas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chamados    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.logins      ENABLE ROW LEVEL SECURITY;
+-- guarda nome, OAB e horario de atendimento: mesmo tratamento das demais
+ALTER TABLE public.agendamentos ENABLE ROW LEVEL SECURITY;
 
 -- ------------------------------------------------------------
 -- PERMISSÕES — explícitas, para não depender das opções da criação
