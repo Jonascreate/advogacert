@@ -57,10 +57,10 @@ document.addEventListener('DOMContentLoaded', function() {
     animate();
 
     // ==========================================
-    // FORMULÁRIOS (Login / Cadastro / Reset)
+    // FORMULÁRIOS (Login / Cadastro)
     // ==========================================
     function mostrarFormulario(idVisivel, titulo) {
-        ['loginForm', 'registerForm', 'resetForm', 'otpForm'].forEach(function (id) {
+        ['loginForm', 'registerForm', 'otpForm'].forEach(function (id) {
             const el = document.getElementById(id);
             if (el) el.style.display = id === idVisivel ? 'block' : 'none';
         });
@@ -74,10 +74,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.showRegisterForm = function() {
         mostrarFormulario('registerForm', 'Criar Nova Conta');
-    };
-
-    window.showResetForm = function() {
-        mostrarFormulario('resetForm', 'Recuperar Senha');
     };
 
     window.showOtpForm = function() {
@@ -459,88 +455,6 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(() => {
                 messageDiv.style.color = '#ef4444';
                 messageDiv.textContent = '✗ Erro de conexão';
-            });
-        });
-    }
-
-    // ==========================================
-    // RESET SENHA (Recuperação de senha)
-    // ==========================================
-    const resetForm = document.getElementById('resetForm');
-
-    if (resetForm) {
-        resetForm.addEventListener('submit', function (e) {
-            e.preventDefault();
-
-            const emailInput = document.getElementById('reset-email');
-            const messageDiv = document.getElementById('reset-message');
-            const email = emailInput.value.trim();
-
-            console.log('🔵 Iniciando reset para:', email);
-
-            if (!email) {
-                messageDiv.style.color = '#ef4444';
-                messageDiv.textContent = '✗ Informe um e-mail válido';
-                return;
-            }
-
-            messageDiv.style.color = '#333';
-            messageDiv.textContent = 'Enviando link de recuperação...';
-
-            const payload = {
-                action: 'reset',
-                email: email
-            };
-
-            console.log('🔵 Payload enviado:', payload);
-            console.log('🔵 URL destino:', apiUrl('/login.php'));
-
-            fetch(apiUrl('/login.php'), {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            })
-            .then(res => {
-                console.log('🟢 Resposta recebida. Status:', res.status);
-                console.log('🟢 Headers:', [...res.headers.entries()]);
-                
-                if (!res.ok) {
-                    console.error('🔴 Resposta não OK:', res.status, res.statusText);
-                }
-                
-                return res.text(); // Primeiro pegue como texto
-            })
-            .then(text => {
-                console.log('🟢 Resposta bruta:', text);
-                
-                try {
-                    const data = JSON.parse(text);
-                    console.log('🟢 JSON parseado:', data);
-                    
-                    if (data.success) {
-                        messageDiv.style.color = '#10b981';
-                        messageDiv.textContent = '✓ ' + data.msg;
-                    } else {
-                        messageDiv.style.color = '#ef4444';
-                        messageDiv.textContent = '✗ ' + data.error;
-                    }
-                } catch (jsonError) {
-                    console.error('🔴 Erro ao parsear JSON:', jsonError);
-                    console.error('🔴 Texto recebido:', text);
-                    messageDiv.style.color = '#ef4444';
-                    messageDiv.textContent = '✗ Resposta inválida do servidor';
-                }
-            })
-            .catch(err => {
-                console.error('🔴 Erro no fetch:', err);
-                console.error('🔴 Tipo do erro:', err.name);
-                console.error('🔴 Mensagem:', err.message);
-                console.error('🔴 Stack:', err.stack);
-                
-                messageDiv.style.color = '#ef4444';
-                messageDiv.textContent = '✗ Erro de conexão: ' + err.message;
             });
         });
     }

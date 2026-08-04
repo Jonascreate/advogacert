@@ -1,6 +1,6 @@
 <?php
 /**
- * login.php — Login, Cadastro e Recuperação de Senha
+ * login.php — Login e Cadastro
  * ====================================================
  * 
  * Dependências (substituem o PHPMailer):
@@ -95,58 +95,6 @@ if ($action === 'register') {
         echo json_encode(['success' => true, 'msg' => 'Conta criada com sucesso!']);
     } else {
         echo json_encode(['success' => false, 'error' => 'Erro ao criar conta']);
-    }
-    exit;
-}
-
-// ================== RESET DE SENHA ==================
-if ($action === 'reset') {
-
-    if (!$email) {
-        echo json_encode(['success' => false, 'error' => 'E-mail inválido']);
-        exit;
-    }
-
-    $user = getUserByEmail($email);
-
-    if (!$user) {
-        // Por segurança, não informar se o e-mail existe ou não
-        echo json_encode(['success' => true, 'msg' => 'Se o e-mail existir, você receberá um link de recuperação.']);
-        exit;
-    }
-
-    $token   = bin2hex(random_bytes(32));
-    $expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
-
-    updateResetToken($email, $token, $expires);
-
-    // ================== ENVIO DE EMAIL ==================
-    $resetLink = "https://www.agentej.us/reset.php?token={$token}";
-    $htmlTemplate = file_get_contents(__DIR__ . '/emailweb.html');
-    $htmlBody = str_replace(
-        ['{{RESET_LINK}}', '{{EMAIL}}'],
-        [$resetLink, htmlspecialchars($email)],
-        $htmlTemplate
-    );
-    $textoAlt = "Clique no link para redefinir sua senha: {$resetLink}";
-
-    $resultado = enviarEmailBrevo(
-        $email,
-        $email,
-        '🔐 Recuperação de Senha - AgenteJ.us',
-        $htmlBody,
-        $textoAlt
-    );
-
-    if ($resultado['success']) {
-        echo json_encode(['success' => true, 'msg' => 'E-mail enviado com sucesso']);
-    } else {
-        error_log("Falha no envio de e-mail para {$email}: " . $resultado['message']);
-        echo json_encode([
-            'success' => true,
-            'msg' => 'Se o e-mail existir, você receberá um link de recuperação.'
-            // ⚠️ Mesmo com erro, não revelamos que falhou (segurança)
-        ]);
     }
     exit;
 }

@@ -4,12 +4,12 @@
  * 
  * Este servidor substitui o PHP para testes locais.
  * Ele serve arquivos estáticos e faz chamadas REAIS à API Brevo
- * para enviar e-mails (boas-vindas e recuperação de senha).
+ * para enviar e-mails (boas-vindas e código de acesso).
  * 
  * COMO USAR:
  *   1. node server.js
  *   2. Abra http://localhost:3000
- *   3. Faça cadastro, login, recuperação de senha
+ *   3. Faça cadastro e entre pelo código
  * 
  * ⚠️ Para produção na VPS, use PHP (Apache/Nginx + PHP-FPM).
  *    Este arquivo serve APENAS para testes locais.
@@ -246,8 +246,6 @@ function usuarioDaContaSocial(conta, provider) {
             provider,
             provider_id: conta.idExterno,
             nome: conta.nome,
-            reset_token: null,
-            token_expires: null,
             created_at: new Date().toISOString()
         };
         db.usuarios.push(user);
@@ -426,7 +424,7 @@ async function enviarSmsBrevo(telefone, texto) {
     }
 }
 
-/** Monta o e-mail do codigo a partir do template email-otp.html (mesmo visual do emailweb.html). */
+/** Monta o e-mail do codigo a partir do template email-otp.html. */
 function htmlCodigoOtp(email, codigo) {
     const templatePath = path.join(__dirname, 'email-otp.html');
     if (!fs.existsSync(templatePath)) {
@@ -480,8 +478,6 @@ function usuarioDoDestinoOtp(tipo, valor) {
             senha: null,
             provider: 'codigo',
             nome: '',
-            reset_token: null,
-            token_expires: null,
             created_at: new Date().toISOString()
         };
         db.usuarios.push(user);
@@ -1509,8 +1505,6 @@ const server = http.createServer((req, res) => {
                         oab,
                         nome: String(input.nome || '').trim().slice(0, 120),
                         senha: hash,
-                        reset_token: null,
-                        token_expires: null,
                         created_at: new Date().toISOString()
                     };
                     db.usuarios.push(novo);
@@ -1568,111 +1562,11 @@ const server = http.createServer((req, res) => {
                     return;
                 }
 
-                // ---- RESET ----
-                if (action === 'reset') {
-                    if (!email) {
-                        res.writeHead(400, { 'Content-Type': 'application/json' });
-                        res.end(JSON.stringify({ success: false, error: 'E-mail inválido' }));
-                        return;
-                    }
-
-                    const user = db.usuarios.find(u => u.email === email);
-
-                    if (!user) {
-                        res.writeHead(200, { 'Content-Type': 'application/json' });
-                        res.end(JSON.stringify({ success: true, msg: 'Se o e-mail existir, você receberá um link de recuperação.' }));
-                        return;
-                    }
-
-                    const token = crypto.randomBytes(32).toString('hex');
-                    const expires = new Date(Date.now() + 3600000).toISOString();
-
-                    user.reset_token = token;
-                    user.token_expires = expires;
-                    saveJsonDb(db);
-
-                    // ================== ENVIO REAL DE E-MAIL DE RECUPERAÇÃO ==================
-                    // Link aponta para o próprio host que atendeu a requisição, assim
-                    // funciona tanto em localhost (teste) quanto no domínio real (produção).
-                    const resetLink = `http://${req.headers.host}/reset.php?token=${token}`;
-                    const templatePath = path.join(__dirname, 'emailweb.html');
-
-                    if (fs.existsSync(templatePath)) {
-                        let htmlTemplate = fs.readFileSync(templatePath, 'utf-8');
-                        htmlTemplate = htmlTemplate.replaceAll('{{RESET_LINK}}', resetLink);
-                        htmlTemplate = htmlTemplate.replaceAll('{{EMAIL}}', email);
-
-                        console.log(`📧 Enviando e-mail REAL de recuperação para ${email}...`);
-                        await enviarEmailBrevo(
-                            email,
-                            '🔐 Recuperação de Senha - AgenteJ.us',
-                            htmlTemplate,
-                            `Clique no link para redefinir sua senha: ${resetLink}`
-                        );
-                    }
-
-                    console.log('========================================');
-                    console.log('🔗 LINK DE RECUPERAÇÃO:', resetLink);
-                    console.log('========================================');
-
-                    res.writeHead(200, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({
-                        success: true,
-                        msg: 'E-mail de recuperação enviado!'
-                    }));
-                    return;
-                }
-
                 res.writeHead(400, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ success: false, error: 'Ação inválida' }));
 
             } catch (err) {
                 console.error('Erro:', err);
-                res.writeHead(400, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ success: false, error: 'Erro interno' }));
-            }
-        });
-        return;
-    }
-
-    // ================== API: POST /process_reset.php ==================
-    if (method === 'POST' && url === '/process_reset.php') {
-        let body = '';
-        req.on('data', chunk => body += chunk);
-        req.on('end', () => {
-            try {
-                const input = JSON.parse(body);
-                const { token, nova_senha } = input;
-
-                if (!token || !nova_senha || nova_senha.length < 6) {
-                    res.writeHead(400, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ success: false, error: 'Dados inválidos' }));
-                    return;
-                }
-
-                const db = loadJsonDb();
-                const user = db.usuarios.find(u =>
-                    u.reset_token === token &&
-                    u.token_expires &&
-                    new Date(u.token_expires) > new Date()
-                );
-
-                if (!user) {
-                    res.writeHead(200, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ success: false, error: 'Token inválido ou expirado' }));
-                    return;
-                }
-
-                const hash = crypto.createHash('sha256').update(nova_senha).digest('hex');
-                user.senha = hash;
-                user.reset_token = null;
-                user.token_expires = null;
-                saveJsonDb(db);
-
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ success: true, msg: 'Senha atualizada' }));
-
-            } catch (err) {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ success: false, error: 'Erro interno' }));
             }
@@ -1842,48 +1736,6 @@ ENCERRAMENTO DE CONVERSA
         return;
     }
 
-    // ================== GET /reset.php (valida token e abre resetsenha.html) ==================
-    if (method === 'GET' && url.split('?')[0] === '/reset.php') {
-        const token = new URL(req.url, `http://${req.headers.host}`).searchParams.get('token');
-
-        if (!token) {
-            res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
-            res.end('<h1>Token inválido</h1>');
-            return;
-        }
-
-        const db = loadJsonDb();
-        const user = db.usuarios.find(u =>
-            u.reset_token === token &&
-            u.token_expires &&
-            new Date(u.token_expires) > new Date()
-        );
-
-        if (!user) {
-            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-            res.end('<h1>Token inválido ou expirado. Solicite uma nova recuperação de senha.</h1>');
-            return;
-        }
-
-        const resetSenhaPath = path.join(__dirname, 'resetsenha.html');
-        fs.readFile(resetSenhaPath, 'utf-8', (err, html) => {
-            if (err) {
-                res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
-                res.end('<h1>Erro ao carregar página de redefinição</h1>');
-                return;
-            }
-
-            const script = `<script>
-                window.USER_EMAIL = ${JSON.stringify(user.email)};
-                window.USER_TOKEN = ${JSON.stringify(token)};
-            </script>`;
-
-            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-            res.end(html.replace('</head>', script + '</head>'));
-        });
-        return;
-    }
-
     // ================== ARQUIVOS ESTÁTICOS ==================
     // Só serve extensões públicas de front-end. Sem isso, QUALQUER arquivo do
     // projeto (usuarios.json, db_config.php, lib/mail.php, .git/config, etc.)
@@ -1960,12 +1812,11 @@ function aoSubir() {
     console.log(`📁 Abra: http://localhost:${PORT}`);
     console.log('========================================');
     console.log('📧 E-mails REAIS sendo enviados via Brevo API');
-    console.log('   (boas-vindas e recuperação de senha)');
+    console.log('   (boas-vindas e código de acesso)');
     console.log('========================================');
     console.log('🔐 Fluxo completo disponível:');
     console.log('  1. Crie uma conta → e-mail de boas-vindas REAL');
-    console.log('  2. Faça login');
-    console.log('  3. Esqueci senha → e-mail de recuperação REAL');
+    console.log('  2. Entre pelo celular → código de 6 dígitos');
     console.log('========================================');
     const stat = (c) => (c.clientId && c.clientSecret) ? '✅ configurado' : '⚠️  sem credenciais (oauth_config.json)';
     console.log(`🔑 Login Google:    ${stat(OAUTH.google)}  →  ${oauthRedirectUri('google')}`);

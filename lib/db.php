@@ -61,43 +61,6 @@ function getUserByEmail(string $email): ?array {
 }
 
 /**
- * Obtém um usuário pelo token de reset
- * @param string $token
- * @return array|null
- */
-function getUserByToken(string $token): ?array {
-    // ---- INÍCIO: Modo JSON (testes) ----
-    $db = loadJsonDb();
-    foreach ($db['usuarios'] as $user) {
-        if (isset($user['reset_token']) && $user['reset_token'] === $token) {
-            // Verificar expiração
-            if (isset($user['token_expires']) && strtotime($user['token_expires']) > time()) {
-                return $user;
-            }
-        }
-    }
-    // ---- FIM: Modo JSON ----
-
-    /* ---- INÍCIO: Modo PDO (produção) ----
-    try {
-        $pdo = new PDO('pgsql:host=localhost;dbname=juspaperdb', 'usuario', 'senha', [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-        ]);
-        $stmt = $pdo->prepare(
-            "SELECT * FROM usuarios WHERE reset_token = ? AND token_expires > NOW()"
-        );
-        $stmt->execute([$token]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
-    } catch (Exception $e) {
-        error_log("DB Error: " . $e->getMessage());
-        return null;
-    }
-    ---- FIM: Modo PDO ---- */
-
-    return null;
-}
-
-/**
  * Cria um novo usuário
  * @param string $email
  * @param string $senhaHash
@@ -111,8 +74,6 @@ function createUser(string $email, string $senhaHash): bool {
         'id' => $newId,
         'email' => $email,
         'senha' => $senhaHash,
-        'reset_token' => null,
-        'token_expires' => null,
         'created_at' => date('Y-m-d H:i:s')
     ];
     return saveJsonDb($db);
@@ -125,78 +86,6 @@ function createUser(string $email, string $senhaHash): bool {
         ]);
         $stmt = $pdo->prepare("INSERT INTO usuarios (email, senha) VALUES (?, ?)");
         return $stmt->execute([$email, $senhaHash]);
-    } catch (Exception $e) {
-        error_log("DB Error: " . $e->getMessage());
-        return false;
-    }
-    ---- FIM: Modo PDO ---- */
-}
-
-/**
- * Atualiza o token de reset de um usuário
- * @param string $email
- * @param string $token
- * @param string $expires
- * @return bool
- */
-function updateResetToken(string $email, string $token, string $expires): bool {
-    // ---- INÍCIO: Modo JSON (testes) ----
-    $db = loadJsonDb();
-    foreach ($db['usuarios'] as &$user) {
-        if ($user['email'] === $email) {
-            $user['reset_token'] = $token;
-            $user['token_expires'] = $expires;
-            return saveJsonDb($db);
-        }
-    }
-    return false;
-    // ---- FIM: Modo JSON ----
-
-    /* ---- INÍCIO: Modo PDO (produção) ----
-    try {
-        $pdo = new PDO('pgsql:host=localhost;dbname=juspaperdb', 'usuario', 'senha', [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-        ]);
-        $stmt = $pdo->prepare(
-            "UPDATE usuarios SET reset_token = ?, token_expires = ? WHERE email = ?"
-        );
-        return $stmt->execute([$token, $expires, $email]);
-    } catch (Exception $e) {
-        error_log("DB Error: " . $e->getMessage());
-        return false;
-    }
-    ---- FIM: Modo PDO ---- */
-}
-
-/**
- * Atualiza a senha e limpa o token
- * @param int $userId
- * @param string $novaSenhaHash
- * @return bool
- */
-function updatePassword(int $userId, string $novaSenhaHash): bool {
-    // ---- INÍCIO: Modo JSON (testes) ----
-    $db = loadJsonDb();
-    foreach ($db['usuarios'] as &$user) {
-        if ($user['id'] === $userId) {
-            $user['senha'] = $novaSenhaHash;
-            $user['reset_token'] = null;
-            $user['token_expires'] = null;
-            return saveJsonDb($db);
-        }
-    }
-    return false;
-    // ---- FIM: Modo JSON ----
-
-    /* ---- INÍCIO: Modo PDO (produção) ----
-    try {
-        $pdo = new PDO('pgsql:host=localhost;dbname=juspaperdb', 'usuario', 'senha', [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-        ]);
-        $stmt = $pdo->prepare(
-            "UPDATE usuarios SET senha = ?, reset_token = NULL, token_expires = NULL WHERE id = ?"
-        );
-        return $stmt->execute([$novaSenhaHash, $userId]);
     } catch (Exception $e) {
         error_log("DB Error: " . $e->getMessage());
         return false;

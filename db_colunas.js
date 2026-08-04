@@ -23,7 +23,7 @@
 const COLUNAS = {
     usuarios: [
         'id', 'email', 'telefone', 'senha', 'nome', 'oab',
-        'provider', 'provider_id', 'reset_token', 'token_expires',
+        'provider', 'provider_id',
         'created_at', 'ultimo_login'
     ],
     assinaturas: [

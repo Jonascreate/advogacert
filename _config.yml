@@ -11,8 +11,6 @@ exclude:
   - gpt.php
   - login.php
   - logout.php
-  - process_reset.php
-  - reset.php
   - lib
   - package.json
   - package2.json
