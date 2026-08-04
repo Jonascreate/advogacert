@@ -115,7 +115,13 @@
 
                 var a = document.createElement('a');
                 a.href = href;
-                a.textContent = visivel;
+                // O endereço vai no destino, não na tela: escrito por extenso
+                // ele é uma palavra só, mais larga que a janela do chat, e
+                // estourava o balão. "ver aqui" cabe em qualquer largura.
+                // O endereço completo continua visível ao passar o mouse e na
+                // barra de status do navegador, pelo title e pelo href.
+                a.textContent = 'ver aqui';
+                a.title = visivel;
                 a.target = '_blank';
                 // sem isto, a página aberta ganha acesso a esta pela window.opener
                 a.rel = 'noopener noreferrer';
