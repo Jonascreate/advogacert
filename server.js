@@ -877,9 +877,10 @@ function freeUsadoPelaOab(db, oab) {
 const AGENDA = {
     // 0 = domingo ... 6 = sábado. Todos os dias.
     dias: [0, 1, 2, 3, 4, 5, 6],
-    horaInicio: 9,          // primeiro bloco começa às 9h
-    horaFim: 18,            // último bloco termina às 18h
-    almoco: [12, 13],       // nada entre 12h e 13h
+    // O movimento é à noite: o advogado procura suporte depois do expediente.
+    horaInicio: 18,         // primeiro bloco começa às 18h
+    horaFim: 24,            // último começa às 23h e termina à meia-noite
+    intervalo: null,        // sem parada nessa faixa; use [12, 13] para bloquear 12h-13h
     duracaoMin: 60,         // cada atendimento reserva 1 hora
     anteceMinDias: 1,       // só a partir de amanhã
     janelaDias: 7           // até 7 dias à frente
@@ -927,7 +928,7 @@ function horariosLivres(db, dia) {
     const passoHoras = AGENDA.duracaoMin / 60;
 
     for (let h = AGENDA.horaInicio; h + passoHoras <= AGENDA.horaFim; h += passoHoras) {
-        if (h >= AGENDA.almoco[0] && h < AGENDA.almoco[1]) continue;
+        if (AGENDA.intervalo && h >= AGENDA.intervalo[0] && h < AGENDA.intervalo[1]) continue;
 
         const inicio = instanteBR(dia, h);
         if (inicio.getTime() <= Date.now()) continue;          // hora que já passou
