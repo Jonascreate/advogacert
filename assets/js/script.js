@@ -673,7 +673,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (who === 'bot') text = limparMarkdown(text);
             const div = document.createElement('div');
             div.style.cssText = `
-                margin:6px 0; max-width:80%;
+                margin:6px 0;
                 padding:8px 10px;
                 border-radius:10px;
                 white-space:pre-wrap;
@@ -681,8 +681,10 @@ document.addEventListener('DOMContentLoaded', function() {
                    ele passa da largura do balão e sai pela lateral da janela */
                 overflow-wrap:anywhere;
                 ${who === 'user'
-                    ? 'margin-left:auto;background:#005c4b;color:#e9edef'
-                    : 'margin-right:auto;background:#202c33;color:#e9edef'}
+                    ? 'max-width:80%;margin-left:auto;background:#005c4b;color:#e9edef'
+                    /* o bot é quem manda passo a passo e endereço: ganha mais
+                       largura que o emissor para o texto caber no cinza */
+                    : 'max-width:94%;margin-right:auto;background:#202c33;color:#e9edef'}
             `;
             msgs.appendChild(div);
             msgs.scrollTop = msgs.scrollHeight;
