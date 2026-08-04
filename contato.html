@@ -677,6 +677,43 @@ document.addEventListener('DOMContentLoaded', function() {
                 0%, 100% { box-shadow: 0 4px 16px rgba(0,0,0,.3), 0 0 20px rgba(110, 231, 200, 0.15); }
                 50% { box-shadow: 0 4px 16px rgba(0,0,0,.3), 0 0 40px rgba(110, 231, 200, 0.4); }
             }
+
+            /* ---------- CELULAR ----------
+               A janela do chat e montada por JS com estilo inline, e estilo
+               inline vence folha de estilo — por isso o !important aqui.
+
+               Sem estas regras, num aparelho de 360px de largura a janela
+               (360px fixos + 24px de margem) estourava a tela e ficava com
+               parte cortada. */
+            @media (max-width: 600px) {
+                #chat-frame {
+                    /* colada nas duas bordas: a largura passa a ser a da tela */
+                    left: 12px !important;
+                    right: 12px !important;
+                    width: auto !important;
+                    bottom: 92px !important;
+
+                    /* dvh, e nao vh: no iOS o vh conta a barra de endereco
+                       como se ela nao existisse, e o rodape do chat — com o
+                       campo de digitar — ficava embaixo dela. */
+                    height: calc(100dvh - 104px) !important;
+                    max-height: none !important;
+                }
+
+                /* 16px e o minimo que o Safari aceita sem dar zoom na pagina
+                   inteira quando o dedo toca no campo. Com 14px, o site
+                   inteiro saltava de tamanho ao comecar a digitar. */
+                #chat-frame #chat-input {
+                    font-size: 16px !important;
+                }
+            }
+
+            /* Navegador antigo sem suporte a dvh usa vh, que ao menos aproxima */
+            @supports not (height: 100dvh) {
+                @media (max-width: 600px) {
+                    #chat-frame { height: calc(100vh - 104px) !important; }
+                }
+            }
         `;
         document.head.appendChild(botGlowStyle);
 
@@ -696,6 +733,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // "Falar no WhatsApp" no próprio card de contato, evitando duplicar.
 
         const frame = document.createElement('div');
+        frame.id = 'chat-frame';   // alvo das regras de celular acima
         frame.style.cssText = `
             position:fixed; bottom:95px; right:24px;
             width:360px; height:520px;

@@ -607,10 +607,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 0%, 100% { box-shadow: 0 4px 16px rgba(0,0,0,.3), 0 0 20px rgba(37, 211, 102, 0.15); }
                 50% { box-shadow: 0 4px 16px rgba(0,0,0,.3), 0 0 40px rgba(37, 211, 102, 0.4); }
             }
+
+            /* ---------- CELULAR ----------
+               A janela e montada por JS com estilo inline, e estilo inline
+               vence folha de estilo — dai o !important.
+
+               Sem isto, num aparelho de 360px de largura os 360px fixos da
+               janela mais 24px de margem estouravam a tela.
+
+               Aqui a janela comeca a 160px do rodape porque ha dois botoes
+               flutuantes empilhados (bot e WhatsApp), e nao um so. */
+            @media (max-width: 600px) {
+                #chat-frame {
+                    left: 12px !important;
+                    right: 12px !important;
+                    width: auto !important;
+                    bottom: 156px !important;
+
+                    /* dvh, e nao vh: no iOS o vh ignora a barra de endereco,
+                       e o campo de digitar acabava escondido atras dela. */
+                    height: calc(100dvh - 168px) !important;
+                    max-height: none !important;
+                }
+
+                /* 16px e o minimo que o Safari aceita sem dar zoom na pagina
+                   quando o dedo toca no campo. */
+                #chat-frame #chat-input {
+                    font-size: 16px !important;
+                }
+            }
+
+            @supports not (height: 100dvh) {
+                @media (max-width: 600px) {
+                    #chat-frame { height: calc(100vh - 168px) !important; }
+                }
+            }
         `;
         document.head.appendChild(waGlowStyle);
 
         const frame = document.createElement('div');
+        frame.id = 'chat-frame';   // alvo das regras de celular acima
         frame.style.cssText = `
             position:fixed; bottom:160px; right:24px;
             width:360px; height:520px;
