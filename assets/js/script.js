@@ -341,7 +341,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (!destino) {
                 messageDiv.style.color = '#ef4444';
-                messageDiv.textContent = '✗ Informe seu celular com DDD';
+                messageDiv.textContent = '✗ Informe seu celular com DDD ou seu e-mail';
                 return;
             }
 

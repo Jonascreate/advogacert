@@ -513,10 +513,10 @@
 
                 <form id="loginForm" style="display: block;">
                     <div class="form-group">
-                        <label for="login-telefone">Celular</label>
-                        <input type="text" id="login-telefone" inputmode="tel" placeholder="(DDD) 99999-9999" autocomplete="tel" required>
+                        <label for="login-telefone">Celular ou e-mail</label>
+                        <input type="text" id="login-telefone" placeholder="(DDD) 99999-9999 ou seu@email.com" autocomplete="tel email" required>
                     </div>
-                    <p class="otp-hint">Você recebe um código de 6 dígitos. Sem senha para lembrar. Prefere e-mail? Digite o e-mail neste mesmo campo.</p>
+                    <p class="otp-hint">Você recebe um código de 6 dígitos. Sem senha para lembrar.</p>
                     <button type="submit" class="login-btn" id="login-btn-codigo">Enviar código</button>
                     <div id="login-message" style="margin-top:15px;text-align:center;font-size:14px;"></div>
                     <div class="login-divider">ou entre com</div>
@@ -568,8 +568,8 @@
                 <form id="otpForm" style="display: none;">
                     <div id="otp-passo-destino">
                         <div class="form-group">
-                            <label for="otp-destino-input">Celular</label>
-                            <input type="text" id="otp-destino-input" inputmode="tel" placeholder="(DDD) 99999-9999" autocomplete="tel" required>
+                            <label for="otp-destino-input">Celular ou e-mail</label>
+                            <input type="text" id="otp-destino-input" placeholder="(DDD) 99999-9999 ou seu@email.com" autocomplete="tel email" required>
                         </div>
                         <p class="otp-hint">Enviamos um código de 6 dígitos. Sem senha para lembrar.</p>
                         <button type="submit" class="login-btn" id="otp-btn-enviar">Enviar código</button>
