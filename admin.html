@@ -60,10 +60,10 @@
                 <div class="sub" id="atualizado"></div>
             </div>
             <div class="admin-head-acoes">
-                <!-- Assinantes NÃO é aba: as abas são a linha do tempo de um
-                     atendimento, e controle de plano não é etapa dela. É uma
-                     planilha de controle, aberta quando você precisa dela. -->
-                <button class="acao" id="btn-assinantes">Assinantes</button>
+                <!-- Cadastros e agenda NÃO é aba: as abas são a linha do tempo
+                     de um atendimento, e controle de cadastro não é etapa
+                     dela. É painel de controle, aberto quando você precisa. -->
+                <button class="acao" id="btn-cadastros">Cadastros e agenda</button>
                 <button class="acao" id="btn-recarregar">Atualizar agora</button>
             </div>
         </div>
@@ -76,9 +76,9 @@
              aqui: o que entra vem do servidor e é montado via DOM.
 
              A ordem abaixo é a ordem da esteira: confere a OAB, tria o
-             horário, trabalha o chamado. Assinantes não está aqui — não é
-             etapa de atendimento, é planilha de controle (veja o modal
-             #modal-assinantes, mais abaixo). -->
+             horário, trabalha o chamado. Cadastros e agenda não está aqui —
+             não é etapa de atendimento, é painel de controle (veja o modal
+             #modal-cadastros, mais abaixo). -->
         <section id="aba-verificacao" class="aba-conteudo"></section>
         <section id="aba-triagem" class="aba-conteudo" style="display:none;"></section>
         <section id="aba-chamados" class="aba-conteudo" style="display:none;"></section>
@@ -136,21 +136,20 @@
         </section>
     </div>
 
-    <!-- ================= ASSINANTES (planilha de controle) =================
+    <!-- ================= CADASTROS E AGENDA (painel de controle) =============
          Fora do fluxo de abas de propósito. Verificação, Triagem e Chamados
          são a linha do tempo de UM atendimento: cada uma é uma etapa que
-         ele atravessa. Assinantes não é isso — é a mesma pessoa em qualquer
-         etapa, ou em nenhuma. Colocá-la como aba a deixava fora de ordem em
-         qualquer lugar da barra: virava planilha no meio de uma esteira.
-         Aqui ela abre por cima, você confere e fecha, sem interromper onde
-         estava. -->
-    <div id="modal-assinantes" class="admin-modal" style="display:none;" role="dialog" aria-modal="true" aria-label="Assinantes">
+         ele atravessa. Cadastros e agenda não é isso — é a mesma pessoa em
+         qualquer etapa, ou em nenhuma. Aqui abre por cima, você confere e
+         fecha, sem interromper onde estava. -->
+    <div id="modal-cadastros" class="admin-modal" style="display:none;" role="dialog" aria-modal="true" aria-label="Cadastros e agenda">
         <div class="admin-modal-caixa">
             <div class="admin-modal-topo">
-                <h2>Assinantes</h2>
-                <button class="acao" id="btn-fechar-assinantes" aria-label="Fechar">Fechar</button>
+                <h2>Cadastros e agenda</h2>
+                <button class="acao" id="btn-fechar-cadastros" aria-label="Fechar">Fechar</button>
             </div>
-            <div id="modal-assinantes-conteudo"></div>
+            <div id="modal-cadastros-pessoas"></div>
+            <div id="modal-cadastros-agenda" style="margin-top:2.5rem;"></div>
         </div>
     </div>
 

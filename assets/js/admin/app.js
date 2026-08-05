@@ -83,9 +83,10 @@
     // As abas são a linha do tempo de UM atendimento: cada uma é uma etapa
     // que ele atravessa, da verificação da OAB ao chamado fechado.
     //
-    // Assinantes não é etapa — é a mesma pessoa em qualquer etapa, ou em
-    // nenhuma. Por isso não está aqui: é o botão "Assinantes" no topo, que
-    // abre por cima como planilha de controle, sem entrar na esteira.
+    // Cadastros e agenda não é etapa — é a mesma pessoa em qualquer etapa,
+    // ou em nenhuma. Por isso não está aqui: é o botão "Cadastros e agenda"
+    // no topo, que abre por cima como painel de controle, sem entrar na
+    // esteira.
     var ABAS = [
         { id: 'verificacao', rotulo: 'Verificação de OAB' },
         { id: 'triagem',     rotulo: 'Triagem' },
@@ -203,14 +204,14 @@
         ]).then(marcarHora);
     }
 
-    // ---------------- modal de assinantes ----------------
+    // ---------------- modal de cadastros e agenda ----------------
     // Não faz parte da esteira, então não faz parte de mostrarAba/ABAS. É
     // uma janela por cima: abre, você confere, fecha, e volta pra aba onde
     // estava — nada na tela de trás muda de lugar.
-    function ligarModalAssinantes() {
-        var modal = document.getElementById('modal-assinantes');
-        var abrir = document.getElementById('btn-assinantes');
-        var fechar = document.getElementById('btn-fechar-assinantes');
+    function ligarModalCadastros() {
+        var modal = document.getElementById('modal-cadastros');
+        var abrir = document.getElementById('btn-cadastros');
+        var fechar = document.getElementById('btn-fechar-cadastros');
         if (!modal || !abrir || !fechar) return;
 
         function mostrar() {
@@ -239,7 +240,8 @@
         global.AdminIndicadores.montar(document.getElementById('aba-indicadores'));
         global.AdminCadastros.montar({
             resumo: document.getElementById('resumo'),
-            pessoas: document.getElementById('modal-assinantes-conteudo'),
+            pessoas: document.getElementById('modal-cadastros-pessoas'),
+            agenda: document.getElementById('modal-cadastros-agenda'),
             // o alvo é o div interno, não a seção: o bloco de ajuda embaixo
             // é conteúdo fixo e seria apagado a cada redesenho
             diagnostico: document.getElementById('aba-sistema-diag')
@@ -261,7 +263,7 @@
         clearInterval(tempoPolling);
         telaPainel.style.display = 'none';
         telaLogin.style.display = 'flex';
-        var modal = document.getElementById('modal-assinantes');
+        var modal = document.getElementById('modal-cadastros');
         if (modal) modal.style.display = 'none';
     }
 
@@ -272,7 +274,7 @@
 
         ligarLogin();
         ligarAbas();
-        ligarModalAssinantes();
+        ligarModalCadastros();
         API.aoExpirarSessao(voltarAoLogin);
 
         document.getElementById('btn-recarregar').onclick = function () {

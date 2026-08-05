@@ -187,9 +187,8 @@
 
     /**
      * Confirmar é o que fecha a triagem: o atendimento sai daqui e entra na
-     * fila de chamados, com o prazo correndo. A pendência de assinatura se
-     * confere ANTES, na Lista de assinantes — por isso ela vem primeiro na
-     * ordem das abas.
+     * fila de chamados, com o prazo correndo. Pendência de assinatura se
+     * confere no painel de controle (botão "Cadastros e agenda" no topo).
      */
     function confirmar(item) {
         global.AdminDesfazer.agendar({

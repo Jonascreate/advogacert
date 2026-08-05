@@ -3296,14 +3296,13 @@ const server = http.createServer((req, res) => {
     // ============ PAINEL: POST /admin/confirmar ============
     // O fim da triagem: confirma o horário E abre o chamado, num passo só.
     //
-    // A esteira é: confere a OAB → lista de assinantes diz se há pendência →
-    // tria o horário → CONFIRMA, e o atendimento entra na fila de chamados
-    // com o prazo correndo.
+    // A esteira é: confere a OAB → tria o horário → CONFIRMA, e o
+    // atendimento entra na fila de chamados com o prazo correndo.
     //
-    // Já houve uma parada intermediária em "Cadastros e agenda" entre a
-    // triagem e o chamado. Saiu: aquela aba virou a lista de assinantes, que
-    // é consulta — a conferência de pendência acontece ANTES de confirmar,
-    // não num terceiro clique depois.
+    // Já houve uma parada intermediária ("Cadastros e agenda" entre a
+    // triagem e o chamado, com um botão "Abrir chamado" próprio). Saiu:
+    // confirmar já abre o chamado direto, e Cadastros e agenda virou
+    // painel de controle — consulta de cadastro, não etapa da esteira.
     if (method === 'POST' && url === '/admin/confirmar') {
         let body = '';
         req.on('data', chunk => body += chunk);
@@ -3413,7 +3412,7 @@ const server = http.createServer((req, res) => {
     // A rota /admin/promover morava aqui. Era o segundo passo de um fluxo em
     // dois cliques (confirmar na triagem, abrir chamado em Cadastros e
     // agenda) que deixou de existir: /admin/confirmar faz os dois de uma
-    // vez, e a aba do meio virou a lista de assinantes.
+    // vez, e Cadastros e agenda virou painel de controle fora da esteira.
 
     // ============ PAINEL: GET /admin/linha-tempo ============
     // A história daquela inscrição, em ordem. Montada na hora a partir das
@@ -4057,13 +4056,19 @@ O QUE CADA TABELA GUARDA
 ============================================================
 AS ABAS DO PAINEL, NA ORDEM DA ESTEIRA
 ============================================================
-1. Verificação de OAB — confere a inscrição no CNA e libera.
-2. Lista de assinantes — só quem tem plano (ativo ou vencido). É consulta:
-   serve para ver pendência ANTES de confirmar um atendimento.
-3. Triagem — a central de horários: grade da semana, alertas, remarcação e
-   a configuração da agenda. Confirmar aqui já abre o chamado.
-4. Chamados — o trabalho com prazo correndo.
-5. Indicadores e 6. Servidor e banco.
+1. Verificação de OAB — confere a inscrição no CNA e libera. Quem já foi
+   conferido mas ainda não marcou horário também aparece aqui (filtro
+   "Conferidas"), com botão de lembrar ou marcar por ele.
+2. Triagem — a central de horários: grade da semana, alertas, remarcação e
+   a configuração da agenda. Só entra quem JÁ tem hora marcada. Confirmar
+   aqui já abre o chamado, num passo só.
+3. Chamados — o trabalho com prazo correndo.
+4. Indicadores e 5. Servidor e banco.
+
+"Cadastros e agenda" NÃO é aba — é o botão no topo do painel, ao lado de
+"Atualizar agora". Abre por cima como painel de controle (todo cadastro,
+plano, chamado grátis, agenda marcada) e fecha sem mudar de aba. Não é
+etapa de atendimento, por isso ficou fora da esteira.
 
 O selo de cada aba conta só o que está parado nela, e vem de
 /admin/contadores. Âmbar = pendência normal. Vermelho = esperando há mais
@@ -4073,8 +4078,7 @@ de 24h ou conflito de horário. Sem selo = nada a fazer.
 COMO LER O PAINEL
 ============================================================
 - "Inadimplente" = valida_ate já passou e ninguém cancelou. É de quem se cobra.
-- "Cancelada" = pediu para sair. "Sem plano" = nunca assinou. Estes dois
-  NÃO aparecem na Lista de assinantes — ela é só de quem paga.
+- "Cancelada" = pediu para sair. "Sem plano" = nunca assinou.
 - "Renovação" alterna entre Automática e Manual clicando no botão.
 - Assinatura liberada na mão nasce Manual de propósito: vence e vira
   inadimplente, para você reavaliar em vez de renovar sozinha.
