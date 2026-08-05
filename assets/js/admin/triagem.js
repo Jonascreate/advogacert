@@ -35,45 +35,6 @@
         return 'https://wa.me/' + so + '?text=' + encodeURIComponent(texto);
     }
 
-    /**
-     * Etapa 1: ainda não conferida. A bola está com você, no CNA — por isso
-     * o cartão leva direto para a aba onde a decisão é tomada, em vez de
-     * repetir aqui os três botões e ter duas telas decidindo a mesma coisa.
-     */
-    function cartaoPendente(item) {
-        var atrasado = item.horas_desde >= VERIFICACAO_HORAS;
-
-        return el('article.triagem-card' + (atrasado ? '.critico' : ''), {}, [
-            el('div.triagem-topo', {}, [
-                el('div', {}, [
-                    el('span.triagem-inscricao', { texto: item.inscricao }),
-                    el('div.fraco', { texto: item.nome || '—' })
-                ]),
-                el('div.triagem-lado', {}, [
-                    selo(item.tipo),
-                    el('span' + (atrasado ? '.critico' : '.fraco'), {
-                        texto: 'há ' + D.fmtEspera(item.horas_desde)
-                    })
-                ])
-            ]),
-            el('div.triagem-acoes', {}, [
-                el('button.acao.acao-ok', {
-                    type: 'button',
-                    texto: 'Conferir no CNA e decidir',
-                    aoClicar: function () {
-                        var b = document.getElementById('btn-aba-verificacao');
-                        if (b) b.click();
-                    }
-                }),
-                el('button.acao', {
-                    type: 'button',
-                    texto: 'Ver linha do tempo',
-                    aoClicar: function (e) { abrirLinha(item.inscricao, e.target); }
-                })
-            ])
-        ]);
-    }
-
     function cartaoAguardando(item) {
         var frio = item.horas_desde >= COBRANCA_HORAS;
         var link = whatsapp(item.contato,
@@ -144,11 +105,13 @@
                 ])
             ]),
             el('div.triagem-acoes', {}, [
-                // o botão que fecha a triagem e abre o trabalho
+                // O botão que fecha a triagem. Ele NÃO abre chamado: manda o
+                // atendimento para "Cadastros e agenda", que é a etapa
+                // seguinte. O chamado nasce lá, depois da conferência.
                 el('button.acao.acao-promover', {
                     type: 'button',
-                    texto: 'Passar para chamado',
-                    aoClicar: function () { promover(item); }
+                    texto: 'Confirmar e enviar para agenda',
+                    aoClicar: function () { confirmar(item); }
                 }),
                 el('button.acao', {
                     type: 'button',
@@ -168,18 +131,22 @@
         ]);
     }
 
-    function promover(item) {
-        var premium = item.tipo === 'premium';
-        if (!confirm('Passar ' + item.inscricao + ' para a fila de chamados?\n\n' +
-                     'A partir daí o prazo começa a correr.')) return;
+    /**
+     * Fecha a triagem: o atendimento sai daqui e passa para Cadastros e
+     * agenda. O chamado ainda não existe — nasce lá, no botão "Abrir
+     * chamado", depois que você confere o cadastro.
+     */
+    function confirmar(item) {
+        if (!confirm('Confirmar ' + item.inscricao + ' e enviar para Cadastros e agenda?\n\n' +
+                     'Ele sai da triagem. O chamado é aberto lá, na próxima aba.')) return;
 
         global.AdminDesfazer.agendar({
-            texto: item.inscricao + ' → chamado',
+            texto: item.inscricao + ' → agenda',
             aoConfirmar: function () {
-                return global.AdminApi.promover(item.id, premium ? 'premium' : null)
+                return global.AdminApi.confirmar(item.id)
                     .then(function () {
                         carregar();
-                        if (global.AdminFilaChamados) global.AdminFilaChamados.recarregar();
+                        if (global.AdminCadastros) global.AdminCadastros.recarregar();
                     });
             }
         });
@@ -296,31 +263,24 @@
             el('div.bloco-topo', {}, el('div', {}, [
                 el('h2', { texto: 'Triagem' }),
                 el('p.bloco-nota', {
-                    texto: 'Tempo real. A esteira inteira, do pedido ao atendimento.'
+                    texto: 'Tempo real. Aqui se resolve o horário — a conferência da OAB é na aba anterior.'
                 })
             ])),
 
             el('h3.ind-sub', {
-                texto: '1. Aguardando você conferir a OAB (' + estado.pendentes.length + ')'
-            }),
-            estado.pendentes.length
-                ? el('div.triagem-lista', {}, estado.pendentes.map(cartaoPendente))
-                : el('div.vazio', { texto: 'Nenhuma inscrição esperando conferência.' }),
-
-            el('h3.ind-sub', {
-                texto: '2. Aguardando o cliente marcar (' + estado.aguardando.length + ')'
+                texto: '1. Sem horário marcado (' + estado.aguardando.length + ')'
             }),
             estado.aguardando.length
                 ? el('div.triagem-lista', {}, estado.aguardando.map(cartaoAguardando))
                 : el('div.vazio', { texto: 'Ninguém liberado esperando para marcar.' }),
 
             el('h3.ind-sub', {
-                texto: '3. Marcados, esperando você priorizar (' + estado.marcados.length +
+                texto: '2. Horário marcado — revise e confirme (' + estado.marcados.length +
                        (estado.atrasados ? ' · ' + estado.atrasados + ' passaram da hora' : '') + ')'
             }),
             estado.marcados.length
                 ? el('div.triagem-lista', {}, estado.marcados.map(cartaoMarcado))
-                : el('div.vazio', { texto: 'Nada esperando para virar chamado.' })
+                : el('div.vazio', { texto: 'Nada esperando confirmação.' })
         ];
 
         D.trocar(alvo, blocos);
@@ -340,7 +300,7 @@
             // dentro dela — inclusive marcado esperando ser priorizado. Ela só
             // apaga quando tudo passou para chamado, que é o fim da triagem.
             if (global.AdminBadge) {
-                var total = estado.pendentes.length + estado.aguardando.length + estado.marcados.length;
+                var total = estado.aguardando.length + estado.marcados.length;
                 global.AdminBadge('triagem', 'Triagem', total, total > 0);
             }
             desenhar();

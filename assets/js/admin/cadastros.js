@@ -155,18 +155,28 @@
         var lista = estado.dados.agendamentos || [];
 
         var linhas = lista.map(function (a) {
-            var passou = new Date(a.inicio) < new Date() && a.status === 'marcado';
-            var mapa = {
-                atendido: ['Atendido', 'ativa'],
-                faltou: ['Faltou', 'usado'],
-                cancelado: ['Cancelado', 'sem']
-            }[a.status] || (passou ? ['Aguardando baixa', 'atrasada'] : ['Marcado', 'livre']);
+            var passou = new Date(a.inicio) < new Date() && !a.virou_chamado;
+            var mapa = a.virou_chamado ? ['Virou chamado', 'ativa']
+                     : a.confirmado    ? ['Confirmado', 'livre']
+                     : a.status === 'cancelado' ? ['Cancelado', 'sem']
+                     : ['Na triagem', 'sem'];
+
+            // O último passo da esteira: confirmado na agenda, vira trabalho.
+            // Só aparece no que foi confirmado e ainda não virou chamado.
+            var acao = (a.confirmado && !a.virou_chamado)
+                ? el('button.acao.acao-promover', {
+                    type: 'button', texto: 'Abrir chamado',
+                    aoClicar: function () { abrirChamado(a); }
+                  })
+                : (a.confirmado || a.virou_chamado ? null : el('span.fraco', { texto: 'aguarda triagem' }));
 
             return el('tr', {}, [
-                el('td', { 'data-rotulo': 'Quando' }, el('span.mono', { texto: D.fmtData(a.inicio) })),
+                el('td', { 'data-rotulo': 'Quando' },
+                    el('span.mono' + (passou ? '.critico' : ''), { texto: D.fmtData(a.inicio) })),
                 el('td', { 'data-rotulo': 'Quem', texto: a.nome || '—' }),
                 el('td', { 'data-rotulo': 'OAB' }, el('span.mono', { texto: a.oab || '—' })),
-                el('td', { 'data-rotulo': 'Status' }, D.tag(mapa[0], mapa[1]))
+                el('td', { 'data-rotulo': 'Status' }, D.tag(mapa[0], mapa[1])),
+                el('td', { 'data-rotulo': '' }, acao || document.createTextNode(''))
             ]);
         });
 
@@ -177,7 +187,7 @@
             ])),
             el('div.tabela-wrap.responsiva', {}, [
                 el('table', {}, [
-                    el('thead', {}, el('tr', {}, ['Quando', 'Quem', 'OAB', 'Status'].map(function (t) {
+                    el('thead', {}, el('tr', {}, ['Quando', 'Quem', 'OAB', 'Status', ''].map(function (t) {
                         return el('th', { texto: t });
                     }))),
                     el('tbody', {}, linhas)
@@ -219,6 +229,22 @@
                 ]);
             }))
         ]);
+    }
+
+    /** Último passo: o atendimento confirmado vira trabalho na fila. */
+    function abrirChamado(a) {
+        if (!confirm('Abrir chamado para ' + (a.oab || a.nome) + '?\n\n' +
+                     'A partir daqui o prazo de atendimento começa a correr.')) return;
+
+        global.AdminDesfazer.agendar({
+            texto: (a.oab || a.nome) + ' → chamado',
+            aoConfirmar: function () {
+                return global.AdminApi.promover(a.id).then(function () {
+                    carregar();
+                    if (global.AdminFilaChamados) global.AdminFilaChamados.recarregar();
+                });
+            }
+        });
     }
 
     function carregar() {

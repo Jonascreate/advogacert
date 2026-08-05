@@ -94,6 +94,13 @@
             });
         },
 
+        confirmar: function (agendamento_id, voltar) {
+            return pedir('/admin/confirmar', {
+                metodo: 'POST',
+                corpo: { agendamento_id: agendamento_id, voltar: voltar === true }
+            });
+        },
+
         promover: function (agendamento_id, prioridade) {
             return pedir('/admin/promover', {
                 metodo: 'POST',

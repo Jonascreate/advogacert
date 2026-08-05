@@ -2021,7 +2021,14 @@ const server = http.createServer((req, res) => {
             // não um histórico — por isso não vai invertida como as outras
             agendamentos: (db.agendamentos || [])
                 .slice()
-                .sort((a, b) => new Date(a.inicio) - new Date(b.inicio)),
+                .sort((a, b) => new Date(a.inicio) - new Date(b.inicio))
+                .map(a => ({
+                    ...a,
+                    // a agenda precisa saber em que ponto da esteira o item
+                    // está para oferecer o botão certo
+                    virou_chamado: !!a.chamado_id,
+                    confirmado: a.status === 'confirmado'
+                })),
             assinaturas: db.assinaturas.slice().reverse(),
             // vai com o nome e o contato de quem abriu: o painel lista os
             // chamados um a um, e só o usuario_id não diz nada na tela
@@ -2469,6 +2476,66 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // ============ PAINEL: POST /admin/confirmar ============
+    // A etapa que faltava entre a triagem e o chamado.
+    //
+    // A esteira é: confere a OAB → tria e marca a hora → CONFIRMA, e o
+    // atendimento passa para "Cadastros e agenda" → abre o chamado, e vira
+    // trabalho com prazo correndo.
+    //
+    // Antes a triagem pulava direto para chamado, e a agenda ficava sendo
+    // uma tela de consulta que ninguém alimentava de propósito.
+    if (method === 'POST' && url === '/admin/confirmar') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            const responder = (status, payload) => {
+                res.writeHead(status, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(payload));
+            };
+
+            if (!sessaoAdmin(req)) {
+                responder(401, { success: false, error: 'Sessão expirada' });
+                return;
+            }
+
+            try {
+                const { agendamento_id, voltar } = JSON.parse(body || '{}');
+                const db = loadJsonDb();
+                const a = (db.agendamentos || []).find(x => x.id === agendamento_id);
+
+                if (!a) {
+                    responder(404, { success: false, error: 'Agendamento não encontrado' });
+                    return;
+                }
+                if (a.chamado_id) {
+                    responder(400, { success: false, error: 'Já virou chamado.' });
+                    return;
+                }
+
+                a.status = voltar ? 'marcado' : 'confirmado';
+
+                auditar(db, {
+                    acao: voltar ? 'devolvido_para_triagem' : 'confirmado_na_agenda',
+                    alvo: `OAB ${a.oab}`,
+                    detalhe: `Agendamento #${a.id} em ${a.inicio}`,
+                    ip: ipDoPedido(req)
+                });
+                saveJsonDb(db);
+
+                responder(200, {
+                    success: true,
+                    msg: voltar ? 'Devolvido para a triagem.' : 'Confirmado. Está em Cadastros e agenda.'
+                });
+
+            } catch (err) {
+                console.error('Erro ao confirmar:', err.message);
+                responder(400, { success: false, error: 'Erro interno' });
+            }
+        });
+        return;
+    }
+
     // ============ PAINEL: POST /admin/promover ============
     // O passo que você pediu: só o que foi priorizado na triagem vira chamado.
     // Até aqui existia um horário combinado; daqui em diante existe trabalho
@@ -2498,6 +2565,15 @@ const server = http.createServer((req, res) => {
                 }
                 if (a.chamado_id) {
                     responder(400, { success: false, error: 'Este atendimento já virou chamado.' });
+                    return;
+                }
+                // Só abre chamado o que passou pela agenda. É a etapa que
+                // garante que ninguém pula a conferência de cadastro.
+                if (a.status !== 'confirmado') {
+                    responder(400, {
+                        success: false,
+                        error: 'Confirme na triagem antes: o atendimento precisa passar por Cadastros e agenda.'
+                    });
                     return;
                 }
 
