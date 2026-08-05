@@ -3143,7 +3143,19 @@ ENCERRAMENTO DE CONVERSA
                 res.end('Erro interno');
                 return;
             }
-            res.writeHead(200, { 'Content-Type': contentType });
+            // O servidor não mandava cabeçalho de cache nenhum, e aí cada
+            // navegador decidia por conta própria por quanto tempo guardar o
+            // arquivo. É assim que o painel continuava servindo a versão
+            // anterior do admin.html depois de uma publicação.
+            //
+            // "no-cache" não proíbe guardar: obriga a perguntar ao servidor se
+            // mudou antes de usar. Quando não mudou, a resposta é curta e
+            // barata; quando mudou, vem o arquivo novo. É o que se quer para
+            // HTML, que é o ponto de entrada e referencia todo o resto.
+            res.writeHead(200, {
+                'Content-Type': contentType,
+                'Cache-Control': 'no-cache, must-revalidate'
+            });
             res.end(data);
         });
     });
