@@ -991,21 +991,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
             /* 600px, e não 480: aparelhos de 540 a 600 ficavam de fora e
                recebiam o layout de computador espremido */
+            /* celular: tela cheia, pelo mesmo motivo da caixa do gratuito —
+               em caixa flutuante o rodapé com o botão de pagar saía da tela */
             @media (max-width: 600px) {
-                .pay-overlay { padding: 0; }
+                .pay-overlay { padding: 0; align-items: stretch; overflow: hidden; }
                 .pay-modal {
                     max-width: none;
-                    border-radius: 20px 20px 0 0;
-                    /* colado embaixo, como folha que sobe — mas com margem
-                       automática só no topo, para poder rolar quando é alto */
-                    margin: auto 0 0;
-                    max-height: 92dvh;
+                    width: 100%;
+                    height: 100dvh;
+                    max-height: none;
+                    margin: 0;
+                    border: none;
+                    border-radius: 0;
                 }
                 @supports not (height: 100dvh) {
-                    .pay-modal { max-height: 92vh; }
+                    .pay-modal { height: 100vh; }
                 }
                 .pay-head { padding: 1.1rem 1.15rem; }
-                .pay-corpo { padding: 1.15rem; }
+                /* o respiro de baixo tira o botão de trás da barra do navegador */
+                .pay-corpo { padding: 1.15rem 1.15rem 3.5rem; }
                 .pay-linha { flex-direction: column; gap: 0; }
                 /* abaixo de 16px o Safari dá zoom na página inteira quando o
                    dedo toca no campo, e o modal sai do lugar */
@@ -1461,25 +1465,59 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 .free-aviso strong { color: #6ee7c8; }
 
+                /* ---- celular: folha em tela cheia ----
+                   São cinco campos, mais a grade de dias e as fichas de
+                   horário. Numa tela de 360px isso não cabe em caixa flutuante
+                   de jeito nenhum — e o que não cabia ficava fora do alcance
+                   do dedo, com o botão de enviar escondido.
+
+                   Em tela cheia não há como transbordar: a folha ocupa a
+                   janela inteira e o conteúdo rola dentro dela. */
                 @media (max-width: 600px) {
-                    .free-overlay { padding: 0; }
+                    .free-overlay {
+                        padding: 0;
+                        align-items: stretch;
+                        overflow: hidden;          /* quem rola é a folha */
+                    }
                     .free-card {
-                        padding: 2rem 1.35rem 1.5rem;
-                        border-radius: 20px 20px 0 0;
-                        margin: auto 0 0;
-                        max-height: 94dvh;
+                        max-width: none;
+                        width: 100%;
+                        height: 100dvh;
+                        max-height: none;
+                        margin: 0;
+                        border: none;
+                        border-radius: 0;
+                        /* o respiro de baixo tira o botão de trás da barra do
+                           navegador, que no celular cobre o rodapé da página */
+                        padding: 1.75rem 1.25rem 4rem;
                         overflow-y: auto;
                         -webkit-overflow-scrolling: touch;
+                        overscroll-behavior: contain;
                     }
+                    /* a borda animada é posicionada sobre a caixa inteira; num
+                       container que rola ela fica parada enquanto o conteúdo
+                       anda, e aparece cortando o texto */
+                    .free-card::after { display: none; }
+
+                    .free-icone { width: 52px; height: 52px; font-size: 1.5rem; margin-bottom: 1rem; }
+                    .free-card h2 { font-size: 1.45rem; }
+                    .free-sub { font-size: 0.86rem; margin-bottom: 1.25rem; }
+                    .free-grupo { margin-bottom: 0.9rem; }
                     .free-linha { flex-direction: column; gap: 0; }
                     .free-linha .free-uf { flex: 1; }
-                    /* abaixo de 16px o Safari dá zoom na página ao tocar no campo */
-                    .free-grupo input, .free-grupo select { font-size: 16px; }
-                    .free-card h2 { font-size: 1.5rem; }
+                    /* abaixo de 16px o Safari dá zoom na página ao tocar no
+                       campo, e a folha sai do lugar */
+                    .free-grupo input, .free-grupo select {
+                        font-size: 16px;
+                        padding: 0.85rem 1rem;
+                    }
+                    .free-fechar { top: 0.75rem; right: 0.9rem; font-size: 1.8rem; }
+                    .free-dia { min-width: 4.1rem; padding: 0.6rem 0.5rem; }
+                    .free-hora { padding: 0.7rem 0.9rem; }
                 }
                 @supports not (height: 100dvh) {
                     @media (max-width: 600px) {
-                        .free-card { max-height: 94vh; }
+                        .free-card { height: 100vh; }
                     }
                 }
             `;
