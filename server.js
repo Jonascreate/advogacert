@@ -1523,7 +1523,7 @@ const server = http.createServer((req, res) => {
                     responder(200, {
                         success: false,
                         situacao: 'recusado',
-                        error: 'Não conseguimos confirmar esta inscrição. Fale com a gente pelo WhatsApp.'
+                        error: 'Não foi possível concluir seu cadastro. Fale com a gente pelo WhatsApp.'
                     });
                     return;
                 }
@@ -1533,7 +1533,7 @@ const server = http.createServer((req, res) => {
                         success: true,
                         situacao: 'pendente',
                         verificacao_id: antiga.id,
-                        msg: 'Sua inscrição já está em conferência. Avisamos por e-mail assim que liberar.'
+                        msg: 'Seu cadastro já está em análise. Avisamos por e-mail assim que liberar.'
                     });
                     return;
                 }
@@ -1562,7 +1562,7 @@ const server = http.createServer((req, res) => {
                     success: true,
                     situacao: 'pendente',
                     verificacao_id: registro.id,
-                    msg: 'Recebemos seu pedido. Conferimos sua inscrição na OAB e avisamos por e-mail — costuma levar poucas horas.'
+                    msg: 'Recebemos seu pedido. Assim que confirmarmos seu cadastro, você recebe um e-mail para escolher o horário — costuma levar poucas horas.'
                 });
 
             } catch (err) {
@@ -1618,8 +1618,11 @@ const server = http.createServer((req, res) => {
                 const verificacao = (db.verificacoes_oab || [])
                     .find(v => v.id === entrada.verificacao_id);
 
+                // Esta primeira mensagem é trava técnica, não recado ao
+                // cliente: só chega aqui quem chamou a rota por fora, pulando
+                // a tela. Pela tela é impossível cair neste caso.
                 if (!verificacao) {
-                    responder(400, { success: false, error: 'Faça a identificação da inscrição antes de marcar.' });
+                    responder(400, { success: false, error: 'Pedido inválido.' });
                     return;
                 }
                 if (verificacao.status !== 'confere') {
@@ -1627,8 +1630,8 @@ const server = http.createServer((req, res) => {
                         success: false,
                         situacao: verificacao.status,
                         error: verificacao.status === 'pendente'
-                            ? 'Sua inscrição ainda está em conferência. Avisamos por e-mail assim que liberar.'
-                            : 'Não conseguimos confirmar esta inscrição.'
+                            ? 'Seu cadastro ainda está sendo confirmado. Avisamos por e-mail assim que liberar.'
+                            : 'Não foi possível concluir seu cadastro. Fale com a gente pelo WhatsApp.'
                     });
                     return;
                 }

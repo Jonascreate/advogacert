@@ -1303,13 +1303,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     filter: drop-shadow(0 0 2px rgba(79, 163, 255, 0.5));
                 }
 
+                /* o mesmo halo pulsante do ícone da tela de login; sem ele o
+                   quadrado ficava chapado ao lado do resto da caixa */
+                @keyframes freeIconeGlow {
+                    0%, 100% { box-shadow: 0 0 20px rgba(110, 231, 200, 0.15); }
+                    50%      { box-shadow: 0 0 40px rgba(110, 231, 200, 0.4); }
+                }
                 .free-icone {
                     display: flex; align-items: center; justify-content: center;
-                    width: 60px; height: 60px; margin: 0 auto 1.4rem;
+                    width: 68px; height: 68px; margin: 0 auto 1.4rem;
                     border-radius: 18px;
                     background: rgba(110, 231, 200, 0.12);
                     border: 1px solid rgba(110, 231, 200, 0.25);
-                    color: #6ee7c8; font-size: 1.7rem;
+                    color: #6ee7c8; font-size: 2rem;
+                    animation: freeIconeGlow 3.2s ease-in-out infinite;
+                }
+                @media (prefers-reduced-motion: reduce) {
+                    .free-icone { animation: none; }
                 }
                 .free-card h2 {
                     font-family: 'Outfit', sans-serif;
@@ -1405,7 +1415,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <button type="button" class="free-fechar" id="free-close" aria-label="Fechar">&times;</button>
                     <div class="free-icone"><i class="fas fa-headset"></i></div>
                     <h2 id="free-titulo">1 <span>suporte grátis</span></h2>
-                    <p class="free-sub" id="free-sub">É um por inscrição na OAB. Confirmamos sua inscrição antes de marcar.</p>
+                    <p class="free-sub" id="free-sub">Um por inscrição na OAB. Preencha seus dados para solicitar.</p>
 
                     <form id="free-form-id" novalidate>
                         <div class="free-grupo">
@@ -1491,7 +1501,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 p.textContent = texto;
                 blocoEspera.appendChild(p);
                 mostrarPasso('espera');
-                q('#free-sub').textContent = 'Conferência da inscrição';
+                q('#free-sub').textContent = 'Pedido recebido';
             }
 
             // ---- passo 1: identificação ----
@@ -1525,7 +1535,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.situacao === 'liberado') {
                         verificacaoId = data.verificacao_id;
                         aviso('');
-                        q('#free-sub').textContent = 'Inscrição confirmada. Escolha o horário.';
+                        q('#free-sub').textContent = 'Tudo certo. Escolha o horário.';
                         mostrarPasso('agenda');
                         carregarAgenda();
                         return;
@@ -1630,7 +1640,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 verificacaoId = null;
                 mostrarPasso('identificacao');
-                q('#free-sub').textContent = 'É um por inscrição na OAB. Confirmamos sua inscrição antes de marcar.';
+                q('#free-sub').textContent = 'Um por inscrição na OAB. Preencha seus dados para solicitar.';
                 aviso('');
                 overlayFree.classList.add('aberto');
                 document.body.style.overflow = 'hidden';
