@@ -671,7 +671,10 @@ const MIME_TYPES = {
 // que é o que se quer rodando na sua máquina.
 const COLECOES = [
     'usuarios', 'assinaturas', 'chamados', 'logins', 'agendamentos',
-    'verificacoes_oab', 'auditoria'
+    'verificacoes_oab', 'auditoria',
+    // a agenda deixou de ser constante no código e virou dado: horário de
+    // trabalho por dia, ajustes gerais e datas bloqueadas
+    'agenda_config', 'agenda_ajustes', 'agenda_bloqueios'
 ];
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || SECRETS.supabase?.url || '').replace(/\/$/, '');
@@ -1072,97 +1075,339 @@ function ipDoPedido(req) {
 }
 
 // ============================================================
-// AGENDA DO SUPORTE GRATUITO
+// AGENDA DO SUPORTE
 //
 // O premium não agenda: entra na fila e é atendido a qualquer momento. O
 // gratuito marca hora, e por isso precisa de uma lista de horários livres.
 //
-// Mudar as regras abaixo muda a agenda inteira — é o único lugar a mexer.
+// A agenda MORA NO BANCO, não aqui. Antes era um objeto constante neste
+// arquivo, e mudar o horário de trabalho exigia publicar o servidor de novo.
+// Agora vem de agenda_config (faixa por dia da semana), agenda_ajustes
+// (duração, folga, antecedência) e agenda_bloqueios (feriado, viagem).
+//
+// E é a MESMA fonte para os dois lados: a tela pública monta a lista de
+// horários com estas funções, e o painel desenha a grade da semana com
+// elas. Não existe caminho pelo qual o cliente marque fora do que está
+// configurado, porque não há segunda regra escrita em outro lugar.
+//
+// Os valores abaixo são só a rede de segurança de quando as tabelas ainda
+// estão vazias — no primeiro boot depois da migração, por exemplo.
 // ============================================================
-const AGENDA = {
-    // 0 = domingo ... 6 = sábado. Todos os dias.
-    dias: [0, 1, 2, 3, 4, 5, 6],
+const AGENDA_PADRAO = {
     // O movimento é à noite: o advogado procura suporte depois do expediente.
     horaInicio: 18,         // primeiro bloco começa às 18h
     horaFim: 24,            // último começa às 23h e termina à meia-noite
-    intervalo: null,        // sem parada nessa faixa; use [12, 13] para bloquear 12h-13h
+    capacidade: 1,          // um atendimento por bloco
     duracaoMin: 60,         // cada atendimento reserva 1 hora
-    anteceMinDias: 1,       // só a partir de amanhã
+    folgaMin: 0,            // respiro entre um atendimento e o seguinte
+    antecedenciaMin: 1440,  // o cliente só marca de amanhã em diante
     janelaDias: 7           // até 7 dias à frente
 };
 
-// O Render roda em UTC; o atendimento é no horário de Brasília. O Brasil não
+// O Render roda em UTC; o atendimento é no horário de Fortaleza. O Brasil não
 // tem mais horário de verão, então o deslocamento é fixo e não precisa de
 // biblioteca de fuso.
 const FUSO_BR = -3;
+const FUSO_NOME = 'America/Fortaleza';
 
-/** 'YYYY-MM-DD' + hora local → instante real (Date em UTC). */
+/** 'YYYY-MM-DD' + hora local (aceita fração) → instante real (Date em UTC). */
 function instanteBR(dia, hora) {
     const [a, m, d] = dia.split('-').map(Number);
-    return new Date(Date.UTC(a, m - 1, d, hora - FUSO_BR, 0, 0));
+    return new Date(Date.UTC(a, m - 1, d, 0, 0, 0) + Math.round((hora - FUSO_BR) * 3600000));
+}
+
+/** O dia 'YYYY-MM-DD' em que aquele instante cai — no fuso daqui, não no do servidor. */
+function diaBR(quando) {
+    return new Date(new Date(quando).getTime() + FUSO_BR * 3600000).toISOString().slice(0, 10);
+}
+
+/** A hora local, em número com fração: 19h30 vira 19.5. */
+function horaBR(quando) {
+    const local = new Date(new Date(quando).getTime() + FUSO_BR * 3600000);
+    return local.getUTCHours() + local.getUTCMinutes() / 60;
+}
+
+/** Manhã, tarde ou noite — é assim que o cliente declara a preferência. */
+function turnoDaHora(hora) {
+    if (hora < 12) return 'manha';
+    if (hora < 18) return 'tarde';
+    return 'noite';
+}
+
+/**
+ * A configuração da agenda, já consolidada e com os buracos preenchidos.
+ * Uma leitura só, para as funções abaixo não irem ao banco em cada laço.
+ */
+function agendaConfig(db) {
+    const ajustes = (db.agenda_ajustes || [])[0] || {};
+    const porDia = {};
+
+    for (let d = 0; d <= 6; d++) {
+        const linha = (db.agenda_config || []).find(c => Number(c.dia_semana) === d);
+        porDia[d] = linha
+            ? {
+                dia_semana: d,
+                hora_inicio: Number(linha.hora_inicio),
+                hora_fim: Number(linha.hora_fim),
+                capacidade: Math.max(1, Number(linha.capacidade) || 1),
+                ativo: linha.ativo !== false
+            }
+            : {
+                dia_semana: d,
+                hora_inicio: AGENDA_PADRAO.horaInicio,
+                hora_fim: AGENDA_PADRAO.horaFim,
+                capacidade: AGENDA_PADRAO.capacidade,
+                // Sem linha no banco o dia fica ATIVO, e não desligado: uma
+                // tabela vazia deixaria o site sem nenhum horário para
+                // oferecer, o que parece defeito e não configuração.
+                ativo: true
+            };
+    }
+
+    const num = (v, padrao) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : padrao);
+    return {
+        dias: porDia,
+        duracaoMin: num(ajustes.duracao_min, AGENDA_PADRAO.duracaoMin),
+        folgaMin: Number.isFinite(Number(ajustes.folga_min))
+            ? Math.max(0, Number(ajustes.folga_min)) : AGENDA_PADRAO.folgaMin,
+        antecedenciaMin: Number.isFinite(Number(ajustes.antecedencia_min))
+            ? Math.max(0, Number(ajustes.antecedencia_min)) : AGENDA_PADRAO.antecedenciaMin,
+        janelaDias: num(ajustes.janela_dias, AGENDA_PADRAO.janelaDias)
+    };
+}
+
+/** Os status que ocupam lugar na agenda. Cancelado e faltou liberam a vaga. */
+const STATUS_OCUPA = ['marcado', 'confirmado', 'em_atendimento', 'atendido'];
+
+function agendamentosVivos(db) {
+    return (db.agendamentos || []).filter(a => STATUS_OCUPA.includes(a.status));
+}
+
+/** O bloqueio que cobre esta faixa, se houver. */
+function bloqueioDaFaixa(db, inicio, fim) {
+    const de = new Date(inicio).getTime();
+    const ate = new Date(fim).getTime();
+    return (db.agenda_bloqueios || []).find(b => {
+        const bi = new Date(b.inicio).getTime();
+        const bf = new Date(b.fim).getTime();
+        return bi < ate && bf > de;      // sobreposição de faixas
+    }) || null;
+}
+
+/**
+ * Todos os blocos de um dia, livres ou não.
+ *
+ * É a função-base: a lista pública, a grade da semana do painel e a
+ * conferência na hora de gravar saem todas daqui. Se o desenho da agenda
+ * mudar, muda num lugar só.
+ */
+function slotsDoDia(db, dia, opcoes = {}) {
+    const cfg = opcoes.cfg || agendaConfig(db);
+    const ignorarId = opcoes.ignorarId;
+    const diaSemana = new Date(dia + 'T12:00:00Z').getUTCDay();
+    const regra = cfg.dias[diaSemana];
+    if (!regra || !regra.ativo || regra.hora_fim <= regra.hora_inicio) return [];
+
+    const vivos = agendamentosVivos(db).filter(a => a.id !== ignorarId);
+    const duracaoH = cfg.duracaoMin / 60;
+    const passoH = (cfg.duracaoMin + cfg.folgaMin) / 60;
+    const agora = Date.now();
+    const cedoDemais = agora + cfg.antecedenciaMin * 60000;
+
+    const slots = [];
+    for (let h = regra.hora_inicio; h + duracaoH <= regra.hora_fim + 1e-9; h += passoH) {
+        const inicio = instanteBR(dia, h);
+        const fim = new Date(inicio.getTime() + cfg.duracaoMin * 60000);
+        const bloqueio = bloqueioDaFaixa(db, inicio, fim);
+
+        // Ocupação é por bloco, e o bloco é identificado pelo instante de
+        // início. Agendamento que ficou fora da grade (remarcado à mão, ou
+        // sobra de uma configuração antiga) é contado pelo início real —
+        // por isso a comparação é de sobreposição, e não de igualdade.
+        const dentro = vivos.filter(a => {
+            const ai = new Date(a.inicio).getTime();
+            const af = new Date(a.fim || ai + cfg.duracaoMin * 60000).getTime();
+            return ai < fim.getTime() && af > inicio.getTime();
+        });
+
+        slots.push({
+            inicio: inicio.toISOString(),
+            fim: fim.toISOString(),
+            rotulo: String(Math.floor(h)).padStart(2, '0') + ':' +
+                    String(Math.round((h % 1) * 60)).padStart(2, '0'),
+            turno: turnoDaHora(h),
+            capacidade: regra.capacidade,
+            ocupados: dentro.length,
+            agendamentos: dentro.map(a => a.id),
+            bloqueado: !!bloqueio,
+            motivo_bloqueio: bloqueio ? (bloqueio.motivo || 'Bloqueado') : null,
+            bloqueio_id: bloqueio ? bloqueio.id : null,
+            passou: inicio.getTime() <= agora,
+            // "cedo demais" não é o mesmo que ocupado: o painel PODE marcar
+            // aqui (é decisão sua), o cliente não.
+            cedo_demais: inicio.getTime() <= cedoDemais
+        });
+    }
+    return slots;
 }
 
 /** Os dias que a pessoa pode escolher, em 'YYYY-MM-DD'. */
-function diasDaAgenda() {
+function diasDaAgenda(db) {
+    const cfg = agendaConfig(db || loadJsonDb());
     const lista = [];
-    const hoje = new Date();
-    for (let i = AGENDA.anteceMinDias; i <= AGENDA.janelaDias; i++) {
-        const d = new Date(hoje.getTime() + i * 86400000);
-        // o dia da semana é o de Brasília, não o do servidor
-        const local = new Date(d.getTime() + FUSO_BR * 3600000);
-        if (!AGENDA.dias.includes(local.getUTCDay())) continue;
-        lista.push(local.toISOString().slice(0, 10));
+    const hojeBR = diaBR(new Date());
+    for (let i = 0; i <= cfg.janelaDias; i++) {
+        const d = new Date(hojeBR + 'T12:00:00Z');
+        d.setUTCDate(d.getUTCDate() + i);
+        const dia = d.toISOString().slice(0, 10);
+        if (cfg.dias[d.getUTCDay()].ativo) lista.push(dia);
     }
     return lista;
 }
 
 /**
- * Horários livres de um dia.
- * Livre = dentro do expediente, fora do almoço, ainda no futuro e sem
- * agendamento vivo em cima. É consultado ao montar a tela E de novo ao
- * gravar: entre ver e confirmar, alguém pode ter pego o horário.
+ * Horários livres de um dia, do ponto de vista do CLIENTE.
+ * Livre = dentro do expediente, não bloqueado, com vaga, e respeitando a
+ * antecedência mínima. É consultado ao montar a tela E de novo ao gravar:
+ * entre ver e confirmar, alguém pode ter pego o horário.
  */
-function horariosLivres(db, dia) {
-    const ocupados = new Set(
-        (db.agendamentos || [])
-            .filter(a => a.status === 'marcado' || a.status === 'atendido')
-            .map(a => new Date(a.inicio).toISOString())
-    );
-
-    const livres = [];
-    const passoHoras = AGENDA.duracaoMin / 60;
-
-    for (let h = AGENDA.horaInicio; h + passoHoras <= AGENDA.horaFim; h += passoHoras) {
-        if (AGENDA.intervalo && h >= AGENDA.intervalo[0] && h < AGENDA.intervalo[1]) continue;
-
-        const inicio = instanteBR(dia, h);
-        if (inicio.getTime() <= Date.now()) continue;          // hora que já passou
-        if (ocupados.has(inicio.toISOString())) continue;      // já tem gente
-
-        livres.push({
-            inicio: inicio.toISOString(),
-            rotulo: String(h).padStart(2, '0') + ':00'
-        });
-    }
-    return livres;
+function horariosLivres(db, dia, opcoes = {}) {
+    return slotsDoDia(db, dia, opcoes)
+        .filter(s => !s.bloqueado && s.ocupados < s.capacidade && !s.cedo_demais)
+        .map(s => ({ inicio: s.inicio, rotulo: s.rotulo, turno: s.turno }));
 }
 
-/** O horário pedido é válido e continua livre? */
-function horarioValido(db, inicioISO) {
+/**
+ * Horários livres do ponto de vista do PAINEL: vale tudo que ainda não
+ * passou e tem vaga, inclusive daqui a uma hora. A antecedência mínima é
+ * regra para o cliente não marcar em cima da hora — não para me impedir de
+ * encaixar alguém.
+ */
+function horariosLivresPainel(db, dia, opcoes = {}) {
+    return slotsDoDia(db, dia, opcoes)
+        .filter(s => !s.bloqueado && s.ocupados < s.capacidade && !s.passou);
+}
+
+/**
+ * O horário pedido é válido e continua livre?
+ * `opcoes.painel` afrouxa a antecedência; `opcoes.ignorarId` tira o próprio
+ * agendamento da conta — sem isso, remarcar para o mesmo bloco seria
+ * recusado por conflito com ele mesmo.
+ */
+function horarioValido(db, inicioISO, opcoes = {}) {
     if (!inicioISO) return { ok: false, erro: 'Escolha um horário.' };
 
     const quando = new Date(inicioISO);
     if (isNaN(quando)) return { ok: false, erro: 'Horário inválido.' };
 
-    const dia = new Date(quando.getTime() + FUSO_BR * 3600000).toISOString().slice(0, 10);
-    if (!diasDaAgenda().includes(dia)) {
-        return { ok: false, erro: 'Este dia está fora da agenda.' };
+    const dia = diaBR(quando);
+    const cfg = agendaConfig(db);
+    const slots = slotsDoDia(db, dia, { cfg, ignorarId: opcoes.ignorarId });
+    const slot = slots.find(s => s.inicio === quando.toISOString());
+
+    if (!slot) return { ok: false, erro: 'Este horário está fora da sua agenda de trabalho.' };
+    if (slot.bloqueado) return { ok: false, erro: 'Este horário está bloqueado: ' + slot.motivo_bloqueio };
+    if (slot.passou) return { ok: false, erro: 'Esse horário já passou.' };
+    if (!opcoes.painel && slot.cedo_demais) {
+        return { ok: false, erro: 'Este horário é cedo demais para marcar agora.' };
     }
-    const livre = horariosLivres(db, dia).some(h => h.inicio === quando.toISOString());
-    if (!livre) {
+    if (slot.ocupados >= slot.capacidade) {
         return { ok: false, erro: 'Esse horário acabou de ser ocupado. Escolha outro.' };
     }
-    return { ok: true, quando };
+    return { ok: true, quando, slot };
+}
+
+/**
+ * O próximo bloco vago, calculado AQUI e não no navegador.
+ *
+ * É o que faz o botão da triagem nascer com a data no rótulo — "Remarcar
+ * para qui 06/08 15h" — em vez de abrir um formulário vazio para você
+ * procurar. Respeita horário de trabalho, folga, bloqueio e, quando o
+ * cliente declarou, o turno que ele prefere.
+ */
+function proximoSlotLivre(db, opcoes = {}) {
+    const cfg = agendaConfig(db);
+    const depois = opcoes.depoisDe ? new Date(opcoes.depoisDe).getTime() : Date.now();
+    const turno = opcoes.turno || null;
+
+    // Duas passadas: primeiro tentando respeitar o turno preferido, depois
+    // sem ele. Um turno preferido que não tem vaga nenhuma não pode deixar
+    // o botão mudo — melhor oferecer outro horário do que oferecer nada.
+    for (const exigirTurno of (turno ? [turno, null] : [null])) {
+        let d = new Date(diaBR(new Date(depois)) + 'T12:00:00Z');
+        for (let i = 0; i <= cfg.janelaDias + 14; i++) {
+            const dia = d.toISOString().slice(0, 10);
+            const achado = horariosLivresPainel(db, dia, { cfg, ignorarId: opcoes.ignorarId })
+                .filter(s => new Date(s.inicio).getTime() > depois)
+                .filter(s => !exigirTurno || s.turno === exigirTurno)
+                .sort((a, b) => new Date(a.inicio) - new Date(b.inicio))[0];
+            if (achado) return { ...achado, turno_preferido: !!exigirTurno };
+            d.setUTCDate(d.getUTCDate() + 1);
+        }
+    }
+    return null;
+}
+
+/**
+ * Escapa o que vai dentro de HTML de e-mail.
+ *
+ * Nome e observação são digitados por quem está do outro lado, e os avisos
+ * ao cliente são montados com template string. Sem isto, um nome com `<` ou
+ * `<script>` sairia como marcação dentro do e-mail — e o texto do aviso é
+ * editável no painel antes do envio, o que é mais uma porta de entrada.
+ */
+function escaparHtml(texto) {
+    return String(texto == null ? '' : texto)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/**
+ * Controle de concorrência otimista.
+ *
+ * O painel carrega a triagem, você lê, pensa e clica — e nesse intervalo o
+ * cliente pode ter remarcado pelo site, ou a outra aba do navegador pode ter
+ * confirmado. Gravar por cima apagaria a mudança do outro sem ninguém notar.
+ *
+ * Então o painel devolve o `atualizado_em` que leu. Se não bater com o do
+ * banco, a ação é recusada e a tela recarrega aquele item.
+ */
+function conferirVersao(registro, atualizadoEm) {
+    const atual = registro.atualizado_em || registro.criado_em || null;
+    // Registro anterior à migração pode não ter carimbo nenhum: não dá para
+    // exigir versão de quem nunca teve uma. Ele ganha o carimbo agora.
+    if (!atual) return { ok: true };
+    if (!atualizadoEm) {
+        return {
+            ok: false,
+            resposta: {
+                success: false,
+                conflito: true,
+                error: 'Recarregue a triagem antes de agir sobre este item.'
+            }
+        };
+    }
+    if (new Date(atualizadoEm).getTime() !== new Date(atual).getTime()) {
+        return {
+            ok: false,
+            resposta: {
+                success: false,
+                conflito: true,
+                error: 'Este atendimento mudou desde que a tela carregou. Recarreguei — confira e refaça.'
+            }
+        };
+    }
+    return { ok: true };
+}
+
+/** Como o horário é escrito para o cliente e para o painel. */
+function rotularQuando(quando, opcoes = {}) {
+    return new Date(quando).toLocaleString('pt-BR', {
+        weekday: opcoes.curto ? 'short' : 'long',
+        day: '2-digit', month: '2-digit',
+        hour: '2-digit', minute: '2-digit',
+        timeZone: FUSO_NOME
+    });
 }
 
 /** Situação consolidada de uma pessoa — é o que o painel mostra. */
@@ -1621,9 +1866,10 @@ const server = http.createServer((req, res) => {
     // veriam a mesma vaga como livre.
     if (method === 'GET' && url.split('?')[0] === '/agenda/horarios') {
         const db = loadJsonDb();
-        const dias = diasDaAgenda().map(dia => {
+        const cfg = agendaConfig(db);
+        const dias = diasDaAgenda(db).map(dia => {
             const d = new Date(dia + 'T12:00:00Z');
-            const horarios = horariosLivres(db, dia);
+            const horarios = horariosLivres(db, dia, { cfg });
             return {
                 dia,
                 // partes separadas para a grade montar o cartão do dia sem
@@ -1714,7 +1960,7 @@ const server = http.createServer((req, res) => {
                 // isso, metade dos atendimentos entraria na fila de trabalho
                 // sem passar pela sua conferência.
                 const agora = new Date().toISOString();
-                const fim = new Date(vaga.quando.getTime() + AGENDA.duracaoMin * 60000);
+                const fim = new Date(vaga.quando.getTime() + agendaConfig(db).duracaoMin * 60000);
                 db.agendamentos.push({
                     id: proximoId(db.agendamentos),
                     chamado_id: null,
@@ -1725,7 +1971,13 @@ const server = http.createServer((req, res) => {
                     inicio: vaga.quando.toISOString(),
                     fim: fim.toISOString(),
                     status: 'marcado',
-                    criado_em: new Date().toISOString()
+                    // o turno que ele escolheu é o que ele prefere: guardado
+                    // aqui, o cálculo do próximo horário livre respeita
+                    // sozinho na hora de remarcar
+                    preferencia_turno: turnoDaHora(horaBR(vaga.quando)),
+                    confirmado_pelo_cliente: true,   // foi ele quem escolheu
+                    atualizado_em: agora,
+                    criado_em: agora
                 });
                 saveJsonDb(db);
 
@@ -2002,7 +2254,12 @@ const server = http.createServer((req, res) => {
                 email: (process.env.BREVO_API_KEY || SECRETS.brevo?.api_key) ? 'configurado' : 'sem chave',
                 google: (OAUTH.google && OAUTH.google.clientId) ? 'configurado' : 'sem credenciais',
                 pagamento: MP.link ? 'link configurado' : 'NÃO ligado (checkout não cobra)',
-                agenda: `${AGENDA.horaInicio}h às ${AGENDA.horaFim}h, blocos de ${AGENDA.duracaoMin}min, até ${AGENDA.janelaDias} dias`
+                agenda: (() => {
+                    const cfg = agendaConfig(db);
+                    const ativos = Object.values(cfg.dias).filter(d => d.ativo);
+                    return `${ativos.length} dia(s) da semana, blocos de ${cfg.duracaoMin}min, ` +
+                           `até ${cfg.janelaDias} dias — configurável na aba Triagem`;
+                })()
             },
             resumo: {
                 usuarios: pessoas.length,
@@ -2068,6 +2325,14 @@ const server = http.createServer((req, res) => {
                 ? new Date(a.criado_em) - new Date(b.criado_em)
                 : new Date(b.decidido_em || b.criado_em) - new Date(a.decidido_em || a.criado_em));
 
+        // Confere, mas ainda sem hora marcada: a bola está com o cliente (ele
+        // escolhe no site), mas você pode empurrar com um lembrete ou marcar
+        // por ele se demorar demais. Calculado só para quem está em
+        // 'confere' — nas outras listas ninguém vai agir sobre isso.
+        const agendamentos = db.agendamentos || [];
+        const semHoraAinda = id =>
+            !agendamentos.some(a => a.verificacao_id === id && a.status !== 'cancelado');
+
         const inicio = (pagina - 1) * porPagina;
         const itens = todas.slice(inicio, inicio + porPagina).map(v => ({
             id: v.id,
@@ -2082,7 +2347,11 @@ const server = http.createServer((req, res) => {
             decidido_em: v.decidido_em,
             criado_em: v.criado_em,
             espera_horas: Math.floor((Date.now() - new Date(v.criado_em).getTime()) / 3600000),
-            sinais: sinaisDeFraude(db, v)
+            sinais: sinaisDeFraude(db, v),
+            aguardando_hora: v.status === 'confere' && semHoraAinda(v.id),
+            horas_desde_liberacao: v.status === 'confere'
+                ? Math.floor((Date.now() - new Date(v.decidido_em || v.criado_em).getTime()) / 3600000)
+                : null
         }));
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -2197,85 +2466,608 @@ const server = http.createServer((req, res) => {
         const agendamentos = db.agendamentos || [];
         const agora = Date.now();
 
-        /**
-         * Para onde essa pessoa vai: grátis ou Premium.
-         * A verificação não guarda isso — ela nasce do fluxo gratuito. Quem
-         * responde é a assinatura: se existe uma valendo para a conta que usa
-         * aquele e-mail ou telefone, é assinante, e o atendimento dele não é
-         * o gratuito de teste. Sem essa leitura, o painel trataria os dois
-         * como iguais na hora de priorizar.
-         */
-        function tipoDoContato(v) {
-            const soDigitos = s => String(s || '').replace(/\D/g, '');
-            const dono = (db.usuarios || []).find(u =>
-                (v.email && String(u.email || '').toLowerCase() === String(v.email).toLowerCase()) ||
-                (v.contato && soDigitos(u.telefone) === soDigitos(v.contato)));
-            return dono && assinaturaAtiva(db, dono.id) ? 'premium' : 'free';
-        }
+        // Quem ainda não conferiu a OAB e quem conferiu mas não marcou hora
+        // não estão mais aqui: a Triagem é só remarcação de horário já
+        // marcado. "Aguardando verificação" mora na aba Verificação de OAB
+        // (é lá que a ação acontece); "conferido, sem hora ainda" mora na
+        // mesma aba, porque é continuação do mesmo status — ver
+        // /admin/verificacoes.
 
-        const resumir = v => ({
-            verificacao_id: v.id,
-            inscricao: `${v.inscricao}/${v.uf}`,
-            nome: v.nome_declarado,
-            contato: v.contato,
-            email: v.email,
-            tipo: tipoDoContato(v)
-        });
-
-        // Etapa 1 — ainda não conferida: a bola está com você, no CNA.
-        const aguardandoVerificacao = (db.verificacoes_oab || [])
-            .filter(v => v.status === 'pendente')
-            .map(v => Object.assign(resumir(v), {
-                pedido_em: v.criado_em,
-                horas_desde: Math.floor((agora - new Date(v.criado_em).getTime()) / 3600000)
-            }))
-            .sort((a, b) => b.horas_desde - a.horas_desde);
-
-        // Etapa 2 — liberados que ainda não marcaram: a bola está com o cliente.
-        const aguardandoMarcar = (db.verificacoes_oab || [])
-            .filter(v => v.status === 'confere')
-            .filter(v => !agendamentos.some(a => a.verificacao_id === v.id))
-            .map(v => Object.assign(resumir(v), {
-                liberado_em: v.decidido_em,
-                horas_desde: Math.floor((agora - new Date(v.decidido_em || v.criado_em).getTime()) / 3600000)
-            }))
-            .sort((a, b) => b.horas_desde - a.horas_desde);
-
-        // Já marcaram: separados entre o que ainda vai acontecer e o que já
-        // passou da hora sem você dar baixa.
-        // Etapa 3 — hora marcada, esperando sua decisão de mandar para a fila.
+        // Hora marcada, esperando sua decisão de mandar para a fila.
         // Só entra quem ainda NÃO virou chamado: promovido sai da triagem e
         // passa a viver na aba de chamados, senão apareceria nos dois lugares
         // e você não saberia onde ele está de verdade.
+        //
+        // Cada item vem com as AÇÕES JÁ RESOLVIDAS pelo servidor: qual é o
+        // próximo horário livre, se empurrar uma hora cabe, se empurrar um
+        // dia cabe. É o que permite o botão nascer com a data no rótulo e
+        // desabilitado quando criaria conflito — o navegador não recalcula
+        // agenda, só desenha o que recebeu.
+        // Fica na triagem tudo que ainda não virou chamado. O 'confirmado'
+        // sem chamado_id é herança do fluxo antigo (confirmava aqui, abria o
+        // chamado em outra aba): hoje confirmar já abre o chamado, mas o
+        // registro velho precisa continuar visível para você fechá-lo.
         const marcados = agendamentos
-            .filter(a => a.status === 'marcado' && !a.chamado_id)
+            .filter(a => (a.status === 'marcado' || a.status === 'confirmado') && !a.chamado_id)
             .map(a => {
                 const v = (db.verificacoes_oab || []).find(x => x.id === a.verificacao_id);
                 const dono = a.usuario_id
                     ? (db.usuarios || []).find(u => u.id === a.usuario_id)
                     : null;
+                const inicio = new Date(a.inicio).getTime();
+
+                /** Um destino possível para este agendamento, já conferido. */
+                const destino = (quando) => {
+                    const teste = horarioValido(db, new Date(quando).toISOString(), {
+                        painel: true, ignorarId: a.id
+                    });
+                    return {
+                        inicio: new Date(quando).toISOString(),
+                        rotulo: rotularQuando(quando, { curto: true }),
+                        ok: teste.ok,
+                        motivo: teste.ok ? null : teste.erro
+                    };
+                };
+
+                const proximo = proximoSlotLivre(db, {
+                    depoisDe: Math.max(Date.now(), inicio),
+                    turno: a.preferencia_turno || null,
+                    ignorarId: a.id
+                });
+
                 return {
                     id: a.id,
                     verificacao_id: a.verificacao_id,
                     inscricao: a.oab,
                     nome: a.nome || (v ? v.nome_declarado : ''),
                     contato: v ? v.contato : (dono ? dono.telefone : ''),
+                    email: v ? v.email : (dono ? dono.email : ''),
                     inicio: a.inicio,
                     fim: a.fim,
+                    status: a.status,
+                    // o painel devolve isto na hora de agir. Se não bater com
+                    // o que está no banco, alguém mexeu no meio e a ação é
+                    // recusada em vez de sobrescrever a mudança do outro.
+                    atualizado_em: a.atualizado_em || a.criado_em || null,
+                    confirmado_pelo_cliente: a.confirmado_pelo_cliente === true,
+                    preferencia_turno: a.preferencia_turno || null,
+                    remarcado_de: a.remarcado_de || null,
                     tipo: dono && assinaturaAtiva(db, dono.id) ? 'premium' : 'free',
-                    passou: new Date(a.inicio).getTime() < agora
+                    passou: inicio < agora,
+                    horas_ate: (inicio - agora) / 3600000,
+                    acoes: {
+                        proximo_livre: proximo
+                            ? {
+                                inicio: proximo.inicio,
+                                rotulo: rotularQuando(proximo.inicio, { curto: true }),
+                                ok: true,
+                                turno_preferido: proximo.turno_preferido
+                            }
+                            : { ok: false, motivo: 'Não há horário livre na sua agenda.' },
+                        empurrar_1h: destino(inicio + 3600000),
+                        empurrar_1d: destino(inicio + 86400000)
+                    }
                 };
             })
-            .sort((a, b) => new Date(a.inicio) - new Date(b.inicio));
+            // Premium primeiro: ele não espera a fila. Dentro de cada grupo,
+            // ordem do relógio — o que acontece antes aparece antes.
+            .sort((a, b) =>
+                (a.tipo === b.tipo ? 0 : a.tipo === 'premium' ? -1 : 1) ||
+                (new Date(a.inicio) - new Date(b.inicio)));
+
+        // ---- alertas: só o que exige ação agora ----
+        //
+        // A régua é essa: se você não puder fazer nada a respeito, não é
+        // alerta, é informação — e informação fica no cartão, não no topo.
+        const cfg = agendaConfig(db);
+        const alertas = [];
+
+        marcados.forEach(m => {
+            if (m.passou) {
+                alertas.push({
+                    tipo: 'passou',
+                    agendamento_id: m.id,
+                    texto: `${m.inscricao} era ${rotularQuando(m.inicio, { curto: true })} e ninguém deu baixa`
+                });
+            } else if (m.horas_ate < 2 && !m.confirmado_pelo_cliente) {
+                alertas.push({
+                    tipo: 'sem_confirmacao',
+                    agendamento_id: m.id,
+                    texto: `${m.inscricao} é em menos de 2h e o cliente não confirmou`
+                });
+            }
+
+            // Fora do expediente: o horário não corresponde a nenhum bloco da
+            // agenda daquele dia. Acontece quando a configuração muda depois
+            // de alguém já ter marcado — ou quando o cliente achou uma brecha.
+            const slots = slotsDoDia(db, diaBR(m.inicio), { cfg });
+            if (!m.passou && !slots.some(s => s.inicio === m.inicio)) {
+                alertas.push({
+                    tipo: 'fora_do_expediente',
+                    agendamento_id: m.id,
+                    texto: `${m.inscricao} está marcado fora do seu horário de trabalho`
+                });
+            }
+        });
+
+        // Sobreposição é do SLOT, não do agendamento: dois no mesmo bloco só
+        // é problema se passar da capacidade que você definiu para o dia.
+        const conflitos = [];
+        const diasComGente = [...new Set(marcados.filter(m => !m.passou).map(m => diaBR(m.inicio)))];
+        diasComGente.forEach(dia => {
+            slotsDoDia(db, dia, { cfg }).forEach(s => {
+                if (s.ocupados <= s.capacidade) return;
+                conflitos.push(s.inicio);
+                alertas.push({
+                    tipo: 'sobreposicao',
+                    agendamento_id: s.agendamentos[0],
+                    texto: `${s.ocupados} atendimentos em ${rotularQuando(s.inicio, { curto: true })} ` +
+                           `— a capacidade do bloco é ${s.capacidade}`
+                });
+            });
+        });
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
             success: true,
-            aguardando_verificacao: aguardandoVerificacao,
-            aguardando_marcar: aguardandoMarcar,
+            agora: new Date().toISOString(),
+            fuso: FUSO_NOME,
             marcados,
+            alertas,
+            conflitos: conflitos.length,
             atrasados: marcados.filter(m => m.passou).length
         }));
+        return;
+    }
+
+    // ============ PAINEL: GET /admin/contadores ============
+    // Um pedido só para todos os selos das abas.
+    //
+    // Cada aba conta APENAS o que está parado nela. Não há número passando
+    // de uma para a outra: o item muda de estágio e os dois contadores são
+    // recalculados do zero. Antes cada módulo mandava o seu selo depois de
+    // carregar a lista inteira — três respostas grandes para exibir três
+    // números, e uma aba nunca aberta ficava sem contador nenhum.
+    if (method === 'GET' && url.split('?')[0] === '/admin/contadores') {
+        if (!sessaoAdmin(req)) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'Sessão expirada' }));
+            return;
+        }
+
+        const db = loadJsonDb();
+        const agora = Date.now();
+        const cfg = agendaConfig(db);
+        const verificacoes = db.verificacoes_oab || [];
+        const agendamentos = db.agendamentos || [];
+
+        const pendentes = verificacoes.filter(v => v.status === 'pendente');
+        // mesmo critério de /admin/verificacoes: um agendamento cancelado
+        // não conta como "já marcou hora"
+        const semHora = verificacoes.filter(v => v.status === 'confere' &&
+            !agendamentos.some(a => a.verificacao_id === v.id && a.status !== 'cancelado'));
+        // mesmo recorte da aba: inclui o 'confirmado' órfão do fluxo antigo
+        const naTriagem = agendamentos.filter(a =>
+            (a.status === 'marcado' || a.status === 'confirmado') && !a.chamado_id);
+        const abertos = (db.chamados || []).filter(c => c.status === 'aberto');
+
+        // Vermelho não é "tem coisa": é "tem coisa que já devia estar feita".
+        // Um item esperando há mais de 24h, ou um conflito de horário.
+        const velho = lista => lista.some(x =>
+            agora - new Date(x.decidido_em || x.criado_em || agora).getTime() > 24 * 3600000);
+
+        let conflitos = 0;
+        [...new Set(naTriagem.map(a => diaBR(a.inicio)))].forEach(dia => {
+            slotsDoDia(db, dia, { cfg }).forEach(s => {
+                if (s.ocupados > s.capacidade) conflitos++;
+            });
+        });
+
+        const passouDaHora = naTriagem.filter(a => new Date(a.inicio).getTime() < agora).length;
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            success: true,
+            aguardando_oab: pendentes.length,
+            aguardando_oab_urgente: velho(pendentes),
+            aguardando_hora: semHora.length,
+            aguardando_hora_urgente: velho(semHora),
+            triagem: naTriagem.length,
+            triagem_urgente: conflitos > 0 || passouDaHora > 0,
+            chamados_abertos: abertos.length,
+            chamados_urgente: velho(abertos),
+            conflitos,
+            saude_alertas: SUPABASE_ATIVO && gravacoesComErro > 0 ? 1 : 0
+        }));
+        return;
+    }
+
+    // ============ PAINEL: GET /admin/agenda/ocupacao ============
+    // A grade da semana. Devolve, bloco a bloco, quanta gente cabe e quanta
+    // está marcada — mais quem é essa gente, para o painel lateral abrir sem
+    // um segundo pedido.
+    //
+    // O navegador NÃO calcula agenda. Ele recebe cada bloco já classificado
+    // (livre, ocupado, cheio, bloqueado) e só pinta. Duas telas calculando a
+    // mesma coisa é como as duas discordarem.
+    if (method === 'GET' && url.split('?')[0] === '/admin/agenda/ocupacao') {
+        if (!sessaoAdmin(req)) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'Sessão expirada' }));
+            return;
+        }
+
+        const db = loadJsonDb();
+        const cfg = agendaConfig(db);
+        const params = new URLSearchParams(url.split('?')[1] || '');
+        const eData = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
+
+        const de = eData(params.get('de')) ? params.get('de') : diaBR(new Date());
+        let ate = eData(params.get('ate')) ? params.get('ate') : null;
+        if (!ate) {
+            const d = new Date(de + 'T12:00:00Z');
+            d.setUTCDate(d.getUTCDate() + 6);
+            ate = d.toISOString().slice(0, 10);
+        }
+
+        // Sem teto, um `ate` distante montaria meses de grade numa resposta só.
+        const limite = new Date(de + 'T12:00:00Z');
+        limite.setUTCDate(limite.getUTCDate() + 30);
+        if (new Date(ate + 'T12:00:00Z') > limite) ate = limite.toISOString().slice(0, 10);
+
+        const porId = id => (db.agendamentos || []).find(a => a.id === id);
+        const dias = [];
+        const cursor = new Date(de + 'T12:00:00Z');
+
+        while (cursor.toISOString().slice(0, 10) <= ate) {
+            const dia = cursor.toISOString().slice(0, 10);
+            const regra = cfg.dias[cursor.getUTCDay()];
+            dias.push({
+                dia,
+                semana: cursor.toLocaleDateString('pt-BR', { weekday: 'short', timeZone: 'UTC' })
+                              .replace('.', '').toUpperCase(),
+                numero: String(cursor.getUTCDate()).padStart(2, '0'),
+                mes: cursor.toLocaleDateString('pt-BR', { month: 'short', timeZone: 'UTC' }).replace('.', ''),
+                ativo: regra.ativo,
+                slots: slotsDoDia(db, dia, { cfg }).map(s => ({
+                    inicio: s.inicio,
+                    fim: s.fim,
+                    rotulo: s.rotulo,
+                    turno: s.turno,
+                    capacidade: s.capacidade,
+                    ocupados: s.ocupados,
+                    bloqueado: s.bloqueado,
+                    bloqueio_id: s.bloqueio_id,
+                    motivo_bloqueio: s.motivo_bloqueio,
+                    passou: s.passou,
+                    // quem está aqui dentro — é o que o painel lateral mostra
+                    pessoas: s.agendamentos.map(id => {
+                        const a = porId(id);
+                        if (!a) return null;
+                        return {
+                            agendamento_id: a.id,
+                            inscricao: a.oab,
+                            nome: a.nome || '',
+                            status: a.status,
+                            virou_chamado: !!a.chamado_id,
+                            confirmado_pelo_cliente: a.confirmado_pelo_cliente === true
+                        };
+                    }).filter(Boolean)
+                }))
+            });
+            cursor.setUTCDate(cursor.getUTCDate() + 1);
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, de, ate, fuso: FUSO_NOME, dias }));
+        return;
+    }
+
+    // ============ PAINEL: GET /admin/agenda/config ============
+    // O que alimenta a validação do site inteiro. Sai daqui para a tela de
+    // configuração da própria aba Triagem.
+    if (method === 'GET' && url.split('?')[0] === '/admin/agenda/config') {
+        if (!sessaoAdmin(req)) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'Sessão expirada' }));
+            return;
+        }
+
+        const db = loadJsonDb();
+        const cfg = agendaConfig(db);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            success: true,
+            dias: Object.values(cfg.dias),
+            duracao_min: cfg.duracaoMin,
+            folga_min: cfg.folgaMin,
+            antecedencia_min: cfg.antecedenciaMin,
+            janela_dias: cfg.janelaDias,
+            bloqueios: (db.agenda_bloqueios || [])
+                .slice()
+                .sort((a, b) => new Date(a.inicio) - new Date(b.inicio))
+                .map(b => ({
+                    id: b.id,
+                    inicio: b.inicio,
+                    fim: b.fim,
+                    motivo: b.motivo || '',
+                    rotulo: rotularQuando(b.inicio, { curto: true }) + ' → ' +
+                            rotularQuando(b.fim, { curto: true })
+                }))
+        }));
+        return;
+    }
+
+    // ============ PAINEL: POST /admin/agenda/config ============
+    // Salva o horário de trabalho. Muda a agenda dos dois lados de uma vez:
+    // a grade do painel e a lista que o cliente vê no site.
+    if (method === 'POST' && url === '/admin/agenda/config') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            const responder = (status, payload) => {
+                res.writeHead(status, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(payload));
+            };
+
+            if (!sessaoAdmin(req)) {
+                responder(401, { success: false, error: 'Sessão expirada' });
+                return;
+            }
+
+            try {
+                const entrada = JSON.parse(body || '{}');
+                const db = loadJsonDb();
+                const inteiro = (v, min, max, padrao) => {
+                    const n = Math.round(Number(v));
+                    return Number.isFinite(n) && n >= min && n <= max ? n : padrao;
+                };
+
+                db.agenda_config = db.agenda_config || [];
+                (entrada.dias || []).forEach(d => {
+                    const dia = inteiro(d.dia_semana, 0, 6, null);
+                    if (dia === null) return;
+
+                    const inicio = inteiro(d.hora_inicio, 0, 23, 18);
+                    const fim = inteiro(d.hora_fim, 1, 24, 24);
+                    // Fim antes do início não é agenda curta, é agenda vazia —
+                    // e vazia sem aviso pareceria o site estar quebrado.
+                    if (fim <= inicio) {
+                        throw new Error(`No dia ${dia}, o fim (${fim}h) precisa ser depois do início (${inicio}h).`);
+                    }
+
+                    const linha = db.agenda_config.find(c => Number(c.dia_semana) === dia);
+                    const valores = {
+                        dia_semana: dia,
+                        hora_inicio: inicio,
+                        hora_fim: fim,
+                        capacidade: inteiro(d.capacidade, 1, 10, 1),
+                        ativo: d.ativo !== false
+                    };
+                    if (linha) Object.assign(linha, valores);
+                    else db.agenda_config.push({ id: proximoId(db.agenda_config), ...valores });
+                });
+
+                db.agenda_ajustes = db.agenda_ajustes || [];
+                const ajustes = db.agenda_ajustes[0] || { id: 1 };
+                ajustes.duracao_min = inteiro(entrada.duracao_min, 15, 480, 60);
+                ajustes.folga_min = inteiro(entrada.folga_min, 0, 240, 0);
+                ajustes.antecedencia_min = inteiro(entrada.antecedencia_min, 0, 20160, 1440);
+                ajustes.janela_dias = inteiro(entrada.janela_dias, 1, 90, 7);
+                if (!db.agenda_ajustes.length) db.agenda_ajustes.push(ajustes);
+
+                auditar(db, {
+                    acao: 'agenda_configurada',
+                    alvo: 'agenda',
+                    detalhe: `blocos de ${ajustes.duracao_min}min, folga ${ajustes.folga_min}min, ` +
+                             `antecedência ${ajustes.antecedencia_min}min, janela ${ajustes.janela_dias}d`,
+                    ip: ipDoPedido(req)
+                });
+                saveJsonDb(db);
+
+                responder(200, { success: true, msg: 'Agenda salva. Vale para o site também.' });
+
+            } catch (err) {
+                console.error('Erro ao salvar agenda:', err.message);
+                responder(400, { success: false, error: err.message || 'Erro interno' });
+            }
+        });
+        return;
+    }
+
+    // ============ PAINEL: POST /admin/agenda/bloqueio ============
+    // Feriado, viagem, ou simplesmente "hoje não".
+    //
+    // Bloquear NÃO empurra quem já estava marcado: o pedido é recusado com a
+    // lista de quem precisa ser remarcado antes. Bloquear por cima de alguém
+    // deixaria um atendimento combinado num horário que não existe mais, e
+    // ninguém saberia disso até o cliente aparecer.
+    if (method === 'POST' && url === '/admin/agenda/bloqueio') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            const responder = (status, payload) => {
+                res.writeHead(status, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(payload));
+            };
+
+            if (!sessaoAdmin(req)) {
+                responder(401, { success: false, error: 'Sessão expirada' });
+                return;
+            }
+
+            try {
+                const { acao, inicio, fim, motivo, id } = JSON.parse(body || '{}');
+                const db = loadJsonDb();
+                db.agenda_bloqueios = db.agenda_bloqueios || [];
+
+                if (acao === 'remover') {
+                    const alvo = db.agenda_bloqueios.find(b => b.id === id);
+                    if (!alvo) {
+                        responder(404, { success: false, error: 'Bloqueio não encontrado' });
+                        return;
+                    }
+                    db.agenda_bloqueios = db.agenda_bloqueios.filter(b => b.id !== id);
+                    auditar(db, {
+                        acao: 'bloqueio_removido',
+                        alvo: 'agenda',
+                        detalhe: `${alvo.inicio} → ${alvo.fim}`,
+                        ip: ipDoPedido(req)
+                    });
+                    saveJsonDb(db);
+                    apagarNoSupabase('agenda_bloqueios', [id])
+                        .catch(e => console.error('Bloqueio não saiu do banco:', e.message));
+                    responder(200, { success: true, msg: 'Bloqueio removido.' });
+                    return;
+                }
+
+                const de = new Date(inicio);
+                const ate = new Date(fim);
+                if (isNaN(de) || isNaN(ate) || ate <= de) {
+                    responder(400, { success: false, error: 'Faixa de datas inválida.' });
+                    return;
+                }
+
+                const ocupando = agendamentosVivos(db).filter(a => {
+                    const ai = new Date(a.inicio).getTime();
+                    return ai >= de.getTime() && ai < ate.getTime();
+                });
+                if (ocupando.length) {
+                    responder(200, {
+                        success: false,
+                        precisa_remarcar: ocupando.map(a => ({
+                            agendamento_id: a.id,
+                            inscricao: a.oab,
+                            rotulo: rotularQuando(a.inicio, { curto: true })
+                        })),
+                        error: `Há ${ocupando.length} atendimento(s) nessa faixa. Remarque antes de bloquear.`
+                    });
+                    return;
+                }
+
+                const registro = {
+                    id: proximoId(db.agenda_bloqueios),
+                    inicio: de.toISOString(),
+                    fim: ate.toISOString(),
+                    motivo: String(motivo || 'Bloqueado').slice(0, 200),
+                    criado_em: new Date().toISOString()
+                };
+                db.agenda_bloqueios.push(registro);
+
+                auditar(db, {
+                    acao: 'bloqueio_criado',
+                    alvo: 'agenda',
+                    detalhe: `${registro.inicio} → ${registro.fim} (${registro.motivo})`,
+                    ip: ipDoPedido(req)
+                });
+                saveJsonDb(db);
+
+                responder(200, { success: true, msg: 'Horário bloqueado.', bloqueio: registro });
+
+            } catch (err) {
+                console.error('Erro no bloqueio:', err.message);
+                responder(400, { success: false, error: 'Erro interno' });
+            }
+        });
+        return;
+    }
+
+    // ============ PAINEL: POST /admin/sugerir-horarios ============
+    // O contrário de impor: manda três opções e devolve a escolha ao cliente.
+    //
+    // O agendamento volta para 'aguardando_hora' — sai da lista de marcados e
+    // entra na de "esperando o cliente". Se ficasse como marcado, o horário
+    // continuaria reservado para uma hora que ele já sabe que não vale.
+    if (method === 'POST' && url === '/admin/sugerir-horarios') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            const responder = (status, payload) => {
+                res.writeHead(status, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(payload));
+            };
+
+            if (!sessaoAdmin(req)) {
+                responder(401, { success: false, error: 'Sessão expirada' });
+                return;
+            }
+
+            try {
+                const { agendamento_id, atualizado_em, texto, apenas_calcular } = JSON.parse(body || '{}');
+                const db = loadJsonDb();
+                const a = (db.agendamentos || []).find(x => x.id === agendamento_id);
+
+                if (!a) {
+                    responder(404, { success: false, error: 'Agendamento não encontrado' });
+                    return;
+                }
+
+                // Três opções, cada uma depois da anterior, respeitando o
+                // turno que o cliente já declarou.
+                const opcoes = [];
+                let cursor = Date.now();
+                for (let i = 0; i < 3; i++) {
+                    const s = proximoSlotLivre(db, {
+                        depoisDe: cursor,
+                        turno: a.preferencia_turno || null,
+                        ignorarId: a.id
+                    });
+                    if (!s) break;
+                    opcoes.push({ inicio: s.inicio, rotulo: rotularQuando(s.inicio) });
+                    cursor = new Date(s.inicio).getTime();
+                }
+
+                if (!opcoes.length) {
+                    responder(200, { success: false, error: 'Não há horário livre para sugerir.' });
+                    return;
+                }
+                // O painel pede primeiro sem gravar, para montar a prévia do
+                // aviso com as opções reais antes de você mandar.
+                if (apenas_calcular) {
+                    responder(200, { success: true, opcoes });
+                    return;
+                }
+
+                const versao = conferirVersao(a, atualizado_em);
+                if (!versao.ok) { responder(200, versao.resposta); return; }
+
+                a.status = 'aguardando_hora';
+                a.confirmado_pelo_cliente = false;
+                a.atualizado_em = new Date().toISOString();
+
+                auditar(db, {
+                    acao: 'horarios_sugeridos',
+                    alvo: `OAB ${a.oab}`,
+                    detalhe: opcoes.map(o => o.rotulo).join(' | '),
+                    ip: ipDoPedido(req)
+                });
+                saveJsonDb(db);
+
+                const v = (db.verificacoes_oab || []).find(x => x.id === a.verificacao_id);
+                const alvo = (v && v.email) || null;
+                if (alvo) {
+                    const corpo = texto
+                        ? `<p>${escaparHtml(texto).replace(/\n/g, '<br>')}</p>`
+                        : `<p>Olá, ${escaparHtml(a.nome || '')}.</p>
+                           <p>Precisamos remarcar seu atendimento. Estes horários estão livres:</p>
+                           <ul>${opcoes.map(o => `<li>${escaparHtml(o.rotulo)}</li>`).join('')}</ul>
+                           <p>Responda este e-mail com o que preferir e a gente confirma.</p>`;
+                    enviarEmailBrevo(alvo, 'Escolha o horário do seu atendimento — AdvogaCert', corpo)
+                        .catch(e => console.error('Sugestão de horários não saiu:', e.message));
+                }
+
+                responder(200, {
+                    success: true,
+                    opcoes,
+                    msg: alvo ? 'Opções enviadas. Voltou para "esperando o cliente".'
+                              : 'Voltou para "esperando o cliente". Sem e-mail no cadastro — avise pelo WhatsApp.'
+                });
+
+            } catch (err) {
+                console.error('Erro ao sugerir horários:', err.message);
+                responder(400, { success: false, error: 'Erro interno' });
+            }
+        });
         return;
     }
 
@@ -2319,7 +3111,10 @@ const server = http.createServer((req, res) => {
                     return;
                 }
 
-                const vaga = horarioValido(db, inicio);
+                // painel: true — a antecedência mínima existe para o cliente
+                // não marcar em cima da hora, não para me impedir de encaixar
+                // alguém daqui a uma hora.
+                const vaga = horarioValido(db, inicio, { painel: true });
                 if (!vaga.ok) {
                     responder(200, { success: false, error: vaga.erro, recarregar_agenda: true });
                     return;
@@ -2337,7 +3132,7 @@ const server = http.createServer((req, res) => {
                 // fila de trabalho — depois de conferir horário e prioridade, e
                 // com a chance de remarcar antes. chamado_id fica null até lá.
                 const agora = new Date().toISOString();
-                const fim = new Date(vaga.quando.getTime() + AGENDA.duracaoMin * 60000);
+                const fim = new Date(vaga.quando.getTime() + agendaConfig(db).duracaoMin * 60000);
                 const agendamentoId = proximoId(db.agendamentos);
                 db.agendamentos.push({
                     id: agendamentoId,
@@ -2349,6 +3144,12 @@ const server = http.createServer((req, res) => {
                     fim: fim.toISOString(),
                     status: 'marcado',
                     verificacao_id: v.id,
+                    preferencia_turno: turnoDaHora(horaBR(vaga.quando)),
+                    // marcado por mim, não por ele: fica pendente de confirmação
+                    // até responder, e é isso que acende o alerta de "é daqui a
+                    // duas horas e ninguém confirmou"
+                    confirmado_pelo_cliente: false,
+                    atualizado_em: agora,
                     criado_em: agora
                 });
 
@@ -2364,15 +3165,12 @@ const server = http.createServer((req, res) => {
 
                 // Avisa quem foi marcado: ele não escolheu, então precisa saber.
                 if (v.email) {
-                    const quando = vaga.quando.toLocaleString('pt-BR', {
-                        weekday: 'long', day: '2-digit', month: '2-digit',
-                        hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo'
-                    });
+                    const quando = rotularQuando(vaga.quando);
                     enviarEmailBrevo(
                         v.email,
                         'Seu atendimento foi marcado — AdvogaCert',
-                        `<p>Olá, ${v.nome_declarado}.</p>
-                         <p>Seu atendimento ficou marcado para <strong>${quando}</strong>.</p>
+                        `<p>Olá, ${escaparHtml(v.nome_declarado)}.</p>
+                         <p>Seu atendimento ficou marcado para <strong>${escaparHtml(quando)}</strong>.</p>
                          <p>Se o horário não servir, responda este e-mail que a gente remarca.</p>`
                     ).catch(e => console.error('Aviso de agendamento não saiu:', e.message));
                 }
@@ -2409,7 +3207,10 @@ const server = http.createServer((req, res) => {
             }
 
             try {
-                const { agendamento_id, inicio } = JSON.parse(body || '{}');
+                const {
+                    agendamento_id, inicio, atualizado_em,
+                    motivo, aviso, avisar
+                } = JSON.parse(body || '{}');
                 const db = loadJsonDb();
                 const a = (db.agendamentos || []).find(x => x.id === agendamento_id);
 
@@ -2425,48 +3226,64 @@ const server = http.createServer((req, res) => {
                     return;
                 }
 
-                // A vaga antiga precisa sair da contagem antes de conferir a
-                // nova: senão, remarcar para o mesmo horário seria recusado
-                // por conflito com ele mesmo.
-                const antigo = a.inicio;
-                a.status = 'remarcando';
+                const versao = conferirVersao(a, atualizado_em);
+                if (!versao.ok) { responder(200, versao.resposta); return; }
 
-                const vaga = horarioValido(db, inicio);
+                // ignorarId tira o próprio agendamento da contagem de lotação:
+                // senão, remarcar para o mesmo bloco seria recusado por
+                // conflito com ele mesmo.
+                const vaga = horarioValido(db, inicio, { painel: true, ignorarId: a.id });
                 if (!vaga.ok) {
-                    a.status = 'marcado';
                     responder(200, { success: false, error: vaga.erro, recarregar_agenda: true });
                     return;
                 }
 
+                const antigo = a.inicio;
+                a.remarcado_de = antigo;
+                a.remarcado_por = 'painel';
+                a.motivo_remarcacao = motivo ? String(motivo).slice(0, 300) : null;
                 a.inicio = vaga.quando.toISOString();
-                a.fim = new Date(vaga.quando.getTime() + AGENDA.duracaoMin * 60000).toISOString();
+                a.fim = new Date(vaga.quando.getTime() + agendaConfig(db).duracaoMin * 60000).toISOString();
                 a.status = 'marcado';
+                // mudou a hora debaixo dele: a confirmação anterior não vale
+                // mais para o horário novo
+                a.confirmado_pelo_cliente = false;
+                a.atualizado_em = new Date().toISOString();
 
                 auditar(db, {
                     acao: 'remarcado',
                     alvo: `OAB ${a.oab}`,
-                    detalhe: `${antigo} -> ${a.inicio}`,
+                    detalhe: `${antigo} -> ${a.inicio}${motivo ? ' (' + motivo + ')' : ''}`,
                     ip: ipDoPedido(req)
                 });
                 saveJsonDb(db);
 
+                // Nunca envio cego: o texto vem do painel, já revisto por você.
+                // Sem `avisar`, remarca e não manda nada — é o caso de quem
+                // combinou por telefone e só está registrando.
                 const v = (db.verificacoes_oab || []).find(x => x.id === a.verificacao_id);
-                if (v && v.email) {
-                    const quando = vaga.quando.toLocaleString('pt-BR', {
-                        weekday: 'long', day: '2-digit', month: '2-digit',
-                        hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo'
-                    });
-                    enviarEmailBrevo(
-                        v.email,
-                        'Seu atendimento foi remarcado — AdvogaCert',
-                        `<p>Olá, ${v.nome_declarado}.</p>
-                         <p>Precisamos remarcar seu atendimento. O novo horário é
-                         <strong>${quando}</strong>.</p>
-                         <p>Se não puder, responda este e-mail que a gente ajusta.</p>`
-                    ).catch(e => console.error('Aviso de remarcação não saiu:', e.message));
+                let enviado = false;
+                if (avisar !== false && v && v.email) {
+                    const quando = rotularQuando(vaga.quando);
+                    const corpo = aviso
+                        ? `<p>${escaparHtml(aviso).replace(/\n/g, '<br>')}</p>`
+                        : `<p>Olá, ${escaparHtml(v.nome_declarado)}.</p>
+                           <p>Precisamos remarcar seu atendimento. O novo horário é
+                           <strong>${escaparHtml(quando)}</strong>.</p>
+                           <p>Se não puder, responda este e-mail que a gente ajusta.</p>`;
+                    enviado = true;
+                    enviarEmailBrevo(v.email, 'Seu atendimento foi remarcado — AdvogaCert', corpo)
+                        .catch(e => console.error('Aviso de remarcação não saiu:', e.message));
                 }
 
-                responder(200, { success: true, msg: 'Remarcado e cliente avisado.' });
+                responder(200, {
+                    success: true,
+                    inicio: a.inicio,
+                    rotulo: rotularQuando(a.inicio, { curto: true }),
+                    atualizado_em: a.atualizado_em,
+                    msg: enviado ? 'Remarcado e cliente avisado.'
+                                 : 'Remarcado. Nenhum aviso foi enviado.'
+                });
 
             } catch (err) {
                 console.error('Erro ao remarcar:', err.message);
@@ -2477,14 +3294,16 @@ const server = http.createServer((req, res) => {
     }
 
     // ============ PAINEL: POST /admin/confirmar ============
-    // A etapa que faltava entre a triagem e o chamado.
+    // O fim da triagem: confirma o horário E abre o chamado, num passo só.
     //
-    // A esteira é: confere a OAB → tria e marca a hora → CONFIRMA, e o
-    // atendimento passa para "Cadastros e agenda" → abre o chamado, e vira
-    // trabalho com prazo correndo.
+    // A esteira é: confere a OAB → lista de assinantes diz se há pendência →
+    // tria o horário → CONFIRMA, e o atendimento entra na fila de chamados
+    // com o prazo correndo.
     //
-    // Antes a triagem pulava direto para chamado, e a agenda ficava sendo
-    // uma tela de consulta que ninguém alimentava de propósito.
+    // Já houve uma parada intermediária em "Cadastros e agenda" entre a
+    // triagem e o chamado. Saiu: aquela aba virou a lista de assinantes, que
+    // é consulta — a conferência de pendência acontece ANTES de confirmar,
+    // não num terceiro clique depois.
     if (method === 'POST' && url === '/admin/confirmar') {
         let body = '';
         req.on('data', chunk => body += chunk);
@@ -2500,7 +3319,7 @@ const server = http.createServer((req, res) => {
             }
 
             try {
-                const { agendamento_id, voltar } = JSON.parse(body || '{}');
+                const { agendamento_id, voltar, atualizado_em } = JSON.parse(body || '{}');
                 const db = loadJsonDb();
                 const a = (db.agendamentos || []).find(x => x.id === agendamento_id);
 
@@ -2513,80 +3332,39 @@ const server = http.createServer((req, res) => {
                     return;
                 }
 
-                a.status = voltar ? 'marcado' : 'confirmado';
-
-                auditar(db, {
-                    acao: voltar ? 'devolvido_para_triagem' : 'confirmado_na_agenda',
-                    alvo: `OAB ${a.oab}`,
-                    detalhe: `Agendamento #${a.id} em ${a.inicio}`,
-                    ip: ipDoPedido(req)
-                });
-                saveJsonDb(db);
-
-                responder(200, {
-                    success: true,
-                    msg: voltar ? 'Devolvido para a triagem.' : 'Confirmado. Está em Cadastros e agenda.'
-                });
-
-            } catch (err) {
-                console.error('Erro ao confirmar:', err.message);
-                responder(400, { success: false, error: 'Erro interno' });
-            }
-        });
-        return;
-    }
-
-    // ============ PAINEL: POST /admin/promover ============
-    // O passo que você pediu: só o que foi priorizado na triagem vira chamado.
-    // Até aqui existia um horário combinado; daqui em diante existe trabalho
-    // na fila, com idade, responsável e prazo correndo.
-    if (method === 'POST' && url === '/admin/promover') {
-        let body = '';
-        req.on('data', chunk => body += chunk);
-        req.on('end', () => {
-            const responder = (status, payload) => {
-                res.writeHead(status, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify(payload));
-            };
-
-            if (!sessaoAdmin(req)) {
-                responder(401, { success: false, error: 'Sessão expirada' });
-                return;
-            }
-
-            try {
-                const { agendamento_id, prioridade } = JSON.parse(body || '{}');
-                const db = loadJsonDb();
-                const a = (db.agendamentos || []).find(x => x.id === agendamento_id);
-
-                if (!a) {
-                    responder(404, { success: false, error: 'Agendamento não encontrado' });
-                    return;
+                // Chamada antiga sem versão continua valendo: quem não
+                // afirma ter lido uma versão não é cobrado por isso.
+                if (atualizado_em) {
+                    const versao = conferirVersao(a, atualizado_em);
+                    if (!versao.ok) { responder(200, versao.resposta); return; }
                 }
-                if (a.chamado_id) {
-                    responder(400, { success: false, error: 'Este atendimento já virou chamado.' });
-                    return;
-                }
-                // Só abre chamado o que passou pela agenda. É a etapa que
-                // garante que ninguém pula a conferência de cadastro.
-                if (a.status !== 'confirmado') {
-                    responder(400, {
-                        success: false,
-                        error: 'Confirme na triagem antes: o atendimento precisa passar por Cadastros e agenda.'
+
+                const agora = new Date().toISOString();
+
+                if (voltar) {
+                    a.status = 'marcado';
+                    a.atualizado_em = agora;
+                    auditar(db, {
+                        acao: 'devolvido_para_triagem',
+                        alvo: `OAB ${a.oab}`,
+                        detalhe: `Agendamento #${a.id} em ${a.inicio}`,
+                        ip: ipDoPedido(req)
                     });
+                    saveJsonDb(db);
+                    responder(200, { success: true, msg: 'Devolvido para a triagem.' });
                     return;
                 }
 
+                // Confirmar abre o chamado aqui mesmo. Se fossem duas rotas
+                // (confirmar e depois promover), existiria um estado
+                // intermediário em que o atendimento não aparece em lugar
+                // nenhum do painel — e foi exatamente o que acontecia.
                 const v = (db.verificacoes_oab || []).find(x => x.id === a.verificacao_id);
                 const dono = a.usuario_id
                     ? (db.usuarios || []).find(u => u.id === a.usuario_id)
                     : null;
-                // premium manda na fila; a prioridade escolhida na triagem só
-                // promove, nunca rebaixa quem paga
-                const tipoBase = dono && assinaturaAtiva(db, dono.id) ? 'premium' : 'free';
-                const tipo = prioridade === 'premium' ? 'premium' : tipoBase;
+                const tipo = dono && assinaturaAtiva(db, dono.id) ? 'premium' : 'free';
 
-                const agora = new Date().toISOString();
                 const chamadoId = proximoId(db.chamados);
                 db.chamados.push({
                     id: chamadoId,
@@ -2594,10 +3372,7 @@ const server = http.createServer((req, res) => {
                     oab: a.oab,
                     uf: v ? v.uf : null,
                     tipo,
-                    descricao: 'Atendimento de ' + new Date(a.inicio).toLocaleString('pt-BR', {
-                        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
-                        timeZone: 'America/Sao_Paulo'
-                    }),
+                    descricao: 'Atendimento de ' + rotularQuando(a.inicio, { curto: true }),
                     status: 'aberto',
                     responsavel: null,
                     primeiro_retorno_em: null,
@@ -2608,26 +3383,37 @@ const server = http.createServer((req, res) => {
                     criado_em: agora
                 });
 
+                a.status = 'confirmado';
                 a.chamado_id = chamadoId;
+                a.atualizado_em = agora;
 
                 auditar(db, {
-                    acao: 'promovido_para_chamado',
+                    acao: 'confirmado_virou_chamado',
                     alvo: `OAB ${a.oab}`,
                     detalhe: `Agendamento #${a.id} -> Chamado #${chamadoId} (${tipo})`,
                     ip: ipDoPedido(req)
                 });
                 saveJsonDb(db);
 
-                console.log(`➡️  Triagem: ${a.oab} virou chamado #${chamadoId} (${tipo})`);
-                responder(200, { success: true, msg: 'Passou para a fila de chamados.', chamado_id: chamadoId });
+                console.log(`➡️  Triagem: ${a.oab} confirmado, chamado #${chamadoId} (${tipo})`);
+                responder(200, {
+                    success: true,
+                    chamado_id: chamadoId,
+                    msg: 'Confirmado. Está na fila de chamados.'
+                });
 
             } catch (err) {
-                console.error('Erro ao promover:', err.message);
+                console.error('Erro ao confirmar:', err.message);
                 responder(400, { success: false, error: 'Erro interno' });
             }
         });
         return;
     }
+
+    // A rota /admin/promover morava aqui. Era o segundo passo de um fluxo em
+    // dois cliques (confirmar na triagem, abrir chamado em Cadastros e
+    // agenda) que deixou de existir: /admin/confirmar faz os dois de uma
+    // vez, e a aba do meio virou a lista de assinantes.
 
     // ============ PAINEL: GET /admin/linha-tempo ============
     // A história daquela inscrição, em ordem. Montada na hora a partir das
@@ -3259,22 +4045,48 @@ O QUE CADA TABELA GUARDA
 - usuarios: nome, e-mail, celular, OAB, como entrou, último login.
 - assinaturas: plano, valor, status, valida_ate, renovacao_automatica.
 - chamados: tipo (free|premium), OAB, descrição, status, criado_em.
-- agendamentos: hora marcada do suporte grátis (inicio, fim, status).
+- agendamentos: hora marcada (inicio, fim, status, remarcado_de,
+  confirmado_pelo_cliente, preferencia_turno, atualizado_em).
+- agenda_config: horário de trabalho por dia da semana (dia_semana,
+  hora_inicio, hora_fim, capacidade, ativo).
+- agenda_ajustes: linha única com duracao_min, folga_min, antecedencia_min
+  e janela_dias — vale para a agenda inteira.
+- agenda_bloqueios: feriado, viagem, "hoje não" (inicio, fim, motivo).
 - logins: histórico de entradas.
+
+============================================================
+AS ABAS DO PAINEL, NA ORDEM DA ESTEIRA
+============================================================
+1. Verificação de OAB — confere a inscrição no CNA e libera.
+2. Lista de assinantes — só quem tem plano (ativo ou vencido). É consulta:
+   serve para ver pendência ANTES de confirmar um atendimento.
+3. Triagem — a central de horários: grade da semana, alertas, remarcação e
+   a configuração da agenda. Confirmar aqui já abre o chamado.
+4. Chamados — o trabalho com prazo correndo.
+5. Indicadores e 6. Servidor e banco.
+
+O selo de cada aba conta só o que está parado nela, e vem de
+/admin/contadores. Âmbar = pendência normal. Vermelho = esperando há mais
+de 24h ou conflito de horário. Sem selo = nada a fazer.
 
 ============================================================
 COMO LER O PAINEL
 ============================================================
 - "Inadimplente" = valida_ate já passou e ninguém cancelou. É de quem se cobra.
-- "Cancelada" = pediu para sair. "Sem plano" = nunca assinou.
+- "Cancelada" = pediu para sair. "Sem plano" = nunca assinou. Estes dois
+  NÃO aparecem na Lista de assinantes — ela é só de quem paga.
 - "Renovação" alterna entre Automática e Manual clicando no botão.
 - Assinatura liberada na mão nasce Manual de propósito: vence e vira
   inadimplente, para você reavaliar em vez de renovar sozinha.
 - O chamado grátis é contado pela OAB, não pelo e-mail: trocar de e-mail
   não devolve o grátis.
-- Agenda do grátis: 18h às 23h, todos os dias, de amanhã até 7 dias.
-  Premium não agenda — entra na fila.
-- "Aguardando baixa" = passou da hora e ninguém marcou como atendido.
+- A agenda NÃO está mais fixa no código: sai de agenda_config, e é a mesma
+  fonte para a grade do painel e para a lista que o cliente vê no site.
+  Mudar ali muda os dois. Premium não agenda — entra na fila.
+- Na grade: cheio é consequência (alguém marcou), bloqueado é decisão sua.
+  São pintados diferente de propósito.
+- Remarcar sempre mostra o aviso ao cliente antes de mandar, e tem 10
+  segundos de desfazer. Nada sai sem você ler.
 
 ============================================================
 PROBLEMAS COMUNS E COMO RESOLVER

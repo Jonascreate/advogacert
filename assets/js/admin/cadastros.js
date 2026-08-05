@@ -1,9 +1,17 @@
 /* ==========================================================
-   admin/cadastros.js — pessoas, agenda e estado do sistema
+   admin/cadastros.js — lista de assinantes e estado do sistema
    ==========================================================
-   O que já existia no painel antigo, reconstruído sem innerHTML: nome,
-   e-mail, OAB e telefone vêm do cadastro do próprio usuário e, montados por
-   template string, permitiam injetar HTML dentro do painel logado.
+   A aba é de CONSULTA, e só de assinantes: quem tem plano valendo e quem
+   está inadimplente. É onde se confere pendência antes de confirmar um
+   atendimento na triagem.
+
+   Cadastro sem assinatura não aparece — a conta de teste, o curioso que só
+   fez login, o cliente do grátis. Eles continuam no banco e nos números do
+   topo, mas listá-los aqui misturava três públicos numa tabela cuja única
+   pergunta é "esse aqui está em dia?".
+
+   Nome, e-mail, OAB e telefone vêm do cadastro do próprio usuário — por
+   isso tudo entra por textContent, nunca por innerHTML.
    ========================================================== */
 (function (global) {
     'use strict';
@@ -12,7 +20,7 @@
     var el = D.el;
 
     var estado = { dados: null, busca: '' };
-    var alvoPessoas, alvoAgenda, alvoDiag, alvoResumo;
+    var alvoPessoas, alvoDiag, alvoResumo;
 
     // ---------------- resumo ----------------
     function desenharResumo() {
@@ -105,9 +113,16 @@
     function desenharPessoas() {
         if (!alvoPessoas || !estado.dados) return;
 
+        // Só assinantes: plano valendo ou vencido sem cancelar. "Cancelada"
+        // e "sem plano" ficam de fora — não há pendência a conferir em quem
+        // não deve nada.
+        var assinantes = (estado.dados.pessoas || []).filter(function (p) {
+            return p.status === 'ativa' || p.status === 'inadimplente';
+        });
+
         var termo = estado.busca.trim().toLowerCase();
         var digitos = termo.replace(/\D/g, '');
-        var lista = (estado.dados.pessoas || []).filter(function (p) {
+        var lista = assinantes.filter(function (p) {
             if (!termo) return true;
             if (digitos.length >= 4 && String(p.telefone || '').replace(/\D/g, '').indexOf(digitos) >= 0) return true;
             if (digitos.length >= 3 && String(p.oab || '').replace(/\D/g, '').indexOf(digitos) >= 0) return true;
@@ -118,7 +133,7 @@
 
         var busca = el('input', {
             type: 'search',
-            placeholder: 'Buscar por OAB, WhatsApp, e-mail ou nome',
+            placeholder: 'Buscar assinante por OAB, WhatsApp, e-mail ou nome',
             valor: estado.busca
         });
         busca.addEventListener('input', function (e) {
@@ -133,10 +148,14 @@
 
         D.trocar(alvoPessoas, [
             el('div.bloco-topo', {}, el('div', {}, [
-                el('h2', { texto: 'Cadastros' }),
-                el('p.bloco-nota', { texto: 'Tempo real.' })
+                el('h2', { texto: 'Lista de assinantes' }),
+                el('p.bloco-nota', {
+                    texto: 'Quem paga, e se está em dia. Confira aqui antes de confirmar um atendimento na triagem.'
+                })
             ])),
-            el('div.busca', {}, busca),
+            // vazia de verdade quando não há assinante: caixa de busca sobre
+            // uma lista vazia é pergunta sem resposta possível
+            assinantes.length ? el('div.busca', {}, busca) : null,
             el('div.tabela-wrap.responsiva', {}, [
                 el('table', {}, [
                     el('thead', {}, el('tr', {}, titulos.map(function (t) {
@@ -144,58 +163,18 @@
                     }))),
                     el('tbody', {}, lista.map(linhaPessoa))
                 ]),
-                lista.length ? null : el('div.vazio', { texto: 'Nenhum cadastro encontrado.' })
+                lista.length ? null : el('div.vazio', {
+                    texto: assinantes.length
+                        ? 'Nenhum assinante bate com a busca.'
+                        : 'Nenhum assinante ainda. Quando uma assinatura Premium entrar, ela aparece aqui.'
+                })
             ])
         ]);
     }
 
-    // ---------------- agenda ----------------
-    function desenharAgenda() {
-        if (!alvoAgenda || !estado.dados) return;
-        var lista = estado.dados.agendamentos || [];
-
-        var linhas = lista.map(function (a) {
-            var passou = new Date(a.inicio) < new Date() && !a.virou_chamado;
-            var mapa = a.virou_chamado ? ['Virou chamado', 'ativa']
-                     : a.confirmado    ? ['Confirmado', 'livre']
-                     : a.status === 'cancelado' ? ['Cancelado', 'sem']
-                     : ['Na triagem', 'sem'];
-
-            // O último passo da esteira: confirmado na agenda, vira trabalho.
-            // Só aparece no que foi confirmado e ainda não virou chamado.
-            var acao = (a.confirmado && !a.virou_chamado)
-                ? el('button.acao.acao-promover', {
-                    type: 'button', texto: 'Abrir chamado',
-                    aoClicar: function () { abrirChamado(a); }
-                  })
-                : (a.confirmado || a.virou_chamado ? null : el('span.fraco', { texto: 'aguarda triagem' }));
-
-            return el('tr', {}, [
-                el('td', { 'data-rotulo': 'Quando' },
-                    el('span.mono' + (passou ? '.critico' : ''), { texto: D.fmtData(a.inicio) })),
-                el('td', { 'data-rotulo': 'Quem', texto: a.nome || '—' }),
-                el('td', { 'data-rotulo': 'OAB' }, el('span.mono', { texto: a.oab || '—' })),
-                el('td', { 'data-rotulo': 'Status' }, D.tag(mapa[0], mapa[1])),
-                el('td', { 'data-rotulo': '' }, acao || document.createTextNode(''))
-            ]);
-        });
-
-        D.trocar(alvoAgenda, [
-            el('div.bloco-topo', {}, el('div', {}, [
-                el('h2', { texto: 'Agenda do suporte grátis' }),
-                el('p.bloco-nota', { texto: 'Tempo real. Em ordem de quem vem primeiro.' })
-            ])),
-            el('div.tabela-wrap.responsiva', {}, [
-                el('table', {}, [
-                    el('thead', {}, el('tr', {}, ['Quando', 'Quem', 'OAB', 'Status', ''].map(function (t) {
-                        return el('th', { texto: t });
-                    }))),
-                    el('tbody', {}, linhas)
-                ]),
-                lista.length ? null : el('div.vazio', { texto: 'Nenhum atendimento marcado.' })
-            ])
-        ]);
-    }
+    // A tabela "Agenda do suporte grátis" que vivia nesta aba foi embora
+    // junto com a etapa que a alimentava: confirmar na triagem agora abre o
+    // chamado direto, e a ocupação dos horários se vê na grade da Triagem.
 
     // ---------------- servidor e banco ----------------
     function desenharDiag() {
@@ -231,29 +210,12 @@
         ]);
     }
 
-    /** Último passo: o atendimento confirmado vira trabalho na fila. */
-    function abrirChamado(a) {
-        if (!confirm('Abrir chamado para ' + (a.oab || a.nome) + '?\n\n' +
-                     'A partir daqui o prazo de atendimento começa a correr.')) return;
-
-        global.AdminDesfazer.agendar({
-            texto: (a.oab || a.nome) + ' → chamado',
-            aoConfirmar: function () {
-                return global.AdminApi.promover(a.id).then(function () {
-                    carregar();
-                    if (global.AdminFilaChamados) global.AdminFilaChamados.recarregar();
-                });
-            }
-        });
-    }
-
     function carregar() {
         return global.AdminApi.dados().then(function (d) {
             if (!d) return;
             estado.dados = d;
             desenharResumo();
             desenharPessoas();
-            desenharAgenda();
             desenharDiag();
         }).catch(function () {});
     }
@@ -262,7 +224,6 @@
         montar: function (nos) {
             alvoResumo = nos.resumo;
             alvoPessoas = nos.pessoas;
-            alvoAgenda = nos.agenda;
             alvoDiag = nos.diagnostico;
             return carregar();
         },

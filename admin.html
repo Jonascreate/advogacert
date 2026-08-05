@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
-    <link rel="stylesheet" href="assets/css/admin.css?v=8">
+    <link rel="stylesheet" href="assets/css/admin.css?v=9">
 </head>
 <body>
     <div class="blush-container">
@@ -59,7 +59,13 @@
                 <h1>Painel de Controle</h1>
                 <div class="sub" id="atualizado"></div>
             </div>
-            <button class="acao" id="btn-recarregar">Atualizar agora</button>
+            <div class="admin-head-acoes">
+                <!-- Assinantes NÃO é aba: as abas são a linha do tempo de um
+                     atendimento, e controle de plano não é etapa dela. É uma
+                     planilha de controle, aberta quando você precisa dela. -->
+                <button class="acao" id="btn-assinantes">Assinantes</button>
+                <button class="acao" id="btn-recarregar">Atualizar agora</button>
+            </div>
         </div>
 
         <div class="stats" id="resumo"></div>
@@ -67,16 +73,16 @@
         <nav class="abas" id="abas"></nav>
 
         <!-- Cada aba é preenchida pelo seu módulo. Nada de conteúdo fixo
-             aqui: o que entra vem do servidor e é montado via DOM. -->
+             aqui: o que entra vem do servidor e é montado via DOM.
+
+             A ordem abaixo é a ordem da esteira: confere a OAB, tria o
+             horário, trabalha o chamado. Assinantes não está aqui — não é
+             etapa de atendimento, é planilha de controle (veja o modal
+             #modal-assinantes, mais abaixo). -->
         <section id="aba-verificacao" class="aba-conteudo"></section>
         <section id="aba-triagem" class="aba-conteudo" style="display:none;"></section>
         <section id="aba-chamados" class="aba-conteudo" style="display:none;"></section>
         <section id="aba-indicadores" class="aba-conteudo" style="display:none;"></section>
-
-        <section id="aba-cadastros" class="aba-conteudo" style="display:none;">
-            <div id="aba-cadastros-pessoas"></div>
-            <div id="aba-cadastros-agenda" style="margin-top:2.5rem;"></div>
-        </section>
 
         <section id="aba-sistema" class="aba-conteudo" style="display:none;">
             <div id="aba-sistema-diag"></div>
@@ -102,6 +108,12 @@
                         diz qual. A ordem certa é sempre
                         <strong>Supabase primeiro, publicar depois</strong>.</dd>
 
+                    <dt>O site não oferece nenhum horário ao cliente</dt>
+                    <dd>A agenda deixou de ser fixa no código: ela vem da
+                        configuração no fim da aba <strong>Triagem</strong>. Dia
+                        desmarcado ali, ou uma data bloqueada, some da lista do
+                        site na hora. Confira lá antes de suspeitar do servidor.</dd>
+
                     <dt>O Supabase está pausado</dt>
                     <dd>O plano free pausa o projeto após cerca de 7 dias sem uso.
                         Entre no painel do Supabase e reative.</dd>
@@ -124,17 +136,37 @@
         </section>
     </div>
 
-    <script src="assets/js/api.js?v=8"></script>
-    <script src="assets/js/script.js?v=8"></script>
+    <!-- ================= ASSINANTES (planilha de controle) =================
+         Fora do fluxo de abas de propósito. Verificação, Triagem e Chamados
+         são a linha do tempo de UM atendimento: cada uma é uma etapa que
+         ele atravessa. Assinantes não é isso — é a mesma pessoa em qualquer
+         etapa, ou em nenhuma. Colocá-la como aba a deixava fora de ordem em
+         qualquer lugar da barra: virava planilha no meio de uma esteira.
+         Aqui ela abre por cima, você confere e fecha, sem interromper onde
+         estava. -->
+    <div id="modal-assinantes" class="admin-modal" style="display:none;" role="dialog" aria-modal="true" aria-label="Assinantes">
+        <div class="admin-modal-caixa">
+            <div class="admin-modal-topo">
+                <h2>Assinantes</h2>
+                <button class="acao" id="btn-fechar-assinantes" aria-label="Fechar">Fechar</button>
+            </div>
+            <div id="modal-assinantes-conteudo"></div>
+        </div>
+    </div>
 
-    <script src="assets/js/admin/dom.js?v=8"></script>
-    <script src="assets/js/admin/api.js?v=8"></script>
-    <script src="assets/js/admin/desfazer.js?v=8"></script>
-    <script src="assets/js/admin/fila-verificacao.js?v=8"></script>
-    <script src="assets/js/admin/triagem.js?v=8"></script>
-    <script src="assets/js/admin/fila-chamados.js?v=8"></script>
-    <script src="assets/js/admin/indicadores.js?v=8"></script>
-    <script src="assets/js/admin/cadastros.js?v=8"></script>
-    <script src="assets/js/admin/app.js?v=8"></script>
+    <script src="assets/js/api.js?v=9"></script>
+    <script src="assets/js/script.js?v=9"></script>
+
+    <script src="assets/js/admin/dom.js?v=9"></script>
+    <script src="assets/js/admin/api.js?v=9"></script>
+    <script src="assets/js/admin/desfazer.js?v=9"></script>
+    <script src="assets/js/admin/fila-verificacao.js?v=9"></script>
+    <!-- agenda antes de triagem: é ela que a triagem monta dentro de si -->
+    <script src="assets/js/admin/agenda.js?v=9"></script>
+    <script src="assets/js/admin/triagem.js?v=9"></script>
+    <script src="assets/js/admin/fila-chamados.js?v=9"></script>
+    <script src="assets/js/admin/indicadores.js?v=9"></script>
+    <script src="assets/js/admin/cadastros.js?v=9"></script>
+    <script src="assets/js/admin/app.js?v=9"></script>
 </body>
 </html>
