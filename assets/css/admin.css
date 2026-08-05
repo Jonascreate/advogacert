@@ -336,6 +336,81 @@ tr.abandonado td { background: rgba(255, 176, 32, 0.05); }
     overflow-wrap: anywhere;
 }
 
+/* ================= TRIAGEM ================= */
+.triagem-lista {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+.triagem-card {
+    background: rgba(22, 22, 24, 0.35);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 1.1rem 1.25rem;
+}
+/* liberado há mais de 48h e ainda não marcou: esfriou, vale lembrar */
+.triagem-card.frio { border-color: rgba(255, 176, 32, 0.45); }
+.triagem-topo {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 0.75rem; margin-bottom: 0.9rem;
+}
+.triagem-inscricao {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem; font-weight: 700; color: var(--accent-mac);
+}
+.triagem-acoes {
+    display: flex; flex-wrap: wrap; gap: 0.5rem;
+    position: relative;
+}
+
+/* ================= LINHA DO TEMPO ================= */
+.linha-tempo {
+    width: 100%;
+    margin-top: 0.9rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--border-color);
+}
+.lt-lista { list-style: none; margin: 0; padding: 0 0 0 1.1rem; position: relative; }
+/* o fio que liga os pontos */
+.lt-lista::before {
+    content: '';
+    position: absolute; left: 3px; top: 0.4rem; bottom: 0.4rem;
+    width: 1px; background: var(--border-color);
+}
+.lt-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.15rem 0.75rem;
+    padding: 0.45rem 0;
+    font-size: 0.85rem;
+}
+.lt-item::before {
+    content: '';
+    position: absolute; left: -1.1rem; top: 0.85rem;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--text-muted);
+}
+.lt-quando {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.74rem; color: var(--text-muted);
+    white-space: nowrap;
+}
+.lt-texto { color: var(--text-secondary); }
+.lt-detalhe {
+    grid-column: 2;
+    color: var(--text-muted); font-size: 0.78rem;
+    overflow-wrap: anywhere;
+}
+/* a cor do ponto diz o que aconteceu sem precisar ler */
+.lt-liberado::before,
+.lt-pagamento::before { background: var(--accent-mac); }
+.lt-recusado::before  { background: #ff6b5e; }
+.lt-atendimento::before,
+.lt-agendou::before   { background: var(--accent-win); }
+.lt-chamado::before   { background: #ffb020; }
+
 /* ================= INDICADORES / DIAGNÓSTICO ================= */
 .ind-sub {
     font-family: 'Outfit', sans-serif;

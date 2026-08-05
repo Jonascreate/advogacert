@@ -70,6 +70,14 @@
             });
         },
 
+        triagem: function () {
+            return pedir('/admin/triagem');
+        },
+
+        linhaTempo: function (inscricao) {
+            return pedir('/admin/linha-tempo' + query({ inscricao: inscricao }));
+        },
+
         chamados: function (filtros) {
             return pedir('/admin/chamados' + query(filtros));
         },

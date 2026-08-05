@@ -82,6 +82,7 @@
     // ---------------- navegação ----------------
     var ABAS = [
         { id: 'verificacao', rotulo: 'Verificação de OAB' },
+        { id: 'triagem',     rotulo: 'Triagem' },
         { id: 'chamados',    rotulo: 'Chamados' },
         { id: 'indicadores', rotulo: 'Indicadores' },
         { id: 'cadastros',   rotulo: 'Cadastros e agenda' },
@@ -127,6 +128,7 @@
     function atualizarTempoReal() {
         return Promise.all([
             global.AdminFilaVerificacao.recarregar(),
+            global.AdminTriagem.recarregar(),
             global.AdminFilaChamados.recarregar()
         ]).then(marcarHora);
     }
@@ -136,6 +138,7 @@
         telaPainel.style.display = 'block';
 
         global.AdminFilaVerificacao.montar(document.getElementById('aba-verificacao'), marcarPendentes);
+        global.AdminTriagem.montar(document.getElementById('aba-triagem'));
         global.AdminFilaChamados.montar(document.getElementById('aba-chamados'));
         global.AdminIndicadores.montar(document.getElementById('aba-indicadores'));
         global.AdminCadastros.montar({

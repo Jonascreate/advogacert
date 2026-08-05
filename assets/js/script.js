@@ -1355,6 +1355,83 @@ document.addEventListener('DOMContentLoaded', function() {
                 .free-linha { display: flex; gap: 1rem; }
                 .free-linha .free-uf { flex: 0 0 7.5rem; }
 
+                /* ---- grade de dias e horários ---- */
+                .free-rotulo {
+                    font-size: 0.9rem;
+                    color: var(--text-secondary, #a1a1a8);
+                    margin-bottom: 0.7rem;
+                }
+                .free-dias {
+                    display: flex; gap: 0.6rem;
+                    overflow-x: auto;
+                    padding-bottom: 0.5rem;
+                    margin-bottom: 1.4rem;
+                    scroll-snap-type: x mandatory;
+                    -webkit-overflow-scrolling: touch;
+                }
+                .free-dias::-webkit-scrollbar { height: 4px; }
+                .free-dias::-webkit-scrollbar-thumb {
+                    background: rgba(110, 231, 200, 0.3); border-radius: 4px;
+                }
+                .free-dia {
+                    flex: 0 0 auto;
+                    scroll-snap-align: start;
+                    display: flex; flex-direction: column;
+                    align-items: center; gap: 0.1rem;
+                    min-width: 4.6rem;
+                    padding: 0.75rem 0.6rem;
+                    background: var(--bg-card, #1c1c1f);
+                    border: 1px solid var(--border-color, #2a2a2e);
+                    border-radius: 14px;
+                    color: var(--text-primary, #fff);
+                    font-family: inherit; cursor: pointer;
+                    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+                }
+                .free-dia:hover { border-color: rgba(110, 231, 200, 0.5); transform: translateY(-2px); }
+                .free-dia.ativo {
+                    border-color: #6ee7c8;
+                    background: rgba(110, 231, 200, 0.1);
+                    box-shadow: 0 0 0 3px rgba(110, 231, 200, 0.12);
+                }
+                .free-dia-sem {
+                    font-size: 0.68rem; letter-spacing: 0.06em;
+                    color: var(--text-muted, #8a8a90);
+                }
+                .free-dia-num {
+                    font-family: 'Outfit', sans-serif;
+                    font-size: 1.35rem; font-weight: 700; line-height: 1.1;
+                }
+                .free-dia-mes {
+                    font-size: 0.7rem; color: var(--text-muted, #8a8a90);
+                }
+                .free-dia-vagas {
+                    margin-top: 0.25rem;
+                    font-size: 0.62rem; color: #6ee7c8;
+                }
+                .free-dia.ativo .free-dia-sem,
+                .free-dia.ativo .free-dia-mes { color: var(--text-secondary, #a1a1a8); }
+
+                .free-horas {
+                    display: flex; flex-wrap: wrap; gap: 0.5rem;
+                    margin-bottom: 1.6rem;
+                }
+                .free-hora {
+                    padding: 0.6rem 1rem;
+                    background: var(--bg-card, #1c1c1f);
+                    border: 1px solid var(--border-color, #2a2a2e);
+                    border-radius: 10px;
+                    color: var(--text-primary, #fff);
+                    font-family: 'JetBrains Mono', monospace;
+                    font-size: 0.88rem; cursor: pointer;
+                    transition: border-color 0.2s ease, background 0.2s ease;
+                }
+                .free-hora:hover { border-color: rgba(110, 231, 200, 0.5); }
+                .free-hora.ativo {
+                    border-color: #6ee7c8;
+                    background: rgba(110, 231, 200, 0.14);
+                    color: #6ee7c8; font-weight: 700;
+                }
+
                 .free-btn {
                     width: 100%; padding: 1rem;
                     background: linear-gradient(135deg, #21b98f, #6ee7c8);
@@ -1444,16 +1521,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     </form>
 
                     <form id="free-form-agenda" novalidate style="display:none;">
-                        <div class="free-linha">
-                            <div class="free-grupo">
-                                <label for="free-dia">Dia</label>
-                                <select id="free-dia"></select>
-                            </div>
-                            <div class="free-grupo">
-                                <label for="free-hora">Horário</label>
-                                <select id="free-hora"></select>
-                            </div>
-                        </div>
+                        <div class="free-rotulo">Escolha o dia</div>
+                        <div class="free-dias" id="free-dias"></div>
+                        <div class="free-rotulo">Escolha o horário</div>
+                        <div class="free-horas" id="free-horas"></div>
                         <button type="submit" class="free-btn" id="free-enviar-agenda">Marcar meu atendimento</button>
                     </form>
 
@@ -1468,9 +1539,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const formAgenda = q('#free-form-agenda');
             const blocoEspera = q('#free-espera');
             const msg = q('#free-msg');
-            const selDia = q('#free-dia');
-            const selHora = q('#free-hora');
             const selUf = q('#free-uf');
+            const gradeDias = q('#free-dias');
+            const gradeHoras = q('#free-horas');
 
             selUf.innerHTML = '<option value="">UF</option>' +
                 UFS_BR.map(u => `<option value="${u}">${u}</option>`).join('');
@@ -1557,36 +1628,80 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
 
-            // ---- passo 2: agenda ----
-            function mostrarHorasDoDia() {
-                const dia = agenda.find(d => d.dia === selDia.value);
-                selHora.innerHTML = (dia ? dia.horarios : [])
-                    .map(h => `<option value="${h.inicio}">${h.rotulo}</option>`).join('');
+            // ---- passo 2: agenda em grade, no estilo de reserva ----
+            // Só aparece o que está de fato livre: a lista é calculada pelo
+            // servidor, que é o único que enxerga o que já foi marcado. No
+            // navegador, duas pessoas veriam a mesma vaga como disponível.
+            let diaEscolhido = null;
+            let horaEscolhida = null;
+
+            function pintarDias() {
+                gradeDias.textContent = '';
+                agenda.forEach(d => {
+                    const b = document.createElement('button');
+                    b.type = 'button';
+                    b.className = 'free-dia' + (d.dia === diaEscolhido ? ' ativo' : '');
+                    b.innerHTML =
+                        '<span class="free-dia-sem"></span>' +
+                        '<span class="free-dia-num"></span>' +
+                        '<span class="free-dia-mes"></span>' +
+                        '<span class="free-dia-vagas"></span>';
+                    b.querySelector('.free-dia-sem').textContent = d.semana;
+                    b.querySelector('.free-dia-num').textContent = d.numero;
+                    b.querySelector('.free-dia-mes').textContent = d.mes;
+                    b.querySelector('.free-dia-vagas').textContent =
+                        d.vagas === 1 ? '1 vaga' : d.vagas + ' vagas';
+                    b.addEventListener('click', () => {
+                        diaEscolhido = d.dia;
+                        horaEscolhida = null;
+                        pintarDias();
+                        pintarHoras();
+                    });
+                    gradeDias.appendChild(b);
+                });
             }
-            selDia.addEventListener('change', mostrarHorasDoDia);
+
+            function pintarHoras() {
+                gradeHoras.textContent = '';
+                const d = agenda.find(x => x.dia === diaEscolhido);
+                if (!d) return;
+                d.horarios.forEach(h => {
+                    const b = document.createElement('button');
+                    b.type = 'button';
+                    b.className = 'free-hora' + (h.inicio === horaEscolhida ? ' ativo' : '');
+                    b.textContent = h.rotulo;
+                    b.addEventListener('click', () => {
+                        horaEscolhida = h.inicio;
+                        pintarHoras();
+                        aviso('');
+                    });
+                    gradeHoras.appendChild(b);
+                });
+            }
 
             function carregarAgenda() {
-                selDia.innerHTML = '<option>carregando...</option>';
-                selHora.innerHTML = '';
+                gradeDias.textContent = 'Carregando...';
+                gradeHoras.textContent = '';
                 return fetch(apiUrl('/agenda/horarios'))
                     .then(r => r.json())
                     .then(d => {
                         agenda = (d && d.dias) || [];
+                        diaEscolhido = agenda.length ? agenda[0].dia : null;
+                        horaEscolhida = null;
                         if (!agenda.length) {
-                            selDia.innerHTML = '<option>sem horário livre</option>';
+                            gradeDias.textContent = '';
                             aviso('Não há horário livre nos próximos dias. Fale conosco pelo WhatsApp.', '#ff6b5e');
                             return;
                         }
-                        selDia.innerHTML = agenda
-                            .map(d2 => `<option value="${d2.dia}">${d2.rotulo}</option>`).join('');
-                        mostrarHorasDoDia();
+                        pintarDias();
+                        pintarHoras();
                     })
                     .catch(() => aviso('Não foi possível carregar a agenda.', '#ff6b5e'));
             }
 
             formAgenda.addEventListener('submit', function (e) {
                 e.preventDefault();
-                if (!selHora.value) { aviso('Escolha o dia e o horário.', '#ff6b5e'); return; }
+                if (!horaEscolhida) { aviso('Escolha o dia e o horário.', '#ff6b5e'); return; }
 
                 const botao = q('#free-enviar-agenda');
                 const u = getUsuarioLogado();
@@ -1598,7 +1713,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         verificacao_id: verificacaoId,
-                        inicio: selHora.value,
+                        inicio: horaEscolhida,
                         usuario_id: u ? u.id : null,
                         descricao: 'Suporte gratuito pedido pela página de planos'
                     })

@@ -1581,12 +1581,20 @@ const server = http.createServer((req, res) => {
         const db = loadJsonDb();
         const dias = diasDaAgenda().map(dia => {
             const d = new Date(dia + 'T12:00:00Z');
+            const horarios = horariosLivres(db, dia);
             return {
                 dia,
+                // partes separadas para a grade montar o cartão do dia sem
+                // ter de fatiar texto no navegador
+                semana: d.toLocaleDateString('pt-BR', { weekday: 'short', timeZone: 'UTC' })
+                          .replace('.', '').toUpperCase(),
+                numero: String(d.getUTCDate()).padStart(2, '0'),
+                mes: d.toLocaleDateString('pt-BR', { month: 'short', timeZone: 'UTC' }).replace('.', ''),
                 rotulo: d.toLocaleDateString('pt-BR', {
                     weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'UTC'
                 }),
-                horarios: horariosLivres(db, dia)
+                vagas: horarios.length,
+                horarios
             };
         }).filter(d => d.horarios.length);
 
@@ -2135,6 +2143,137 @@ const server = http.createServer((req, res) => {
                 responder(400, { success: false, error: 'Erro interno' });
             }
         });
+        return;
+    }
+
+    // ============ PAINEL: GET /admin/triagem ============
+    // O que está entre a liberação e o atendimento. Depois que você confere a
+    // OAB, a pessoa não some nem vira chamado na hora: ela precisa escolher o
+    // horário. Esta aba mostra quem está nesse meio do caminho — senão o
+    // liberado sai da fila de verificação e desaparece do painel.
+    if (method === 'GET' && url.split('?')[0] === '/admin/triagem') {
+        if (!sessaoAdmin(req)) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'Sessão expirada' }));
+            return;
+        }
+
+        const db = loadJsonDb();
+        const agendamentos = db.agendamentos || [];
+        const agora = Date.now();
+
+        // Liberados que ainda não marcaram: a bola está com o cliente.
+        const aguardandoMarcar = (db.verificacoes_oab || [])
+            .filter(v => v.status === 'confere')
+            .filter(v => !agendamentos.some(a => a.verificacao_id === v.id))
+            .map(v => ({
+                verificacao_id: v.id,
+                inscricao: `${v.inscricao}/${v.uf}`,
+                nome: v.nome_declarado,
+                contato: v.contato,
+                email: v.email,
+                liberado_em: v.decidido_em,
+                horas_desde: Math.floor((agora - new Date(v.decidido_em || v.criado_em).getTime()) / 3600000)
+            }))
+            .sort((a, b) => b.horas_desde - a.horas_desde);
+
+        // Já marcaram: separados entre o que ainda vai acontecer e o que já
+        // passou da hora sem você dar baixa.
+        const marcados = agendamentos
+            .filter(a => a.status === 'marcado')
+            .map(a => ({
+                id: a.id,
+                chamado_id: a.chamado_id,
+                inscricao: a.oab,
+                nome: a.nome,
+                inicio: a.inicio,
+                fim: a.fim,
+                passou: new Date(a.inicio).getTime() < agora
+            }))
+            .sort((a, b) => new Date(a.inicio) - new Date(b.inicio));
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            success: true,
+            aguardando_marcar: aguardandoMarcar,
+            marcados,
+            atrasados: marcados.filter(m => m.passou).length
+        }));
+        return;
+    }
+
+    // ============ PAINEL: GET /admin/linha-tempo ============
+    // A história daquela inscrição, em ordem. Montada na hora a partir das
+    // tabelas que já existem — não há tabela de eventos, e criar uma exigiria
+    // gravar duas vezes a mesma informação.
+    if (method === 'GET' && url.split('?')[0] === '/admin/linha-tempo') {
+        if (!sessaoAdmin(req)) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'Sessão expirada' }));
+            return;
+        }
+
+        const q = new URL(req.url, `http://${req.headers.host}`).searchParams;
+        const rotulo = (q.get('inscricao') || '').toUpperCase();
+        const db = loadJsonDb();
+        const eventos = [];
+
+        (db.verificacoes_oab || [])
+            .filter(v => `${v.inscricao}/${v.uf}` === rotulo)
+            .forEach(v => {
+                eventos.push({ em: v.criado_em, tipo: 'pedido', texto: 'Pediu o atendimento gratuito' });
+                if (v.decidido_em) {
+                    const nomes = {
+                        confere: 'Inscrição conferida e liberada',
+                        nao_confere: 'Inscrição não confere',
+                        nao_encontrado: 'Inscrição não encontrada no CNA'
+                    };
+                    eventos.push({
+                        em: v.decidido_em,
+                        tipo: v.status === 'confere' ? 'liberado' : 'recusado',
+                        texto: nomes[v.status] || v.status,
+                        detalhe: v.observacao || ''
+                    });
+                }
+            });
+
+        (db.agendamentos || [])
+            .filter(a => a.oab === rotulo)
+            .forEach(a => {
+                eventos.push({ em: a.criado_em, tipo: 'agendou', texto: 'Escolheu o horário' });
+                eventos.push({ em: a.inicio, tipo: 'atendimento', texto: 'Atendimento marcado' });
+            });
+
+        (db.chamados || [])
+            .filter(c => c.oab === rotulo)
+            .forEach(c => {
+                eventos.push({
+                    em: c.criado_em, tipo: 'chamado',
+                    texto: 'Chamado aberto (' + (c.tipo === 'premium' ? 'Premium' : 'grátis') + ')'
+                });
+                if (c.primeiro_retorno_em) {
+                    eventos.push({ em: c.primeiro_retorno_em, tipo: 'retorno', texto: 'Primeiro retorno' });
+                }
+                if (c.fechado_em) {
+                    eventos.push({ em: c.fechado_em, tipo: 'fechado', texto: 'Chamado fechado' });
+                }
+            });
+
+        const usuarios = (db.usuarios || []).filter(u => u.oab === rotulo);
+        usuarios.forEach(u => {
+            if (u.created_at) eventos.push({ em: u.created_at, tipo: 'cadastro', texto: 'Criou conta no site' });
+        });
+        (db.assinaturas || [])
+            .filter(a => usuarios.some(u => u.id === a.usuario_id))
+            .forEach(a => {
+                eventos.push({ em: a.criado_em, tipo: 'pagamento', texto: 'Assinou o Plano Premium' });
+                if (a.cancelada_em) eventos.push({ em: a.cancelada_em, tipo: 'recusado', texto: 'Cancelou o plano' });
+            });
+
+        eventos.sort((a, b) => new Date(b.em) - new Date(a.em));   // mais novo em cima
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, inscricao: rotulo, eventos }));
         return;
     }
 
