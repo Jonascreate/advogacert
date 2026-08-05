@@ -799,18 +799,30 @@ document.addEventListener('DOMContentLoaded', function() {
         estilo.textContent = `
             .pay-overlay {
                 position: fixed; inset: 0; z-index: 10000;
-                display: none; align-items: center; justify-content: center;
+                /* coluna, e não linha: com o eixo principal na vertical, a
+                   margem automática do modal centraliza sem cortar. Com
+                   align-items:center, o que passa da altura da tela fica
+                   ACIMA da área rolável e não há como alcançar — era assim
+                   que o cabeçalho sumia no celular. */
+                display: none; flex-direction: column; align-items: center;
                 padding: 1.5rem;
                 background: rgba(6, 6, 8, 0.72);
                 backdrop-filter: blur(6px);
                 -webkit-backdrop-filter: blur(6px);
                 overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
             }
             .pay-overlay.aberto { display: flex; }
 
             .pay-modal {
                 position: relative;
                 width: 100%; max-width: 430px;
+                /* centraliza quando cabe; encosta no topo e rola quando não cabe */
+                margin: auto;
+                /* o modal nunca passa da tela: quem rola é o corpo, por dentro,
+                   então o cabeçalho e o botão de pagar ficam sempre visíveis */
+                max-height: calc(100dvh - 3rem);
+                display: flex; flex-direction: column;
                 background: #131315;
                 border: 1px solid #2a2a2e;
                 border-radius: 20px;
@@ -819,6 +831,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
                 overflow: hidden;
                 animation: paySobe 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            /* navegador sem dvh: cai no vh, que erra a barra de endereço do
+               iOS por alguns pixels, mas não deixa o modal maior que a tela */
+            @supports not (height: 100dvh) {
+                .pay-modal { max-height: calc(100vh - 3rem); }
             }
             @keyframes paySobe {
                 from { opacity: 0; transform: translateY(18px) scale(0.98); }
@@ -847,7 +864,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             .pay-fechar:hover { color: #f5f5f5; }
 
-            .pay-corpo { padding: 1.5rem; }
+            /* é o corpo que rola, não a página: o cabeçalho fica parado em
+               cima e o botão de pagar continua alcançável */
+            .pay-head { flex-shrink: 0; }
+            .pay-corpo {
+                padding: 1.5rem;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
 
             /* resumo do plano */
             .pay-resumo {
@@ -965,10 +989,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 gap: 1.1rem; color: #8a8a90; font-size: 1.15rem;
             }
 
-            @media (max-width: 480px) {
-                .pay-overlay { padding: 0; align-items: flex-end; }
-                .pay-modal { max-width: none; border-radius: 20px 20px 0 0; }
+            /* 600px, e não 480: aparelhos de 540 a 600 ficavam de fora e
+               recebiam o layout de computador espremido */
+            @media (max-width: 600px) {
+                .pay-overlay { padding: 0; }
+                .pay-modal {
+                    max-width: none;
+                    border-radius: 20px 20px 0 0;
+                    /* colado embaixo, como folha que sobe — mas com margem
+                       automática só no topo, para poder rolar quando é alto */
+                    margin: auto 0 0;
+                    max-height: 92dvh;
+                }
+                @supports not (height: 100dvh) {
+                    .pay-modal { max-height: 92vh; }
+                }
+                .pay-head { padding: 1.1rem 1.15rem; }
+                .pay-corpo { padding: 1.15rem; }
                 .pay-linha { flex-direction: column; gap: 0; }
+                /* abaixo de 16px o Safari dá zoom na página inteira quando o
+                   dedo toca no campo, e o modal sai do lugar */
+                .pay-campo input { font-size: 16px; }
             }
             @media (prefers-reduced-motion: reduce) {
                 .pay-modal { animation: none; }
@@ -1219,11 +1260,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 .free-overlay {
                     position: fixed; inset: 0; z-index: 10000;
-                    display: none; align-items: center; justify-content: center;
+                    /* mesma razão do modal de pagamento: em coluna, o que não
+                       cabe fica abaixo e rola. Com align-items:center, o topo
+                       do cartão saía da área rolável e sumia no celular. */
+                    display: none; flex-direction: column; align-items: center;
                     padding: 1.5rem;
                     background: rgba(6, 6, 8, 0.72);
                     backdrop-filter: blur(6px);
                     overflow-y: auto;
+                    -webkit-overflow-scrolling: touch;
                 }
                 .free-overlay.aberto { display: flex; }
 
@@ -1329,10 +1374,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 .free-aviso strong { color: #6ee7c8; }
 
-                @media (max-width: 560px) {
-                    .free-card { padding: 2rem 1.5rem 1.5rem; }
+                @media (max-width: 600px) {
+                    .free-overlay { padding: 0; }
+                    .free-card {
+                        padding: 2rem 1.35rem 1.5rem;
+                        border-radius: 20px 20px 0 0;
+                        margin: auto 0 0;
+                        max-height: 94dvh;
+                        overflow-y: auto;
+                        -webkit-overflow-scrolling: touch;
+                    }
                     .free-linha { flex-direction: column; gap: 0; }
                     .free-linha .free-uf { flex: 1; }
+                    /* abaixo de 16px o Safari dá zoom na página ao tocar no campo */
+                    .free-grupo input, .free-grupo select { font-size: 16px; }
+                    .free-card h2 { font-size: 1.5rem; }
+                }
+                @supports not (height: 100dvh) {
+                    @media (max-width: 600px) {
+                        .free-card { max-height: 94vh; }
+                    }
                 }
             `;
             document.head.appendChild(estiloFree);
