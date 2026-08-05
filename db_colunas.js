@@ -33,11 +33,20 @@ const COLUNAS = {
         'criado_em', 'cancelada_em'
     ],
     chamados: [
-        'id', 'usuario_id', 'oab', 'tipo', 'descricao', 'status', 'criado_em'
+        'id', 'usuario_id', 'oab', 'uf', 'tipo', 'descricao', 'status',
+        'responsavel', 'primeiro_retorno_em', 'fechado_em', 'reaberturas',
+        'atualizado_em', 'verificacao_id', 'criado_em'
+    ],
+    verificacoes_oab: [
+        'id', 'inscricao', 'uf', 'nome_declarado', 'contato', 'email',
+        'status', 'observacao', 'decidido_por', 'decidido_em', 'ip', 'criado_em'
+    ],
+    auditoria: [
+        'id', 'ator', 'acao', 'alvo', 'detalhe', 'ip', 'criado_em'
     ],
     agendamentos: [
         'id', 'chamado_id', 'usuario_id', 'oab', 'nome',
-        'inicio', 'fim', 'status', 'criado_em'
+        'inicio', 'fim', 'status', 'verificacao_id', 'criado_em'
     ],
     logins: [
         'id', 'usuario_id', 'metodo', 'ip', 'criado_em'

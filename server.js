@@ -539,6 +539,44 @@ if (!ADMIN.senha) {
 const adminSessoes = new Map();
 const ADMIN_SESSAO_TTL = 8 * 60 * 60 * 1000;
 
+// Estados possíveis de um chamado, na ordem em que o trabalho anda.
+const STATUS_CHAMADO = ['aberto', 'em_atendimento', 'aguardando_cliente', 'fechado'];
+
+// Acima disto, chamado sem responsável fica destacado na fila.
+const SEM_DONO_HORAS = 8;
+
+/**
+ * Sessão do painel.
+ *
+ * O token vem por cookie httpOnly, não por sessionStorage: sessionStorage é
+ * legível por qualquer JavaScript da página, então um XSS no painel levaria
+ * a sessão junto. Cookie httpOnly o script não alcança.
+ *
+ * Isto só é possível porque o admin.html é servido pelo próprio Render (está
+ * no exclude do GitHub Pages): painel e API na mesma origem, sem cookie
+ * de terceiros e sem precisar afrouxar o SameSite.
+ *
+ * O cabeçalho Authorization continua aceito para não quebrar sessão aberta
+ * antes desta mudança; some sozinho quando as sessões antigas expirarem.
+ */
+function lerCookie(req, nome) {
+    const bruto = req.headers.cookie || '';
+    for (const parte of bruto.split(';')) {
+        const [k, ...v] = parte.trim().split('=');
+        if (k === nome) return decodeURIComponent(v.join('='));
+    }
+    return '';
+}
+
+function sessaoAdmin(req) {
+    limparExpirados(adminSessoes, ADMIN_SESSAO_TTL);
+    const doCookie = lerCookie(req, 'admin_sessao');
+    if (doCookie && adminSessoes.has(doCookie)) return doCookie;
+
+    const doHeader = (req.headers.authorization || '').replace('Bearer ', '');
+    return doHeader && adminSessoes.has(doHeader) ? doHeader : null;
+}
+
 // tentativas de login no painel por IP — trava forca bruta na senha e no codigo
 const adminTentativas = new Map();
 const ADMIN_MAX_TENTATIVAS = 8;
@@ -631,7 +669,10 @@ const MIME_TYPES = {
 //
 // Sem SUPABASE_URL configurado, tudo continua no usuarios.json como antes,
 // que é o que se quer rodando na sua máquina.
-const COLECOES = ['usuarios', 'assinaturas', 'chamados', 'logins', 'agendamentos'];
+const COLECOES = [
+    'usuarios', 'assinaturas', 'chamados', 'logins', 'agendamentos',
+    'verificacoes_oab', 'auditoria'
+];
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || SECRETS.supabase?.url || '').replace(/\/$/, '');
 // service_role: ignora as políticas de RLS. Só pode viver no servidor —
@@ -864,6 +905,128 @@ function freeUsadoPelaOab(db, oab) {
     if (!oab) return false;
     const idsDaOab = db.usuarios.filter(u => u.oab === oab).map(u => u.id);
     return db.chamados.some(c => c.tipo === 'free' && idsDaOab.includes(c.usuario_id));
+}
+
+// ============================================================
+// VERIFICAÇÃO DA INSCRIÇÃO NA OAB
+//
+// O sistema não tem como conferir a inscrição sozinho: a OAB não publica
+// API, e o CNA tem CAPTCHA justamente para impedir consulta automatizada.
+// Então a conferência é humana — e o que o código faz é preparar a decisão,
+// registrá-la e reaproveitá-la.
+//
+// Reaproveitar é o ponto: a decisão fica guardada por inscrição. Quem já foi
+// conferido uma vez não volta para a fila.
+// ============================================================
+/**
+ * Normaliza a inscrição para a forma canônica: só dígitos, sem zeros à
+ * esquerda, mais a UF em maiúsculas. Reaproveita a lista UFS e convive com
+ * normalizarOab, que resolve o caso de campo único ("123456/GO"); aqui o
+ * número e a seccional chegam em campos separados, da tela de identificação.
+ *
+ * Sem isso, "012.345/go", "12345/GO" e "12345 GO" viram três inscrições
+ * diferentes no banco — e o controle de "um grátis por inscrição" cai por
+ * terra, porque bastaria digitar com um ponto a mais.
+ */
+function normalizarInscricao(inscricaoBruta, ufBruta) {
+    const digitos = String(inscricaoBruta || '').replace(/\D/g, '').replace(/^0+/, '');
+    const uf = String(ufBruta || '').trim().toUpperCase();
+
+    if (!digitos) return { erro: 'Informe o número da inscrição.' };
+    if (digitos.length > 6) return { erro: 'Inscrição com mais de 6 dígitos.' };
+    if (!UFS.includes(uf)) return { erro: 'Seccional inválida. Use a sigla do estado, como GO.' };
+
+    return { inscricao: digitos, uf, rotulo: `${digitos}/${uf}` };
+}
+
+/** A verificação já registrada para esta inscrição, se houver. */
+function verificacaoDe(db, inscricao, uf) {
+    return (db.verificacoes_oab || [])
+        .find(v => v.inscricao === inscricao && v.uf === uf) || null;
+}
+
+/**
+ * Sinais de que algo não bate. Não bloqueiam nada sozinhos — quem decide é
+ * você, olhando o CNA. Servem para dizer onde olhar com mais atenção.
+ */
+function sinaisDeFraude(db, alvo) {
+    const sinais = [];
+    const verificacoes = db.verificacoes_oab || [];
+    const norm = s => String(s || '').trim().toLowerCase();
+    const soDigitos = s => String(s || '').replace(/\D/g, '');
+
+    // Mesma inscrição pedida antes com outro nome
+    const mesmaInscricao = verificacoes.filter(v =>
+        v.inscricao === alvo.inscricao && v.uf === alvo.uf && v.id !== alvo.id);
+    if (mesmaInscricao.some(v => norm(v.nome_declarado) !== norm(alvo.nome_declarado))) {
+        sinais.push({ tipo: 'nome_divergente', texto: 'Inscrição já pedida com outro nome' });
+    }
+
+    // Mesmo contato em inscrições diferentes
+    if (soDigitos(alvo.contato).length >= 10) {
+        const outras = verificacoes.filter(v =>
+            soDigitos(v.contato) === soDigitos(alvo.contato) &&
+            (v.inscricao !== alvo.inscricao || v.uf !== alvo.uf));
+        if (outras.length) {
+            sinais.push({
+                tipo: 'contato_repetido',
+                texto: `Mesmo WhatsApp em ${outras.length + 1} inscrições`
+            });
+        }
+    }
+
+    // Mesmo e-mail em inscrições diferentes
+    if (norm(alvo.email)) {
+        const outras = verificacoes.filter(v =>
+            norm(v.email) === norm(alvo.email) &&
+            (v.inscricao !== alvo.inscricao || v.uf !== alvo.uf));
+        if (outras.length) {
+            sinais.push({
+                tipo: 'email_repetido',
+                texto: `Mesmo e-mail em ${outras.length + 1} inscrições`
+            });
+        }
+    }
+
+    // Mais de 2 tentativas do mesmo IP em 24h
+    if (alvo.ip) {
+        const desde = Date.now() - 24 * 3600 * 1000;
+        const doIp = verificacoes.filter(v =>
+            v.ip === alvo.ip && new Date(v.criado_em).getTime() > desde);
+        if (doIp.length > 2) {
+            sinais.push({
+                tipo: 'ip_repetido',
+                texto: `${doIp.length} pedidos do mesmo IP em 24h`
+            });
+        }
+    }
+
+    return sinais;
+}
+
+/**
+ * Registra a decisão no histórico.
+ * A tabela de verificações guarda o estado atual — uma linha por inscrição,
+ * sobrescrita a cada nova decisão. Esta guarda o que aconteceu, e nada aqui
+ * é sobrescrito.
+ */
+function auditar(db, { ator, acao, alvo, detalhe, ip }) {
+    db.auditoria = db.auditoria || [];
+    db.auditoria.push({
+        id: proximoId(db.auditoria),
+        ator: ator || 'painel',
+        acao,
+        alvo: String(alvo || '').slice(0, 200),
+        detalhe: String(detalhe || '').slice(0, 500),
+        ip: ip || null,
+        criado_em: new Date().toISOString()
+    });
+}
+
+/** O IP de quem pediu, respeitando o proxy do Render. */
+function ipDoPedido(req) {
+    const encaminhado = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+    return encaminhado || req.socket.remoteAddress || null;
 }
 
 // ============================================================
@@ -1282,6 +1445,134 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // ============ VERIFICAÇÃO: POST /verificacao/solicitar ============
+    // Primeira porta do atendimento gratuito. Responde uma de quatro coisas:
+    //
+    //   liberado    — inscrição já conferida antes: segue direto para a agenda
+    //   pendente    — entrou na fila; o agendamento fica bloqueado até você decidir
+    //   recusado    — já foi conferida e reprovada
+    //   ja_usou     — a inscrição já gastou o gratuito dela
+    //
+    // O agendamento NÃO acontece aqui. Só depois de "liberado".
+    if (method === 'POST' && url === '/verificacao/solicitar') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            const responder = (status, payload) => {
+                res.writeHead(status, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(payload));
+            };
+
+            try {
+                const entrada = JSON.parse(body || '{}');
+                const norma = normalizarInscricao(entrada.inscricao, entrada.uf);
+                if (norma.erro) {
+                    responder(400, { success: false, error: norma.erro });
+                    return;
+                }
+
+                const nome = String(entrada.nome || '').trim();
+                if (nome.length < 5) {
+                    responder(400, { success: false, error: 'Informe seu nome completo, como está na inscrição.' });
+                    return;
+                }
+
+                const contato = String(entrada.contato || '').replace(/\D/g, '');
+                if (contato.length < 10) {
+                    responder(400, { success: false, error: 'Informe seu WhatsApp com DDD.' });
+                    return;
+                }
+
+                const email = String(entrada.email || '').trim().toLowerCase();
+                if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+                    responder(400, { success: false, error: 'Informe um e-mail válido.' });
+                    return;
+                }
+
+                const db = loadJsonDb();
+
+                // 1) O gratuito desta inscrição já foi usado?
+                //    Conferido antes de tudo: não faz sentido mandar para a
+                //    fila de verificação quem não teria direito de qualquer jeito.
+                if (freeUsadoPelaOab(db, norma.rotulo) ||
+                    (db.chamados || []).some(c => c.tipo === 'free' && c.oab === norma.rotulo)) {
+                    responder(200, {
+                        success: false,
+                        situacao: 'ja_usou',
+                        error: `O atendimento gratuito da inscrição ${norma.rotulo} já foi usado.`,
+                        oferecer_premium: true
+                    });
+                    return;
+                }
+
+                // 2) Esta inscrição já foi julgada alguma vez?
+                const antiga = verificacaoDe(db, norma.inscricao, norma.uf);
+
+                if (antiga && antiga.status === 'confere') {
+                    responder(200, {
+                        success: true,
+                        situacao: 'liberado',
+                        verificacao_id: antiga.id,
+                        inscricao: norma.rotulo,
+                        msg: 'Inscrição conferida. Escolha o horário do seu atendimento.'
+                    });
+                    return;
+                }
+
+                if (antiga && (antiga.status === 'nao_confere' || antiga.status === 'nao_encontrado')) {
+                    responder(200, {
+                        success: false,
+                        situacao: 'recusado',
+                        error: 'Não conseguimos confirmar esta inscrição. Fale com a gente pelo WhatsApp.'
+                    });
+                    return;
+                }
+
+                if (antiga && antiga.status === 'pendente') {
+                    responder(200, {
+                        success: true,
+                        situacao: 'pendente',
+                        verificacao_id: antiga.id,
+                        msg: 'Sua inscrição já está em conferência. Avisamos por e-mail assim que liberar.'
+                    });
+                    return;
+                }
+
+                // 3) Primeira vez: entra na fila
+                db.verificacoes_oab = db.verificacoes_oab || [];
+                const registro = {
+                    id: proximoId(db.verificacoes_oab),
+                    inscricao: norma.inscricao,
+                    uf: norma.uf,
+                    nome_declarado: nome.slice(0, 120),
+                    contato,
+                    email,
+                    status: 'pendente',
+                    observacao: null,
+                    decidido_por: null,
+                    decidido_em: null,
+                    ip: ipDoPedido(req),
+                    criado_em: new Date().toISOString()
+                };
+                db.verificacoes_oab.push(registro);
+                saveJsonDb(db);
+
+                console.log(`🔎 Verificação pedida: OAB ${norma.rotulo} — ${nome}`);
+                responder(200, {
+                    success: true,
+                    situacao: 'pendente',
+                    verificacao_id: registro.id,
+                    msg: 'Recebemos seu pedido. Conferimos sua inscrição na OAB e avisamos por e-mail — costuma levar poucas horas.'
+                });
+
+            } catch (err) {
+                console.error('Erro na verificação:', err.message);
+                responder(400, { success: false, error: 'Erro interno' });
+            }
+        });
+        return;
+    }
+
     // ============ AGENDA: GET /agenda/horarios ============
     // Devolve os dias e as horas ainda livres. É calculado aqui, no servidor,
     // porque só ele enxerga o que já foi marcado — no navegador, duas pessoas
@@ -1320,22 +1611,29 @@ const server = http.createServer((req, res) => {
                 const db = loadJsonDb();
                 const user = db.usuarios.find(u => u.id === entrada.usuario_id) || null;
 
-                // A OAB pode vir da conta (quem já entrou) ou digitada na hora
-                // (quem clicou em "1 suporte grátis" sem cadastro). É ela, e não
-                // a conta, que responde se o free ainda está disponível.
-                const oab = String(entrada.oab || (user && user.oab) || '').trim().toUpperCase();
+                // O agendamento do gratuito só existe depois que a inscrição
+                // foi conferida no CNA. Quem manda aqui é a verificação, não a
+                // OAB digitada: sem isso bastaria pular a tela de identificação
+                // e chamar esta rota direto com um número qualquer.
+                const verificacao = (db.verificacoes_oab || [])
+                    .find(v => v.id === entrada.verificacao_id);
 
-                if (!oab) {
-                    responder(400, { success: false, error: 'Informe sua inscrição na OAB.' });
+                if (!verificacao) {
+                    responder(400, { success: false, error: 'Faça a identificação da inscrição antes de marcar.' });
                     return;
                 }
-                // formato: números, barra e a sigla do estado — 123456/GO
-                if (!/^\d{2,7}\s*\/?\s*[A-Z]{2}$/.test(oab.replace(/\s+/g, ''))) {
-                    responder(400, { success: false, error: 'Inscrição inválida. Use o formato 123456/GO.' });
+                if (verificacao.status !== 'confere') {
+                    responder(200, {
+                        success: false,
+                        situacao: verificacao.status,
+                        error: verificacao.status === 'pendente'
+                            ? 'Sua inscrição ainda está em conferência. Avisamos por e-mail assim que liberar.'
+                            : 'Não conseguimos confirmar esta inscrição.'
+                    });
                     return;
                 }
 
-                const oabLimpa = oab.replace(/\s+/g, '');
+                const oabLimpa = `${verificacao.inscricao}/${verificacao.uf}`;
 
                 // conta pela inscrição: trocar de e-mail não devolve o free
                 const jaUsou = freeUsadoPelaOab(db, oabLimpa) ||
@@ -1359,14 +1657,22 @@ const server = http.createServer((req, res) => {
                 }
 
                 const chamadoId = proximoId(db.chamados);
+                const agora = new Date().toISOString();
                 db.chamados.push({
                     id: chamadoId,
                     usuario_id: user ? user.id : null,   // sem conta o chamado fica só pela OAB
                     oab: oabLimpa,              // guardado junto: a contabilidade é por inscrição
+                    uf: verificacao.uf,
                     tipo: 'free',
                     descricao: String(entrada.descricao || '').slice(0, 500),
                     status: 'aberto',
-                    criado_em: new Date().toISOString()
+                    responsavel: null,
+                    primeiro_retorno_em: null,
+                    fechado_em: null,
+                    reaberturas: 0,
+                    atualizado_em: agora,
+                    verificacao_id: verificacao.id,
+                    criado_em: agora
                 });
 
                 const fim = new Date(vaga.quando.getTime() + AGENDA.duracaoMin * 60000);
@@ -1375,7 +1681,8 @@ const server = http.createServer((req, res) => {
                     chamado_id: chamadoId,
                     usuario_id: user ? user.id : null,
                     oab: oabLimpa,
-                    nome: String(entrada.nome || (user && user.nome) || '').slice(0, 120),
+                    nome: verificacao.nome_declarado || (user && user.nome) || '',
+                    verificacao_id: verificacao.id,
                     inicio: vaga.quando.toISOString(),
                     fim: fim.toISOString(),
                     status: 'marcado',
@@ -1599,7 +1906,26 @@ const server = http.createServer((req, res) => {
                 limparExpirados(adminSessoes, ADMIN_SESSAO_TTL);
                 const token = crypto.randomBytes(24).toString('hex');
                 adminSessoes.set(token, { criadoEm: Date.now() });
-                responder(200, { success: true, token });
+
+                // O token vai no cookie httpOnly — o JavaScript da página não
+                // consegue lê-lo, então um XSS no painel não leva a sessão.
+                // Secure só em produção: em http://localhost o navegador
+                // descarta cookie marcado como Secure e o login não fecharia.
+                const producao = /^https:/.test(OAUTH.baseUrl);
+                res.writeHead(200, {
+                    'Content-Type': 'application/json',
+                    'Set-Cookie': [
+                        `admin_sessao=${token}`,
+                        'HttpOnly',
+                        'Path=/',
+                        'SameSite=Strict',
+                        `Max-Age=${ADMIN_SESSAO_TTL / 1000}`,
+                        producao ? 'Secure' : ''
+                    ].filter(Boolean).join('; ')
+                });
+                // o token não volta mais no corpo: quem guarda é o cookie
+                res.end(JSON.stringify({ success: true }));
+                return;
 
             } catch {
                 responder(400, { success: false, error: 'Erro interno' });
@@ -1611,10 +1937,7 @@ const server = http.createServer((req, res) => {
     // ============ PAINEL: GET /admin/dados ============
     // Devolve tudo o que a tela do painel mostra, já consolidado.
     if (method === 'GET' && url.split('?')[0] === '/admin/dados') {
-        limparExpirados(adminSessoes, ADMIN_SESSAO_TTL);
-        const token = (req.headers.authorization || '').replace('Bearer ', '');
-
-        if (!adminSessoes.has(token)) {
+        if (!sessaoAdmin(req)) {
             res.writeHead(401, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ success: false, error: 'Sessão expirada' }));
             return;
@@ -1675,6 +1998,351 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // ============ PAINEL: GET /admin/verificacoes ============
+    // A fila de conferência. Vem com tudo pronto para decidir em segundos:
+    // inscrição formatada, nome para bater no CNA, contato, espera e sinais.
+    if (method === 'GET' && url.split('?')[0] === '/admin/verificacoes') {
+        if (!sessaoAdmin(req)) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'Sessão expirada' }));
+            return;
+        }
+
+        const q = new URL(req.url, `http://${req.headers.host}`).searchParams;
+        const status = q.get('status') || 'pendente';
+        const pagina = Math.max(1, Number(q.get('pagina')) || 1);
+        const porPagina = Math.min(100, Number(q.get('por_pagina')) || 20);
+
+        const db = loadJsonDb();
+        const todas = (db.verificacoes_oab || [])
+            .filter(v => status === 'todos' || v.status === status)
+            // pendente: o mais antigo primeiro, que é quem esperou mais.
+            // decidido: o mais recente primeiro, que é o histórico.
+            .sort((a, b) => status === 'pendente'
+                ? new Date(a.criado_em) - new Date(b.criado_em)
+                : new Date(b.decidido_em || b.criado_em) - new Date(a.decidido_em || a.criado_em));
+
+        const inicio = (pagina - 1) * porPagina;
+        const itens = todas.slice(inicio, inicio + porPagina).map(v => ({
+            id: v.id,
+            inscricao: `${v.inscricao}/${v.uf}`,
+            uf: v.uf,
+            nome_declarado: v.nome_declarado,
+            contato: v.contato,
+            email: v.email,
+            status: v.status,
+            observacao: v.observacao,
+            decidido_por: v.decidido_por,
+            decidido_em: v.decidido_em,
+            criado_em: v.criado_em,
+            espera_horas: Math.floor((Date.now() - new Date(v.criado_em).getTime()) / 3600000),
+            sinais: sinaisDeFraude(db, v)
+        }));
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            success: true,
+            itens,
+            total: todas.length,
+            pagina,
+            por_pagina: porPagina,
+            pendentes: (db.verificacoes_oab || []).filter(v => v.status === 'pendente').length
+        }));
+        return;
+    }
+
+    // ============ PAINEL: POST /admin/verificacao/decidir ============
+    // "Confere" libera o agendamento e avisa por e-mail. As outras duas
+    // bloqueiam. Toda decisão vai para a auditoria, com quem, quando e por quê.
+    if (method === 'POST' && url === '/admin/verificacao/decidir') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', async () => {
+            const responder = (status, payload) => {
+                res.writeHead(status, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(payload));
+            };
+
+            if (!sessaoAdmin(req)) {
+                responder(401, { success: false, error: 'Sessão expirada' });
+                return;
+            }
+
+            try {
+                const { id, decisao, observacao } = JSON.parse(body || '{}');
+                const VALIDAS = ['confere', 'nao_confere', 'nao_encontrado'];
+                if (!VALIDAS.includes(decisao)) {
+                    responder(400, { success: false, error: 'Decisão inválida' });
+                    return;
+                }
+
+                const db = loadJsonDb();
+                const v = (db.verificacoes_oab || []).find(x => x.id === id);
+                if (!v) {
+                    responder(404, { success: false, error: 'Verificação não encontrada' });
+                    return;
+                }
+
+                const antes = v.status;
+                v.status = decisao;
+                v.observacao = String(observacao || '').slice(0, 500);
+                v.decidido_por = 'painel';
+                v.decidido_em = new Date().toISOString();
+
+                auditar(db, {
+                    acao: 'verificacao_decidida',
+                    alvo: `OAB ${v.inscricao}/${v.uf}`,
+                    detalhe: `${antes} -> ${decisao}${v.observacao ? ' | ' + v.observacao : ''}`,
+                    ip: ipDoPedido(req)
+                });
+                saveJsonDb(db);
+
+                console.log(`⚖️  Verificação ${v.inscricao}/${v.uf}: ${antes} -> ${decisao}`);
+
+                // O aviso por e-mail não pode derrubar a decisão: se a Brevo
+                // falhar, a decisão já está gravada e você não perde o trabalho.
+                if (v.email) {
+                    const liberado = decisao === 'confere';
+                    const assunto = liberado
+                        ? 'Sua inscrição foi confirmada — AdvogaCert'
+                        : 'Sobre seu pedido de atendimento — AdvogaCert';
+                    const corpo = liberado
+                        ? `<p>Olá, ${v.nome_declarado}.</p>
+                           <p>Confirmamos sua inscrição <strong>${v.inscricao}/${v.uf}</strong>.
+                           Seu atendimento gratuito está liberado.</p>
+                           <p><a href="https://www.agentej.us/index.html#planos">Escolher o horário</a></p>`
+                        : `<p>Olá, ${v.nome_declarado}.</p>
+                           <p>Não conseguimos confirmar a inscrição
+                           <strong>${v.inscricao}/${v.uf}</strong> no cadastro da OAB.</p>
+                           <p>Se acha que houve engano, responda este e-mail ou fale
+                           conosco pelo WhatsApp que a gente confere de novo.</p>`;
+
+                    enviarEmailBrevo(v.email, assunto, corpo)
+                        .catch(e => console.error('Aviso de verificação não saiu:', e.message));
+                }
+
+                responder(200, {
+                    success: true,
+                    msg: decisao === 'confere' ? 'Liberado e avisado por e-mail.' : 'Registrado.',
+                    status: decisao
+                });
+
+            } catch (err) {
+                console.error('Erro ao decidir verificação:', err.message);
+                responder(400, { success: false, error: 'Erro interno' });
+            }
+        });
+        return;
+    }
+
+    // ============ PAINEL: GET /admin/chamados ============
+    // Filtros, busca, ordenação e paginação acontecem aqui, e não no
+    // navegador: com a fila crescendo, mandar tudo para o cliente filtrar
+    // seria trafegar a base inteira a cada 30 segundos do polling.
+    if (method === 'GET' && url.split('?')[0] === '/admin/chamados') {
+        if (!sessaoAdmin(req)) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'Sessão expirada' }));
+            return;
+        }
+
+        const q = new URL(req.url, `http://${req.headers.host}`).searchParams;
+        const fStatus = q.get('status') || 'abertos';
+        const fTipo = q.get('tipo') || 'todos';
+        const dias = Number(q.get('dias')) || 0;
+        const busca = (q.get('q') || '').trim().toLowerCase();
+        const pagina = Math.max(1, Number(q.get('pagina')) || 1);
+        const porPagina = Math.min(100, Number(q.get('por_pagina')) || 25);
+
+        const db = loadJsonDb();
+        const soDigitos = s => String(s || '').replace(/\D/g, '');
+        const digitosBusca = soDigitos(busca);
+
+        let lista = (db.chamados || []).map(c => {
+            const dono = db.usuarios.find(u => u.id === c.usuario_id);
+            const agend = (db.agendamentos || []).find(a => a.chamado_id === c.id);
+            return {
+                ...c,
+                nome: (agend && agend.nome) || (dono && (dono.nome || dono.email)) || '',
+                contato: (dono && (dono.telefone || dono.email)) || '',
+                idade_horas: Math.floor((Date.now() - new Date(c.criado_em).getTime()) / 3600000)
+            };
+        });
+
+        if (fStatus === 'abertos') {
+            lista = lista.filter(c => c.status !== 'fechado');
+        } else if (fStatus !== 'todos') {
+            lista = lista.filter(c => c.status === fStatus);
+        }
+        if (fTipo !== 'todos') lista = lista.filter(c => c.tipo === fTipo);
+        if (dias > 0) {
+            const desde = Date.now() - dias * 86400000;
+            lista = lista.filter(c => new Date(c.criado_em).getTime() >= desde);
+        }
+        if (busca) {
+            lista = lista.filter(c =>
+                (c.oab || '').toLowerCase().includes(busca) ||
+                (c.nome || '').toLowerCase().includes(busca) ||
+                (c.contato || '').toLowerCase().includes(busca) ||
+                (digitosBusca.length >= 4 && soDigitos(c.contato).includes(digitosBusca)) ||
+                (digitosBusca.length >= 3 && soDigitos(c.oab).includes(digitosBusca))
+            );
+        }
+
+        // Premium sempre acima do grátis; dentro de cada grupo, o mais velho
+        // primeiro — quem espera há mais tempo aparece antes.
+        lista.sort((a, b) => {
+            if (a.tipo !== b.tipo) return a.tipo === 'premium' ? -1 : 1;
+            return new Date(a.criado_em) - new Date(b.criado_em);
+        });
+
+        const inicio = (pagina - 1) * porPagina;
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            success: true,
+            itens: lista.slice(inicio, inicio + porPagina),
+            total: lista.length,
+            pagina,
+            por_pagina: porPagina,
+            // limite acima do qual o chamado fica destacado por abandono
+            sem_dono_horas: SEM_DONO_HORAS
+        }));
+        return;
+    }
+
+    // ============ PAINEL: POST /admin/chamado/status ============
+    if (method === 'POST' && url === '/admin/chamado/status') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            const responder = (status, payload) => {
+                res.writeHead(status, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(payload));
+            };
+
+            if (!sessaoAdmin(req)) {
+                responder(401, { success: false, error: 'Sessão expirada' });
+                return;
+            }
+
+            try {
+                const { id, status } = JSON.parse(body || '{}');
+                if (!STATUS_CHAMADO.includes(status)) {
+                    responder(400, { success: false, error: 'Status inválido' });
+                    return;
+                }
+
+                const db = loadJsonDb();
+                const c = (db.chamados || []).find(x => x.id === id);
+                if (!c) {
+                    responder(404, { success: false, error: 'Chamado não encontrado' });
+                    return;
+                }
+
+                const antes = c.status;
+                const agora = new Date().toISOString();
+
+                // FRT: a primeira vez que o chamado sai de "aberto" é o
+                // primeiro retorno. Só marca uma vez — reabrir depois não
+                // reescreve o tempo de resposta original.
+                if (antes === 'aberto' && status !== 'aberto' && !c.primeiro_retorno_em) {
+                    c.primeiro_retorno_em = agora;
+                }
+                if (status === 'fechado') {
+                    c.fechado_em = agora;
+                } else if (antes === 'fechado') {
+                    // saiu de fechado: é reabertura
+                    c.reaberturas = (c.reaberturas || 0) + 1;
+                    c.fechado_em = null;
+                }
+
+                c.status = status;
+                c.atualizado_em = agora;
+
+                auditar(db, {
+                    acao: 'chamado_status',
+                    alvo: `Chamado #${c.id} (${c.oab || 'sem OAB'})`,
+                    detalhe: `${antes} -> ${status}`,
+                    ip: ipDoPedido(req)
+                });
+                saveJsonDb(db);
+
+                responder(200, { success: true, msg: 'Status atualizado', anterior: antes });
+
+            } catch (err) {
+                console.error('Erro ao mudar status:', err.message);
+                responder(400, { success: false, error: 'Erro interno' });
+            }
+        });
+        return;
+    }
+
+    // ============ PAINEL: GET /admin/indicadores ============
+    // Tudo aqui é janela, não tempo real — a interface deixa isso explícito.
+    if (method === 'GET' && url.split('?')[0] === '/admin/indicadores') {
+        if (!sessaoAdmin(req)) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'Sessão expirada' }));
+            return;
+        }
+
+        const q = new URL(req.url, `http://${req.headers.host}`).searchParams;
+        const dias = ({ hoje: 1, '7d': 7, '30d': 30 })[q.get('janela')] || 7;
+        const desde = Date.now() - dias * 86400000;
+
+        const db = loadJsonDb();
+        const chamados = db.chamados || [];
+        const abertos = chamados.filter(c => c.status !== 'fechado');
+
+        const idadeDias = c => (Date.now() - new Date(c.criado_em).getTime()) / 86400000;
+        const noPeriodo = chamados.filter(c => new Date(c.criado_em).getTime() >= desde);
+        const fechadosNoPeriodo = chamados.filter(c =>
+            c.fechado_em && new Date(c.fechado_em).getTime() >= desde);
+
+        // Média em horas, ignorando quem ainda não tem o marco registrado.
+        const media = (lista, de, ate) => {
+            const vals = lista
+                .filter(c => c[de] && c[ate])
+                .map(c => (new Date(c[ate]) - new Date(c[de])) / 3600000);
+            if (!vals.length) return null;
+            return Math.round(vals.reduce((s, v) => s + v, 0) / vals.length * 10) / 10;
+        };
+
+        const verificacoes = db.verificacoes_oab || [];
+        const pendentes = verificacoes.filter(v => v.status === 'pendente');
+        const decididas = verificacoes.filter(v => v.decidido_em);
+        const reprovadas = decididas.filter(v => v.status !== 'confere');
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            success: true,
+            janela_dias: dias,
+            backlog: {
+                ate_2d: abertos.filter(c => idadeDias(c) <= 2).length,
+                de_3_a_7d: abertos.filter(c => idadeDias(c) > 2 && idadeDias(c) <= 7).length,
+                mais_7d: abertos.filter(c => idadeDias(c) > 7).length
+            },
+            entrada: noPeriodo.length,
+            fechamento: fechadosNoPeriodo.length,
+            frt_horas: media(noPeriodo, 'criado_em', 'primeiro_retorno_em'),
+            mttr_horas: media(fechadosNoPeriodo, 'criado_em', 'fechado_em'),
+            reabertura_pct: chamados.length
+                ? Math.round(chamados.filter(c => (c.reaberturas || 0) > 0).length / chamados.length * 1000) / 10
+                : 0,
+            verificacao: {
+                pendentes: pendentes.length,
+                espera_media_horas: pendentes.length
+                    ? Math.round(pendentes.reduce((s, v) =>
+                        s + (Date.now() - new Date(v.criado_em).getTime()) / 3600000, 0) / pendentes.length * 10) / 10
+                    : 0,
+                reprovacao_pct: decididas.length
+                    ? Math.round(reprovadas.length / decididas.length * 1000) / 10
+                    : 0
+            }
+        }));
+        return;
+    }
+
     // ============ PAINEL: POST /admin/assinatura ============
     // Liberar ou cancelar plano na mão — serve para o pagamento que chegou
     // por fora (Pix direto) ou para o webhook que não identificou o usuário.
@@ -1687,9 +2355,7 @@ const server = http.createServer((req, res) => {
                 res.end(JSON.stringify(payload));
             };
 
-            limparExpirados(adminSessoes, ADMIN_SESSAO_TTL);
-            const token = (req.headers.authorization || '').replace('Bearer ', '');
-            if (!adminSessoes.has(token)) {
+            if (!sessaoAdmin(req)) {
                 responder(401, { success: false, error: 'Sessão expirada' });
                 return;
             }

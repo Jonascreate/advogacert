@@ -1189,22 +1189,27 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // ------------------------------------------
-        // SUPORTE GRÁTIS — pede a OAB e registra antes de mandar ao WhatsApp
+        // SUPORTE GRÁTIS — identificação, conferência e só então a agenda
         //
-        // Antes o botão levava direto para contato.html: a pessoa ia embora
-        // para a conversa e nada ficava registrado, então não havia como saber
-        // quem já tinha usado o free. Agora a inscrição é gravada primeiro; o
-        // WhatsApp abre depois, na página de confirmação, já com a OAB no texto.
+        // São dois passos, e a ordem importa: primeiro a pessoa se identifica,
+        // e o atendimento fica retido até você conferir a inscrição no CNA.
+        // Só quem já foi conferido antes cai direto na escolha do horário.
+        //
+        // Antes o botão levava para contato.html: a pessoa ia embora para a
+        // conversa, nada ficava registrado e não havia como saber quem já
+        // tinha usado o gratuito — nem se era mesmo advogado.
         // ------------------------------------------
         const btnFree = document.getElementById('btn-suporte-free');
         if (btnFree) {
+            const UFS_BR = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG',
+                            'PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+
             // O visual segue o card da tela de login: mesma moldura, mesma
-            // borda em degradê correndo, mesmos campos. Assim a pessoa que veio
-            // do login não sente que caiu noutro site.
+            // borda em degradê correndo, mesmos campos.
             const estiloFree = document.createElement('style');
             estiloFree.textContent = `
                 /* a borda animada depende destes dois, que só existiam no
-                   login.html — aqui a caixa é montada por JS em outra página */
+                   login.html — aqui a caixa é montada por JS noutra página */
                 @property --border-angle {
                     syntax: '<angle>';
                     inherits: false;
@@ -1224,24 +1229,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 .free-card {
                     position: relative;
-                    display: flex;
-                    flex-direction: column;
+                    display: flex; flex-direction: column;
                     box-sizing: border-box;
-                    max-width: 480px;
-                    width: 100%;
+                    max-width: 520px; width: 100%;
                     background: var(--bg-secondary, #161618);
                     border: 1px solid var(--border-color, #2a2a2e);
                     border-radius: 16px;
                     padding: 2.5rem 2.5rem 2rem;
+                    margin: auto;
                 }
                 .free-card > * { position: relative; z-index: 1; width: 100%; }
-
-                /* a mesma borda que corre no card do login */
                 .free-card::after {
                     content: '';
                     position: absolute; inset: 0;
-                    border-radius: inherit;
-                    padding: 1px;
+                    border-radius: inherit; padding: 1px;
                     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
                     -webkit-mask-composite: xor;
                     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -1259,8 +1260,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 .free-icone {
                     display: flex; align-items: center; justify-content: center;
-                    width: 60px; height: 60px;
-                    margin: 0 auto 1.4rem;
+                    width: 60px; height: 60px; margin: 0 auto 1.4rem;
                     border-radius: 18px;
                     background: rgba(110, 231, 200, 0.12);
                     border: 1px solid rgba(110, 231, 200, 0.25);
@@ -1268,8 +1268,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 .free-card h2 {
                     font-family: 'Outfit', sans-serif;
-                    font-size: 1.9rem; text-align: center;
-                    margin-bottom: 0.5rem;
+                    font-size: 1.8rem; text-align: center; margin-bottom: 0.5rem;
                 }
                 .free-card h2 span {
                     background: linear-gradient(135deg, #6ee7c8, #4fa3ff);
@@ -1277,17 +1276,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     -webkit-text-fill-color: transparent;
                 }
                 .free-sub {
-                    text-align: center;
-                    color: var(--text-secondary, #a1a1a8);
-                    font-size: 0.92rem;
-                    margin-bottom: 1.8rem;
+                    text-align: center; color: var(--text-secondary, #a1a1a8);
+                    font-size: 0.92rem; margin-bottom: 1.8rem;
                 }
 
-                .free-grupo { display: flex; flex-direction: column; margin-bottom: 1.2rem; flex: 1; min-width: 0; }
-                .free-grupo label {
-                    margin-bottom: 0.5rem; font-size: 0.9rem;
-                    color: var(--text-secondary, #a1a1a8);
-                }
+                .free-grupo { display: flex; flex-direction: column; margin-bottom: 1.1rem; flex: 1; min-width: 0; }
+                .free-grupo label { margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-secondary, #a1a1a8); }
                 .free-grupo input, .free-grupo select {
                     width: 100%; box-sizing: border-box;
                     padding: 1rem 1.25rem;
@@ -1303,15 +1297,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     outline: none; border-color: #6ee7c8;
                     box-shadow: 0 0 0 3px rgba(110, 231, 200, 0.1);
                 }
-                .free-linha { display: flex; gap: 1.25rem; }
+                .free-linha { display: flex; gap: 1rem; }
+                .free-linha .free-uf { flex: 0 0 7.5rem; }
 
                 .free-btn {
                     width: 100%; padding: 1rem;
                     background: linear-gradient(135deg, #21b98f, #6ee7c8);
                     color: #062018; border: none; border-radius: 12px;
                     font-size: 1rem; font-weight: 700; cursor: pointer;
-                    font-family: inherit;
-                    transition: all 0.3s ease;
+                    font-family: inherit; transition: all 0.3s ease;
                 }
                 .free-btn:hover:not(:disabled) {
                     transform: translateY(-2px);
@@ -1319,22 +1313,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 .free-btn:disabled { opacity: 0.6; cursor: default; }
 
-                .free-msg {
-                    margin-top: 1rem; text-align: center;
-                    font-size: 0.86rem; min-height: 1.2em;
-                }
+                .free-msg { margin-top: 1rem; text-align: center; font-size: 0.86rem; min-height: 1.2em; }
                 .free-fechar {
                     position: absolute; top: 1rem; right: 1.2rem;
-                    background: none; border: none;
-                    color: #8a8a90; font-size: 1.6rem;
-                    line-height: 1; cursor: pointer; padding: 0 4px;
-                    z-index: 2;
+                    background: none; border: none; color: #8a8a90;
+                    font-size: 1.6rem; line-height: 1; cursor: pointer;
+                    padding: 0 4px; z-index: 2;
                 }
                 .free-fechar:hover { color: #f5f5f5; }
+
+                /* aviso de espera: a pessoa saiu da tela sem hora marcada */
+                .free-aviso {
+                    text-align: center; line-height: 1.7;
+                    color: var(--text-secondary, #a1a1a8); font-size: 0.95rem;
+                }
+                .free-aviso strong { color: #6ee7c8; }
 
                 @media (max-width: 560px) {
                     .free-card { padding: 2rem 1.5rem 1.5rem; }
                     .free-linha { flex-direction: column; gap: 0; }
+                    .free-linha .free-uf { flex: 1; }
                 }
             `;
             document.head.appendChild(estiloFree);
@@ -1346,16 +1344,35 @@ document.addEventListener('DOMContentLoaded', function() {
                     <button type="button" class="free-fechar" id="free-close" aria-label="Fechar">&times;</button>
                     <div class="free-icone"><i class="fas fa-headset"></i></div>
                     <h2 id="free-titulo">1 <span>suporte grátis</span></h2>
-                    <p class="free-sub">É um por inscrição na OAB. Escolha o dia e a hora do seu atendimento.</p>
-                    <form id="free-form" novalidate>
+                    <p class="free-sub" id="free-sub">É um por inscrição na OAB. Confirmamos sua inscrição antes de marcar.</p>
+
+                    <form id="free-form-id" novalidate>
                         <div class="free-grupo">
                             <label for="free-nome">Nome completo</label>
                             <input id="free-nome" placeholder="Como está na sua inscrição" autocomplete="name" required>
                         </div>
-                        <div class="free-grupo">
-                            <label for="free-oab">Inscrição na OAB</label>
-                            <input id="free-oab" placeholder="123456/GO" autocomplete="off" required>
+                        <div class="free-linha">
+                            <div class="free-grupo">
+                                <label for="free-inscricao">Número da inscrição</label>
+                                <input id="free-inscricao" inputmode="numeric" placeholder="123456" autocomplete="off" required>
+                            </div>
+                            <div class="free-grupo free-uf">
+                                <label for="free-uf">Seccional</label>
+                                <select id="free-uf"></select>
+                            </div>
                         </div>
+                        <div class="free-grupo">
+                            <label for="free-whats">WhatsApp</label>
+                            <input id="free-whats" inputmode="tel" placeholder="(DDD) 99999-9999" autocomplete="tel" required>
+                        </div>
+                        <div class="free-grupo">
+                            <label for="free-email">E-mail</label>
+                            <input id="free-email" type="email" placeholder="seu@email.com" autocomplete="email" required>
+                        </div>
+                        <button type="submit" class="free-btn" id="free-enviar-id">Continuar</button>
+                    </form>
+
+                    <form id="free-form-agenda" novalidate style="display:none;">
                         <div class="free-linha">
                             <div class="free-grupo">
                                 <label for="free-dia">Dia</label>
@@ -1366,24 +1383,110 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <select id="free-hora"></select>
                             </div>
                         </div>
-                        <button type="submit" class="free-btn" id="free-enviar">Marcar meu atendimento</button>
-                        <div class="free-msg" id="free-msg"></div>
+                        <button type="submit" class="free-btn" id="free-enviar-agenda">Marcar meu atendimento</button>
                     </form>
+
+                    <div id="free-espera" style="display:none;"></div>
+                    <div class="free-msg" id="free-msg"></div>
                 </div>
             `;
             document.body.appendChild(overlayFree);
+
+            const q = s => overlayFree.querySelector(s);
+            const formId = q('#free-form-id');
+            const formAgenda = q('#free-form-agenda');
+            const blocoEspera = q('#free-espera');
+            const msg = q('#free-msg');
+            const selDia = q('#free-dia');
+            const selHora = q('#free-hora');
+            const selUf = q('#free-uf');
+
+            selUf.innerHTML = '<option value="">UF</option>' +
+                UFS_BR.map(u => `<option value="${u}">${u}</option>`).join('');
+
+            let agenda = [];
+            let verificacaoId = null;
+
+            const aviso = (texto, cor) => {
+                msg.style.color = cor || '#8a8a90';
+                msg.textContent = texto;
+            };
 
             const fecharFree = () => {
                 overlayFree.classList.remove('aberto');
                 document.body.style.overflow = '';
             };
 
-            const selDia = overlayFree.querySelector('#free-dia');
-            const selHora = overlayFree.querySelector('#free-hora');
-            let agenda = [];
+            function mostrarPasso(qual) {
+                formId.style.display = qual === 'identificacao' ? 'block' : 'none';
+                formAgenda.style.display = qual === 'agenda' ? 'block' : 'none';
+                blocoEspera.style.display = qual === 'espera' ? 'block' : 'none';
+            }
 
-            // Preenche as horas do dia escolhido. A lista vem inteira do
-            // servidor de uma vez, então trocar de dia não faz nova consulta.
+            function mostrarEspera(texto) {
+                blocoEspera.textContent = '';
+                const p = document.createElement('p');
+                p.className = 'free-aviso';
+                p.textContent = texto;
+                blocoEspera.appendChild(p);
+                mostrarPasso('espera');
+                q('#free-sub').textContent = 'Conferência da inscrição';
+            }
+
+            // ---- passo 1: identificação ----
+            formId.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const nome = q('#free-nome').value.trim();
+                const inscricao = q('#free-inscricao').value.replace(/\D/g, '');
+                const uf = selUf.value;
+                const whats = q('#free-whats').value.replace(/\D/g, '');
+                const email = q('#free-email').value.trim();
+                const botao = q('#free-enviar-id');
+
+                if (nome.length < 5) { aviso('Informe seu nome completo.', '#ff6b5e'); return; }
+                if (!inscricao || inscricao.length > 6) { aviso('Informe o número da inscrição (até 6 dígitos).', '#ff6b5e'); return; }
+                if (!uf) { aviso('Escolha a seccional.', '#ff6b5e'); return; }
+                if (whats.length < 10) { aviso('Informe o WhatsApp com DDD.', '#ff6b5e'); return; }
+                if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { aviso('Informe um e-mail válido.', '#ff6b5e'); return; }
+
+                botao.disabled = true;
+                aviso('Conferindo...');
+
+                fetch(apiUrl('/verificacao/solicitar'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome, inscricao, uf, contato: whats, email })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    botao.disabled = false;
+
+                    if (data.situacao === 'liberado') {
+                        verificacaoId = data.verificacao_id;
+                        aviso('');
+                        q('#free-sub').textContent = 'Inscrição confirmada. Escolha o horário.';
+                        mostrarPasso('agenda');
+                        carregarAgenda();
+                        return;
+                    }
+
+                    if (data.situacao === 'pendente') {
+                        mostrarEspera(data.msg ||
+                            'Recebemos seu pedido. Conferimos sua inscrição na OAB e avisamos por e-mail.');
+                        aviso('');
+                        return;
+                    }
+
+                    // ja_usou e recusado terminam aqui
+                    aviso(data.error || 'Não foi possível seguir.', '#ff6b5e');
+                })
+                .catch(() => {
+                    botao.disabled = false;
+                    aviso('Erro de conexão com o servidor.', '#ff6b5e');
+                });
+            });
+
+            // ---- passo 2: agenda ----
             function mostrarHorasDoDia() {
                 const dia = agenda.find(d => d.dia === selDia.value);
                 selHora.innerHTML = (dia ? dia.horarios : [])
@@ -1392,85 +1495,38 @@ document.addEventListener('DOMContentLoaded', function() {
             selDia.addEventListener('change', mostrarHorasDoDia);
 
             function carregarAgenda() {
-                const m = overlayFree.querySelector('#free-msg');
                 selDia.innerHTML = '<option>carregando...</option>';
                 selHora.innerHTML = '';
-
                 return fetch(apiUrl('/agenda/horarios'))
                     .then(r => r.json())
                     .then(d => {
                         agenda = (d && d.dias) || [];
                         if (!agenda.length) {
                             selDia.innerHTML = '<option>sem horário livre</option>';
-                            m.style.color = '#ff6b5e';
-                            m.textContent = 'Não há horário livre nos próximos dias. Fale conosco pelo WhatsApp.';
+                            aviso('Não há horário livre nos próximos dias. Fale conosco pelo WhatsApp.', '#ff6b5e');
                             return;
                         }
                         selDia.innerHTML = agenda
                             .map(d2 => `<option value="${d2.dia}">${d2.rotulo}</option>`).join('');
                         mostrarHorasDoDia();
                     })
-                    .catch(() => {
-                        selDia.innerHTML = '<option>erro ao carregar</option>';
-                        m.style.color = '#ff6b5e';
-                        m.textContent = 'Não foi possível carregar a agenda. Tente de novo.';
-                    });
+                    .catch(() => aviso('Não foi possível carregar a agenda.', '#ff6b5e'));
             }
 
-            btnFree.addEventListener('click', () => {
-                const u = getUsuarioLogado();
-                // quem já entrou tem a inscrição e o nome na conta: vêm preenchidos
-                if (u && u.oab) overlayFree.querySelector('#free-oab').value = u.oab;
-                if (u && u.nome) overlayFree.querySelector('#free-nome').value = u.nome;
-                const m = overlayFree.querySelector('#free-msg');
-                m.style.color = '#8a8a90';
-                m.textContent = 'É um por inscrição. Escolha dia e hora do seu atendimento.';
-                overlayFree.classList.add('aberto');
-                document.body.style.overflow = 'hidden';
-                carregarAgenda();
-                setTimeout(() => overlayFree.querySelector('#free-nome').focus(), 60);
-            });
-
-            overlayFree.querySelector('#free-close').onclick = fecharFree;
-            overlayFree.addEventListener('click', e => {
-                if (e.target === overlayFree) fecharFree();
-            });
-
-            overlayFree.querySelector('#free-form').addEventListener('submit', function (e) {
+            formAgenda.addEventListener('submit', function (e) {
                 e.preventDefault();
-                const campo = overlayFree.querySelector('#free-oab');
-                const msg = overlayFree.querySelector('#free-msg');
-                const botao = overlayFree.querySelector('#free-enviar');
-                const oab = campo.value.trim().toUpperCase();
-                const nome = overlayFree.querySelector('#free-nome').value.trim();
+                if (!selHora.value) { aviso('Escolha o dia e o horário.', '#ff6b5e'); return; }
 
-                if (nome.length < 5) {
-                    msg.style.color = '#ff6b5e';
-                    msg.textContent = 'Informe seu nome completo, como está na inscrição.';
-                    return;
-                }
-                if (!/^\d{2,7}\s*\/?\s*[A-Z]{2}$/.test(oab.replace(/\s+/g, ''))) {
-                    msg.style.color = '#ff6b5e';
-                    msg.textContent = 'Informe a inscrição no formato 123456/GO.';
-                    return;
-                }
-                if (!selHora.value) {
-                    msg.style.color = '#ff6b5e';
-                    msg.textContent = 'Escolha o dia e o horário do atendimento.';
-                    return;
-                }
-
+                const botao = q('#free-enviar-agenda');
                 const u = getUsuarioLogado();
                 botao.disabled = true;
-                msg.style.color = '#8a8a90';
-                msg.textContent = 'Registrando...';
+                aviso('Marcando...');
 
                 fetch(apiUrl('/chamado/free'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        oab: oab,
-                        nome: nome,
+                        verificacao_id: verificacaoId,
                         inicio: selHora.value,
                         usuario_id: u ? u.id : null,
                         descricao: 'Suporte gratuito pedido pela página de planos'
@@ -1480,29 +1536,49 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(data => {
                     botao.disabled = false;
                     if (!data.success) {
-                        msg.style.color = '#ff6b5e';
-                        msg.textContent = data.error || 'Não foi possível registrar.';
-                        // o horário foi tomado enquanto ela preenchia: a lista
-                        // volta atualizada, senão ela tentaria a mesma vaga
+                        aviso(data.error || 'Não foi possível marcar.', '#ff6b5e');
+                        // o horário foi tomado enquanto ela preenchia
                         if (data.recarregar_agenda) carregarAgenda();
                         return;
                     }
-                    msg.style.color = '#6ee7c8';
-                    msg.textContent = '✓ Atendimento marcado! Abrindo o WhatsApp...';
+                    aviso('Atendimento marcado! Abrindo o WhatsApp...', '#6ee7c8');
                     setTimeout(() => {
                         fecharFree();
-                        // a página de confirmação já monta o link do WhatsApp
-                        // com a inscrição no texto da conversa
                         window.location.href = 'agradecimento-free.html'
-                            + '?oab=' + encodeURIComponent(oab.replace(/\s+/g, ''))
+                            + '?oab=' + encodeURIComponent(q('#free-inscricao').value.replace(/\D/g, '') + '/' + selUf.value)
                             + '&quando=' + encodeURIComponent(data.inicio);
                     }, 1200);
                 })
                 .catch(() => {
                     botao.disabled = false;
-                    msg.style.color = '#ff6b5e';
-                    msg.textContent = 'Erro de conexão com o servidor.';
+                    aviso('Erro de conexão com o servidor.', '#ff6b5e');
                 });
+            });
+
+            // ---- abertura ----
+            btnFree.addEventListener('click', () => {
+                const u = getUsuarioLogado();
+                if (u && u.nome) q('#free-nome').value = u.nome;
+                if (u && u.email) q('#free-email').value = u.email;
+                if (u && u.telefone) q('#free-whats').value = u.telefone;
+                if (u && u.oab) {
+                    const partes = String(u.oab).split('/');
+                    q('#free-inscricao').value = (partes[0] || '').replace(/\D/g, '');
+                    if (partes[1]) selUf.value = partes[1].toUpperCase();
+                }
+
+                verificacaoId = null;
+                mostrarPasso('identificacao');
+                q('#free-sub').textContent = 'É um por inscrição na OAB. Confirmamos sua inscrição antes de marcar.';
+                aviso('');
+                overlayFree.classList.add('aberto');
+                document.body.style.overflow = 'hidden';
+                setTimeout(() => q('#free-nome').focus(), 60);
+            });
+
+            q('#free-close').onclick = fecharFree;
+            overlayFree.addEventListener('click', e => {
+                if (e.target === overlayFree) fecharFree();
             });
         }
 
