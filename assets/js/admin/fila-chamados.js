@@ -108,6 +108,16 @@
                 typeof conteudo === 'string' ? [document.createTextNode(conteudo)] : [conteudo]);
         }
 
+        // Apagar só aparece no que está fechado: chamado aberto é trabalho em
+        // andamento, e um clique errado custaria o atendimento de alguém.
+        var acoes = item.status === 'fechado'
+            ? el('button.acao.acao-nao', {
+                type: 'button',
+                texto: 'Apagar',
+                aoClicar: function () { apagar([item]); }
+              })
+            : null;
+
         return el('tr' + (abandonado ? '.abandonado' : ''), {}, [
             td('Idade', el('span' + (abandonado ? '.critico' : ''), {
                 texto: D.fmtEspera(item.idade_horas)
@@ -120,8 +130,34 @@
             td('Tipo', D.tag(item.tipo === 'premium' ? 'Premium' : 'Grátis',
                 item.tipo === 'premium' ? 'ativa' : 'livre')),
             td('Pedido', el('span.pedido', { texto: item.descricao || '—' })),
-            td('Status', seletorStatus(item))
+            td('Status', seletorStatus(item)),
+            td('', acoes || document.createTextNode(''))
         ]);
+    }
+
+    /**
+     * Apagar é irreversível e leva junto o que alimenta os indicadores —
+     * MTTR, "fechados no período" e taxa de reabertura saem dos fechados.
+     * Por isso: aviso explícito, confirmação, e 10 segundos para desfazer
+     * antes de qualquer coisa sair do banco.
+     */
+    function apagar(itens) {
+        var quantos = itens.length;
+        var texto = quantos === 1
+            ? 'Apagar o chamado #' + itens[0].id + '?'
+            : 'Apagar ' + quantos + ' chamados fechados?';
+
+        if (!confirm(texto + '\n\nIsso é definitivo. Os indicadores de tempo de ' +
+                     'resolução e de reabertura perdem esses registros.')) return;
+
+        global.AdminDesfazer.agendar({
+            texto: quantos === 1 ? 'Apagar chamado #' + itens[0].id
+                                 : 'Apagar ' + quantos + ' chamados',
+            aoConfirmar: function () {
+                return global.AdminApi.apagarChamados({ ids: itens.map(function (c) { return c.id; }) })
+                    .then(carregar);
+            }
+        });
     }
 
     function paginacao() {
@@ -145,7 +181,7 @@
     }
 
     function desenhar() {
-        var cabecalhos = ['Idade', 'Quem', 'OAB', 'Tipo', 'Pedido', 'Status'];
+        var cabecalhos = ['Idade', 'Quem', 'OAB', 'Tipo', 'Pedido', 'Status', ''];
         var tabela = el('table', {}, [
             el('thead', {}, el('tr', {}, cabecalhos.map(function (t) {
                 return el('th', { texto: t });
@@ -153,12 +189,23 @@
             el('tbody', {}, estado.itens.map(linha))
         ]);
 
+        var fechados = estado.itens.filter(function (c) { return c.status === 'fechado'; });
+
         D.trocar(alvo, [
             el('div.bloco-topo', {}, [
                 el('div', {}, [
                     el('h2', { texto: 'Chamados' }),
                     el('p.bloco-nota', { texto: 'Tempo real. Premium sempre acima do grátis.' })
-                ])
+                ]),
+                // só aparece quando há fechados à vista: botão de limpeza em
+                // tela sem nada para limpar é convite a clique errado
+                fechados.length > 1
+                    ? el('button.acao.acao-nao', {
+                        type: 'button',
+                        texto: 'Apagar os ' + fechados.length + ' fechados',
+                        aoClicar: function () { apagar(fechados); }
+                      })
+                    : null
             ]),
             filtros(),
             el('div.tabela-wrap.responsiva', {}, [

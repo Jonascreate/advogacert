@@ -689,6 +689,39 @@ function supabaseHeaders(extra = {}) {
     };
 }
 
+/**
+ * Apaga linhas no banco.
+ *
+ * saveJsonDb não serve para isto: ele reenvia o que está na memória com
+ * "atualizar se já existir" e nunca apaga. Tirar da memória e salvar deixaria
+ * a linha viva no Postgres, e ela voltaria no próximo restart — o servidor
+ * recarrega tudo do banco ao subir.
+ *
+ * Por isso o apagar fala direto com o Supabase, e só depois mexe na memória:
+ * se o banco recusar, a memória continua igual ao que está gravado.
+ */
+async function apagarNoSupabase(tabela, ids) {
+    if (!SUPABASE_ATIVO || !ids.length) return;
+    const lista = ids.map(Number).filter(Number.isFinite).join(',');
+
+    // O apagar entra NA MESMA FILA das gravações, e não em paralelo.
+    //
+    // As gravações são enfileiradas e saem uma de cada vez. Um apagar direto
+    // furava essa fila: se ainda houvesse um upsert pendente com aquela linha
+    // na memória — o que fecha o chamado, por exemplo —, ele chegava depois do
+    // apagar e recriava a linha. O apagar respondia "sucesso" e o registro
+    // continuava lá.
+    filaGravacao = filaGravacao.then(async () => {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/${tabela}?id=in.(${lista})`, {
+            method: 'DELETE',
+            headers: supabaseHeaders({ Prefer: 'return=minimal' })
+        });
+        if (!r.ok) throw new Error(`DELETE ${tabela}: ${r.status} ${await r.text()}`);
+    });
+
+    return filaGravacao;
+}
+
 /** Espelho em memória do banco. É ele que as rotas leem. */
 let memDb = null;
 
@@ -2732,6 +2765,85 @@ const server = http.createServer((req, res) => {
             } catch (err) {
                 console.error('Erro ao mudar status:', err.message);
                 responder(400, { success: false, error: 'Erro interno' });
+            }
+        });
+        return;
+    }
+
+    // ============ PAINEL: POST /admin/chamado/apagar ============
+    // Só apaga o que está fechado. Chamado aberto é trabalho em andamento, e
+    // apagar por engano custaria o atendimento de alguém.
+    //
+    // Apagar fechado tem preço: MTTR, "fechados no período" e taxa de
+    // reabertura saem justamente dali. O painel avisa antes; a decisão é sua.
+    if (method === 'POST' && url === '/admin/chamado/apagar') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', async () => {
+            const responder = (status, payload) => {
+                res.writeHead(status, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(payload));
+            };
+
+            if (!sessaoAdmin(req)) {
+                responder(401, { success: false, error: 'Sessão expirada' });
+                return;
+            }
+
+            try {
+                const entrada = JSON.parse(body || '{}');
+                const db = loadJsonDb();
+
+                // ou uma lista de ids, ou todos os fechados de uma vez
+                const alvos = entrada.todos_fechados
+                    ? (db.chamados || []).filter(c => c.status === 'fechado')
+                    : (db.chamados || []).filter(c => (entrada.ids || []).includes(c.id));
+
+                if (!alvos.length) {
+                    responder(200, { success: false, error: 'Nenhum chamado fechado para apagar.' });
+                    return;
+                }
+
+                const abertos = alvos.filter(c => c.status !== 'fechado');
+                if (abertos.length) {
+                    responder(400, {
+                        success: false,
+                        error: 'Só é possível apagar chamado fechado. Feche antes.'
+                    });
+                    return;
+                }
+
+                const ids = alvos.map(c => c.id);
+
+                // o agendamento aponta para o chamado: soltar a referência
+                // antes evita deixar um ponteiro para o que não existe mais
+                (db.agendamentos || []).forEach(a => {
+                    if (ids.includes(a.chamado_id)) a.chamado_id = null;
+                });
+
+                // banco primeiro: se recusar, a memória não muda e nada se perde
+                await apagarNoSupabase('chamados', ids);
+
+                db.chamados = (db.chamados || []).filter(c => !ids.includes(c.id));
+
+                auditar(db, {
+                    acao: 'chamados_apagados',
+                    alvo: `${ids.length} chamado(s)`,
+                    detalhe: alvos.map(c => `#${c.id} ${c.oab || 'sem OAB'}`).join(', ').slice(0, 500),
+                    ip: ipDoPedido(req)
+                });
+                saveJsonDb(db);
+
+                console.log(`🗑️  Apagados ${ids.length} chamado(s) fechado(s): ${ids.join(', ')}`);
+                responder(200, {
+                    success: true,
+                    msg: ids.length === 1 ? 'Chamado apagado.' : ids.length + ' chamados apagados.',
+                    apagados: ids.length
+                });
+
+            } catch (err) {
+                console.error('Erro ao apagar chamado:', err.message);
+                responder(400, { success: false, error: 'Não foi possível apagar. Nada foi alterado.' });
             }
         });
         return;

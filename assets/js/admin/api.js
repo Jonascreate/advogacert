@@ -109,6 +109,10 @@
             return pedir('/admin/chamados' + query(filtros));
         },
 
+        apagarChamados: function (opcoes) {
+            return pedir('/admin/chamado/apagar', { metodo: 'POST', corpo: opcoes });
+        },
+
         mudarStatusChamado: function (id, status) {
             return pedir('/admin/chamado/status', { metodo: 'POST', corpo: { id: id, status: status } });
         },
