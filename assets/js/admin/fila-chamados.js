@@ -182,11 +182,11 @@
 
             // só conta quando a lista é a dos abertos: com filtro de fechados
             // o número deixaria de significar "o que falta fazer"
+            // Âmbar sempre que houver chamado aberto: a esteira inteira —
+            // verificação, triagem e chamados — fica acesa até o trabalho
+            // acabar. Só apaga quando não sobra nada para fazer.
             if (global.AdminBadge && estado.status === 'abertos' && !estado.q) {
-                global.AdminBadge('chamados', 'Chamados', estado.total,
-                    estado.itens.some(function (c) {
-                        return c.status === 'aberto' && c.idade_horas >= estado.semDonoHoras;
-                    }));
+                global.AdminBadge('chamados', 'Chamados', estado.total, estado.total > 0);
             }
             desenhar();
         })

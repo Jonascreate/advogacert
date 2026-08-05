@@ -376,6 +376,29 @@ tr.abandonado td { background: rgba(255, 176, 32, 0.05); }
     position: relative;
 }
 
+/* etapa 3: a hora é a informação principal do cartão, então lidera */
+.triagem-quando {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem; font-weight: 700;
+    color: var(--accent-win);
+    margin-bottom: 0.2rem;
+}
+.triagem-quando.critico { color: #ff6b5e; }
+.triagem-card.marcado { border-left: 3px solid var(--accent-win); }
+.triagem-card.marcado.critico { border-left-color: #ff6b5e; }
+
+/* o botão que fecha a triagem: é a ação principal do cartão e precisa
+   parecer diferente de "remarcar" e "WhatsApp", que são apoio */
+.acao-promover {
+    border-color: var(--accent-mac);
+    color: var(--accent-mac);
+    font-weight: 700;
+}
+.acao-promover:hover {
+    background: rgba(110, 231, 200, 0.12);
+}
+
 /* ================= AGENDA DENTRO DO CARTÃO ================= */
 .agenda-inline {
     width: 100%;

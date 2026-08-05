@@ -904,7 +904,16 @@ function situacaoDeCobranca(db, usuarioId) {
 function freeUsadoPelaOab(db, oab) {
     if (!oab) return false;
     const idsDaOab = db.usuarios.filter(u => u.oab === oab).map(u => u.id);
-    return db.chamados.some(c => c.tipo === 'free' && idsDaOab.includes(c.usuario_id));
+    // Conta agendamento também, e não só chamado: desde que a triagem passou
+    // a decidir quando o chamado nasce, existe um intervalo em que o
+    // atendimento já foi marcado mas o chamado ainda não existe. Contar só
+    // chamado deixaria a pessoa marcar duas vezes nesse intervalo.
+    const porAgendamento = (db.agendamentos || []).some(a =>
+        a.status !== 'cancelado' &&
+        (a.oab === oab || idsDaOab.includes(a.usuario_id)));
+    const porChamado = (db.chamados || []).some(c =>
+        c.tipo === 'free' && (c.oab === oab || idsDaOab.includes(c.usuario_id)));
+    return porAgendamento || porChamado;
 }
 
 // ============================================================
@@ -1667,29 +1676,15 @@ const server = http.createServer((req, res) => {
                     return;
                 }
 
-                const chamadoId = proximoId(db.chamados);
+                // Marcado pelo cliente também para na triagem: o chamado nasce
+                // quando você prioriza, não quando ele escolhe a hora. Sem
+                // isso, metade dos atendimentos entraria na fila de trabalho
+                // sem passar pela sua conferência.
                 const agora = new Date().toISOString();
-                db.chamados.push({
-                    id: chamadoId,
-                    usuario_id: user ? user.id : null,   // sem conta o chamado fica só pela OAB
-                    oab: oabLimpa,              // guardado junto: a contabilidade é por inscrição
-                    uf: verificacao.uf,
-                    tipo: 'free',
-                    descricao: String(entrada.descricao || '').slice(0, 500),
-                    status: 'aberto',
-                    responsavel: null,
-                    primeiro_retorno_em: null,
-                    fechado_em: null,
-                    reaberturas: 0,
-                    atualizado_em: agora,
-                    verificacao_id: verificacao.id,
-                    criado_em: agora
-                });
-
                 const fim = new Date(vaga.quando.getTime() + AGENDA.duracaoMin * 60000);
                 db.agendamentos.push({
                     id: proximoId(db.agendamentos),
-                    chamado_id: chamadoId,
+                    chamado_id: null,
                     usuario_id: user ? user.id : null,
                     oab: oabLimpa,
                     nome: verificacao.nome_declarado || (user && user.nome) || '',
@@ -2208,18 +2203,26 @@ const server = http.createServer((req, res) => {
 
         // Já marcaram: separados entre o que ainda vai acontecer e o que já
         // passou da hora sem você dar baixa.
+        // Etapa 3 — hora marcada, esperando sua decisão de mandar para a fila.
+        // Só entra quem ainda NÃO virou chamado: promovido sai da triagem e
+        // passa a viver na aba de chamados, senão apareceria nos dois lugares
+        // e você não saberia onde ele está de verdade.
         const marcados = agendamentos
-            .filter(a => a.status === 'marcado')
+            .filter(a => a.status === 'marcado' && !a.chamado_id)
             .map(a => {
-                const chamado = (db.chamados || []).find(c => c.id === a.chamado_id);
+                const v = (db.verificacoes_oab || []).find(x => x.id === a.verificacao_id);
+                const dono = a.usuario_id
+                    ? (db.usuarios || []).find(u => u.id === a.usuario_id)
+                    : null;
                 return {
                     id: a.id,
-                    chamado_id: a.chamado_id,
+                    verificacao_id: a.verificacao_id,
                     inscricao: a.oab,
-                    nome: a.nome,
+                    nome: a.nome || (v ? v.nome_declarado : ''),
+                    contato: v ? v.contato : (dono ? dono.telefone : ''),
                     inicio: a.inicio,
                     fim: a.fim,
-                    tipo: chamado ? chamado.tipo : 'free',
+                    tipo: dono && assinaturaAtiva(db, dono.id) ? 'premium' : 'free',
                     passou: new Date(a.inicio).getTime() < agora
                 };
             })
@@ -2289,29 +2292,16 @@ const server = http.createServer((req, res) => {
                     (v.contato && soDigitos(u.telefone) === soDigitos(v.contato))) || null;
                 const tipo = dono && assinaturaAtiva(db, dono.id) ? 'premium' : 'free';
 
+                // Marcar NÃO abre chamado. O chamado nasce quando você decide,
+                // na triagem, que aquele atendimento está pronto para entrar na
+                // fila de trabalho — depois de conferir horário e prioridade, e
+                // com a chance de remarcar antes. chamado_id fica null até lá.
                 const agora = new Date().toISOString();
-                const chamadoId = proximoId(db.chamados);
-                db.chamados.push({
-                    id: chamadoId,
-                    usuario_id: dono ? dono.id : null,
-                    oab: rotulo,
-                    uf: v.uf,
-                    tipo,
-                    descricao: 'Atendimento marcado pelo painel',
-                    status: 'aberto',
-                    responsavel: null,
-                    primeiro_retorno_em: null,
-                    fechado_em: null,
-                    reaberturas: 0,
-                    atualizado_em: agora,
-                    verificacao_id: v.id,
-                    criado_em: agora
-                });
-
                 const fim = new Date(vaga.quando.getTime() + AGENDA.duracaoMin * 60000);
+                const agendamentoId = proximoId(db.agendamentos);
                 db.agendamentos.push({
-                    id: proximoId(db.agendamentos),
-                    chamado_id: chamadoId,
+                    id: agendamentoId,
+                    chamado_id: null,
                     usuario_id: dono ? dono.id : null,
                     oab: rotulo,
                     nome: v.nome_declarado || '',
@@ -2325,7 +2315,7 @@ const server = http.createServer((req, res) => {
                 auditar(db, {
                     acao: 'agendado_pelo_painel',
                     alvo: `OAB ${rotulo}`,
-                    detalhe: `Chamado #${chamadoId} para ${vaga.quando.toISOString()}`,
+                    detalhe: `Agendamento #${agendamentoId} para ${vaga.quando.toISOString()} (${tipo})`,
                     ip: ipDoPedido(req)
                 });
                 saveJsonDb(db);
@@ -2349,12 +2339,181 @@ const server = http.createServer((req, res) => {
 
                 responder(200, {
                     success: true,
-                    msg: 'Marcado. O chamado foi aberto e o cliente avisado por e-mail.',
-                    chamado_id: chamadoId
+                    msg: 'Horário marcado. Revise na triagem e passe para chamado quando quiser.',
+                    agendamento_id: agendamentoId
                 });
 
             } catch (err) {
                 console.error('Erro ao marcar pelo painel:', err.message);
+                responder(400, { success: false, error: 'Erro interno' });
+            }
+        });
+        return;
+    }
+
+    // ============ PAINEL: POST /admin/remarcar ============
+    // Força maior: o horário combinado não serve mais. Troca a hora sem
+    // desfazer a verificação nem perder o lugar na triagem.
+    if (method === 'POST' && url === '/admin/remarcar') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            const responder = (status, payload) => {
+                res.writeHead(status, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(payload));
+            };
+
+            if (!sessaoAdmin(req)) {
+                responder(401, { success: false, error: 'Sessão expirada' });
+                return;
+            }
+
+            try {
+                const { agendamento_id, inicio } = JSON.parse(body || '{}');
+                const db = loadJsonDb();
+                const a = (db.agendamentos || []).find(x => x.id === agendamento_id);
+
+                if (!a) {
+                    responder(404, { success: false, error: 'Agendamento não encontrado' });
+                    return;
+                }
+                if (a.chamado_id) {
+                    responder(400, {
+                        success: false,
+                        error: 'Já virou chamado. Remarque pela fila de chamados.'
+                    });
+                    return;
+                }
+
+                // A vaga antiga precisa sair da contagem antes de conferir a
+                // nova: senão, remarcar para o mesmo horário seria recusado
+                // por conflito com ele mesmo.
+                const antigo = a.inicio;
+                a.status = 'remarcando';
+
+                const vaga = horarioValido(db, inicio);
+                if (!vaga.ok) {
+                    a.status = 'marcado';
+                    responder(200, { success: false, error: vaga.erro, recarregar_agenda: true });
+                    return;
+                }
+
+                a.inicio = vaga.quando.toISOString();
+                a.fim = new Date(vaga.quando.getTime() + AGENDA.duracaoMin * 60000).toISOString();
+                a.status = 'marcado';
+
+                auditar(db, {
+                    acao: 'remarcado',
+                    alvo: `OAB ${a.oab}`,
+                    detalhe: `${antigo} -> ${a.inicio}`,
+                    ip: ipDoPedido(req)
+                });
+                saveJsonDb(db);
+
+                const v = (db.verificacoes_oab || []).find(x => x.id === a.verificacao_id);
+                if (v && v.email) {
+                    const quando = vaga.quando.toLocaleString('pt-BR', {
+                        weekday: 'long', day: '2-digit', month: '2-digit',
+                        hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo'
+                    });
+                    enviarEmailBrevo(
+                        v.email,
+                        'Seu atendimento foi remarcado — AdvogaCert',
+                        `<p>Olá, ${v.nome_declarado}.</p>
+                         <p>Precisamos remarcar seu atendimento. O novo horário é
+                         <strong>${quando}</strong>.</p>
+                         <p>Se não puder, responda este e-mail que a gente ajusta.</p>`
+                    ).catch(e => console.error('Aviso de remarcação não saiu:', e.message));
+                }
+
+                responder(200, { success: true, msg: 'Remarcado e cliente avisado.' });
+
+            } catch (err) {
+                console.error('Erro ao remarcar:', err.message);
+                responder(400, { success: false, error: 'Erro interno' });
+            }
+        });
+        return;
+    }
+
+    // ============ PAINEL: POST /admin/promover ============
+    // O passo que você pediu: só o que foi priorizado na triagem vira chamado.
+    // Até aqui existia um horário combinado; daqui em diante existe trabalho
+    // na fila, com idade, responsável e prazo correndo.
+    if (method === 'POST' && url === '/admin/promover') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            const responder = (status, payload) => {
+                res.writeHead(status, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(payload));
+            };
+
+            if (!sessaoAdmin(req)) {
+                responder(401, { success: false, error: 'Sessão expirada' });
+                return;
+            }
+
+            try {
+                const { agendamento_id, prioridade } = JSON.parse(body || '{}');
+                const db = loadJsonDb();
+                const a = (db.agendamentos || []).find(x => x.id === agendamento_id);
+
+                if (!a) {
+                    responder(404, { success: false, error: 'Agendamento não encontrado' });
+                    return;
+                }
+                if (a.chamado_id) {
+                    responder(400, { success: false, error: 'Este atendimento já virou chamado.' });
+                    return;
+                }
+
+                const v = (db.verificacoes_oab || []).find(x => x.id === a.verificacao_id);
+                const dono = a.usuario_id
+                    ? (db.usuarios || []).find(u => u.id === a.usuario_id)
+                    : null;
+                // premium manda na fila; a prioridade escolhida na triagem só
+                // promove, nunca rebaixa quem paga
+                const tipoBase = dono && assinaturaAtiva(db, dono.id) ? 'premium' : 'free';
+                const tipo = prioridade === 'premium' ? 'premium' : tipoBase;
+
+                const agora = new Date().toISOString();
+                const chamadoId = proximoId(db.chamados);
+                db.chamados.push({
+                    id: chamadoId,
+                    usuario_id: a.usuario_id || null,
+                    oab: a.oab,
+                    uf: v ? v.uf : null,
+                    tipo,
+                    descricao: 'Atendimento de ' + new Date(a.inicio).toLocaleString('pt-BR', {
+                        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+                        timeZone: 'America/Sao_Paulo'
+                    }),
+                    status: 'aberto',
+                    responsavel: null,
+                    primeiro_retorno_em: null,
+                    fechado_em: null,
+                    reaberturas: 0,
+                    atualizado_em: agora,
+                    verificacao_id: a.verificacao_id || null,
+                    criado_em: agora
+                });
+
+                a.chamado_id = chamadoId;
+
+                auditar(db, {
+                    acao: 'promovido_para_chamado',
+                    alvo: `OAB ${a.oab}`,
+                    detalhe: `Agendamento #${a.id} -> Chamado #${chamadoId} (${tipo})`,
+                    ip: ipDoPedido(req)
+                });
+                saveJsonDb(db);
+
+                console.log(`➡️  Triagem: ${a.oab} virou chamado #${chamadoId} (${tipo})`);
+                responder(200, { success: true, msg: 'Passou para a fila de chamados.', chamado_id: chamadoId });
+
+            } catch (err) {
+                console.error('Erro ao promover:', err.message);
                 responder(400, { success: false, error: 'Erro interno' });
             }
         });

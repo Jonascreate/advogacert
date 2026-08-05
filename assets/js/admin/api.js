@@ -87,6 +87,20 @@
             });
         },
 
+        remarcar: function (agendamento_id, inicio) {
+            return pedir('/admin/remarcar', {
+                metodo: 'POST',
+                corpo: { agendamento_id: agendamento_id, inicio: inicio }
+            });
+        },
+
+        promover: function (agendamento_id, prioridade) {
+            return pedir('/admin/promover', {
+                metodo: 'POST',
+                corpo: { agendamento_id: agendamento_id, prioridade: prioridade }
+            });
+        },
+
         linhaTempo: function (inscricao) {
             return pedir('/admin/linha-tempo' + query({ inscricao: inscricao }));
         },

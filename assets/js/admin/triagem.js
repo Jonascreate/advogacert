@@ -114,21 +114,75 @@
         ]);
     }
 
-    function linhaMarcado(item) {
-        return el('tr' + (item.passou ? '.abandonado' : ''), {}, [
-            el('td', { 'data-rotulo': 'Quando' },
-                el('span.mono' + (item.passou ? '.critico' : ''), { texto: D.fmtData(item.inicio) })),
-            el('td', { 'data-rotulo': 'Quem', texto: item.nome || '—' }),
-            el('td', { 'data-rotulo': 'OAB' }, el('span.mono', { texto: item.inscricao || '—' })),
-            el('td', { 'data-rotulo': 'Tipo' }, selo(item.tipo)),
-            el('td', { 'data-rotulo': 'Situação' },
-                D.tag(item.passou ? 'Aguardando baixa' : 'Marcado', item.passou ? 'atrasada' : 'livre')),
-            el('td', { 'data-rotulo': '' }, el('button.acao', {
-                type: 'button',
-                texto: 'Linha do tempo',
-                aoClicar: function (e) { abrirLinha(item.inscricao, e.target); }
-            }))
+    /**
+     * Etapa 3: hora marcada, esperando sua decisão.
+     *
+     * É aqui que a triagem deixa de ser lista e vira sala de decisão. Você
+     * confere se o horário ainda serve, remarca se houver força maior, e só
+     * então passa para chamado — que é quando o prazo começa a correr.
+     */
+    function cartaoMarcado(item) {
+        var atrasado = item.passou;
+        var link = whatsapp(item.contato,
+            'Olá, ' + item.nome + '! Confirmando seu atendimento da AdvogaCert em ' +
+            new Date(item.inicio).toLocaleString('pt-BR', {
+                day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+            }) + '.');
+
+        return el('article.triagem-card.marcado' + (atrasado ? '.critico' : ''), {}, [
+            el('div.triagem-topo', {}, [
+                el('div', {}, [
+                    el('span.triagem-quando' + (atrasado ? '.critico' : ''), {
+                        texto: D.fmtData(item.inicio)
+                    }),
+                    el('div.triagem-inscricao', { texto: item.inscricao }),
+                    el('div.fraco', { texto: item.nome || '—' })
+                ]),
+                el('div.triagem-lado', {}, [
+                    selo(item.tipo),
+                    atrasado ? D.tag('Passou da hora', 'atrasada') : null
+                ])
+            ]),
+            el('div.triagem-acoes', {}, [
+                // o botão que fecha a triagem e abre o trabalho
+                el('button.acao.acao-promover', {
+                    type: 'button',
+                    texto: 'Passar para chamado',
+                    aoClicar: function () { promover(item); }
+                }),
+                el('button.acao', {
+                    type: 'button',
+                    texto: 'Remarcar',
+                    aoClicar: function (e) { abrirAgenda(item, e.target, true); }
+                }),
+                link ? el('a.acao', {
+                    href: link, target: '_blank', rel: 'noopener noreferrer',
+                    texto: 'WhatsApp'
+                }) : null,
+                el('button.acao', {
+                    type: 'button',
+                    texto: 'Linha do tempo',
+                    aoClicar: function (e) { abrirLinha(item.inscricao, e.target); }
+                })
+            ])
         ]);
+    }
+
+    function promover(item) {
+        var premium = item.tipo === 'premium';
+        if (!confirm('Passar ' + item.inscricao + ' para a fila de chamados?\n\n' +
+                     'A partir daí o prazo começa a correr.')) return;
+
+        global.AdminDesfazer.agendar({
+            texto: item.inscricao + ' → chamado',
+            aoConfirmar: function () {
+                return global.AdminApi.promover(item.id, premium ? 'premium' : null)
+                    .then(function () {
+                        carregar();
+                        if (global.AdminFilaChamados) global.AdminFilaChamados.recarregar();
+                    });
+            }
+        });
     }
 
     /**
@@ -138,7 +192,7 @@
      * que está livre. E o servidor confere de novo ao gravar: você e um
      * cliente podem estar clicando no mesmo horário no mesmo instante.
      */
-    function abrirAgenda(item, botao) {
+    function abrirAgenda(item, botao, remarcando) {
         var caixa = botao.parentNode.querySelector('.agenda-inline');
         if (caixa) { caixa.parentNode.removeChild(caixa); return; }
 
@@ -179,11 +233,17 @@
             }
 
             function confirmar(h) {
-                if (!confirm('Marcar ' + item.inscricao + ' para ' +
-                             diaAtual.rotulo + ' às ' + h.rotulo + '?')) return;
+                var verbo = remarcando ? 'Remarcar' : 'Marcar';
+                if (!confirm(verbo + ' ' + item.inscricao + ' para ' +
+                             diaAtual.rotulo + ' às ' + h.rotulo + '?' +
+                             (remarcando ? '\n\nO cliente será avisado do novo horário.' : ''))) return;
 
-                aviso.textContent = 'Marcando...';
-                global.AdminApi.agendar(item.verificacao_id, h.inicio).then(function (r) {
+                aviso.textContent = remarcando ? 'Remarcando...' : 'Marcando...';
+                var chamada = remarcando
+                    ? global.AdminApi.remarcar(item.id, h.inicio)
+                    : global.AdminApi.agendar(item.verificacao_id, h.inicio);
+
+                chamada.then(function (r) {
                     if (!r || !r.success) {
                         aviso.textContent = (r && r.error) || 'Não foi possível marcar.';
                         aviso.className = 'agenda-aviso erro';
@@ -255,17 +315,12 @@
                 : el('div.vazio', { texto: 'Ninguém liberado esperando para marcar.' }),
 
             el('h3.ind-sub', {
-                texto: '3. Atendimentos marcados (' + estado.marcados.length +
-                       (estado.atrasados ? ' · ' + estado.atrasados + ' sem baixa' : '') + ')'
+                texto: '3. Marcados, esperando você priorizar (' + estado.marcados.length +
+                       (estado.atrasados ? ' · ' + estado.atrasados + ' passaram da hora' : '') + ')'
             }),
             estado.marcados.length
-                ? el('div.tabela-wrap.responsiva', {}, el('table', {}, [
-                    el('thead', {}, el('tr', {}, ['Quando', 'Quem', 'OAB', 'Tipo', 'Situação', ''].map(function (t) {
-                        return el('th', { texto: t });
-                    }))),
-                    el('tbody', {}, estado.marcados.map(linhaMarcado))
-                  ]))
-                : el('div.vazio', { texto: 'Nenhum atendimento marcado.' })
+                ? el('div.triagem-lista', {}, estado.marcados.map(cartaoMarcado))
+                : el('div.vazio', { texto: 'Nada esperando para virar chamado.' })
         ];
 
         D.trocar(alvo, blocos);
@@ -281,10 +336,12 @@
 
             // o contador da aba conta a esteira inteira, e fica âmbar quando
             // há algo esperando você — verificar ou dar baixa
+            // A bola da triagem fica âmbar enquanto houver qualquer coisa
+            // dentro dela — inclusive marcado esperando ser priorizado. Ela só
+            // apaga quando tudo passou para chamado, que é o fim da triagem.
             if (global.AdminBadge) {
-                global.AdminBadge('triagem', 'Triagem',
-                    estado.pendentes.length + estado.aguardando.length + estado.marcados.length,
-                    estado.pendentes.length > 0 || estado.atrasados > 0);
+                var total = estado.pendentes.length + estado.aguardando.length + estado.marcados.length;
+                global.AdminBadge('triagem', 'Triagem', total, total > 0);
             }
             desenhar();
         }).catch(function () {});

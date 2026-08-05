@@ -80,12 +80,14 @@
     }
 
     // ---------------- navegação ----------------
+    // A ordem conta a esteira: confere a OAB, tria, olha o cadastro e a
+    // agenda de quem passou, e só então o trabalho na fila de chamados.
     var ABAS = [
         { id: 'verificacao', rotulo: 'Verificação de OAB' },
         { id: 'triagem',     rotulo: 'Triagem' },
+        { id: 'cadastros',   rotulo: 'Cadastros e agenda' },
         { id: 'chamados',    rotulo: 'Chamados' },
         { id: 'indicadores', rotulo: 'Indicadores' },
-        { id: 'cadastros',   rotulo: 'Cadastros e agenda' },
         { id: 'sistema',     rotulo: 'Servidor e banco' }
     ];
 
