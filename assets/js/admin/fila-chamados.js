@@ -179,6 +179,15 @@
             estado.itens = d.itens || [];
             estado.total = d.total || 0;
             estado.semDonoHoras = d.sem_dono_horas || 8;
+
+            // só conta quando a lista é a dos abertos: com filtro de fechados
+            // o número deixaria de significar "o que falta fazer"
+            if (global.AdminBadge && estado.status === 'abertos' && !estado.q) {
+                global.AdminBadge('chamados', 'Chamados', estado.total,
+                    estado.itens.some(function (c) {
+                        return c.status === 'aberto' && c.idade_horas >= estado.semDonoHoras;
+                    }));
+            }
             desenhar();
         })
         .catch(function () {});

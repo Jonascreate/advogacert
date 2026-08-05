@@ -94,6 +94,13 @@
                 ])
             ]),
             el('div.triagem-acoes', {}, [
+                // é este botão que faz a esteira andar: marcada a hora, o
+                // item sai da triagem e vira chamado
+                el('button.acao.acao-ok', {
+                    type: 'button',
+                    texto: 'Marcar horário',
+                    aoClicar: function (e) { abrirAgenda(item, e.target); }
+                }),
                 link ? el('a.acao', {
                     href: link, target: '_blank', rel: 'noopener noreferrer',
                     texto: 'Lembrar pelo WhatsApp'
@@ -122,6 +129,78 @@
                 aoClicar: function (e) { abrirLinha(item.inscricao, e.target); }
             }))
         ]);
+    }
+
+    /**
+     * Escolha do horário pelo painel.
+     *
+     * A lista vem da mesma rota que a tela pública usa — uma fonte só sobre o
+     * que está livre. E o servidor confere de novo ao gravar: você e um
+     * cliente podem estar clicando no mesmo horário no mesmo instante.
+     */
+    function abrirAgenda(item, botao) {
+        var caixa = botao.parentNode.querySelector('.agenda-inline');
+        if (caixa) { caixa.parentNode.removeChild(caixa); return; }
+
+        caixa = el('div.agenda-inline', {}, el('div.fraco', { texto: 'Carregando horários...' }));
+        botao.parentNode.appendChild(caixa);
+
+        global.AdminApi.horariosLivres().then(function (d) {
+            var dias = (d && d.dias) || [];
+            if (!dias.length) {
+                D.trocar(caixa, el('div.fraco', { texto: 'Sem horário livre nos próximos dias.' }));
+                return;
+            }
+
+            var diaAtual = dias[0];
+            var aviso = el('div.agenda-aviso');
+
+            function pintar() {
+                D.trocar(caixa, [
+                    el('div.agenda-dias', {}, dias.map(function (dia) {
+                        return el('button.agenda-dia' + (dia.dia === diaAtual.dia ? '.ativo' : ''), {
+                            type: 'button',
+                            aoClicar: function () { diaAtual = dia; pintar(); }
+                        }, [
+                            el('span.agenda-dia-sem', { texto: dia.semana }),
+                            el('span.agenda-dia-num', { texto: dia.numero }),
+                            el('span.agenda-dia-vagas', { texto: dia.vagas + 'v' })
+                        ]);
+                    })),
+                    el('div.agenda-horas', {}, diaAtual.horarios.map(function (h) {
+                        return el('button.agenda-hora', {
+                            type: 'button',
+                            texto: h.rotulo,
+                            aoClicar: function () { confirmar(h); }
+                        });
+                    })),
+                    aviso
+                ]);
+            }
+
+            function confirmar(h) {
+                if (!confirm('Marcar ' + item.inscricao + ' para ' +
+                             diaAtual.rotulo + ' às ' + h.rotulo + '?')) return;
+
+                aviso.textContent = 'Marcando...';
+                global.AdminApi.agendar(item.verificacao_id, h.inicio).then(function (r) {
+                    if (!r || !r.success) {
+                        aviso.textContent = (r && r.error) || 'Não foi possível marcar.';
+                        aviso.className = 'agenda-aviso erro';
+                        return;
+                    }
+                    carregar();                       // o item muda de etapa
+                    if (global.AdminFilaChamados) global.AdminFilaChamados.recarregar();
+                }).catch(function () {
+                    aviso.textContent = 'Erro de conexão.';
+                    aviso.className = 'agenda-aviso erro';
+                });
+            }
+
+            pintar();
+        }).catch(function () {
+            D.trocar(caixa, el('div.fraco', { texto: 'Não foi possível carregar a agenda.' }));
+        });
     }
 
     /**
@@ -199,6 +278,14 @@
             estado.aguardando = d.aguardando_marcar || [];
             estado.marcados = d.marcados || [];
             estado.atrasados = d.atrasados || 0;
+
+            // o contador da aba conta a esteira inteira, e fica âmbar quando
+            // há algo esperando você — verificar ou dar baixa
+            if (global.AdminBadge) {
+                global.AdminBadge('triagem', 'Triagem',
+                    estado.pendentes.length + estado.aguardando.length + estado.marcados.length,
+                    estado.pendentes.length > 0 || estado.atrasados > 0);
+            }
             desenhar();
         }).catch(function () {});
     }

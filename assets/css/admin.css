@@ -181,11 +181,17 @@
 }
 .aba:hover { color: var(--text-primary); }
 .aba.ativa { color: var(--accent-mac); border-bottom-color: var(--accent-mac); }
+/* âmbar = a vez é sua; cinza = a bola está com o cliente. É o mesmo número
+   andando de aba em aba conforme o atendimento avança. */
 .aba-selo {
     display: inline-block; min-width: 1.35rem;
     padding: 0.1rem 0.4rem; border-radius: 100px;
     background: #ffb020; color: #1a1200;
     font-size: 0.7rem; font-weight: 700; text-align: center;
+}
+.aba-selo.calmo {
+    background: rgba(255, 255, 255, 0.09);
+    color: var(--text-secondary);
 }
 
 .bloco-topo {
@@ -369,6 +375,60 @@ tr.abandonado td { background: rgba(255, 176, 32, 0.05); }
     display: flex; flex-wrap: wrap; gap: 0.5rem;
     position: relative;
 }
+
+/* ================= AGENDA DENTRO DO CARTÃO ================= */
+.agenda-inline {
+    width: 100%;
+    margin-top: 0.9rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--border-color);
+}
+.agenda-dias {
+    display: flex; gap: 0.4rem;
+    overflow-x: auto; padding-bottom: 0.4rem;
+    margin-bottom: 0.75rem;
+}
+.agenda-dia {
+    flex: 0 0 auto;
+    display: flex; flex-direction: column; align-items: center;
+    min-width: 3.4rem; padding: 0.45rem 0.4rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-family: inherit; cursor: pointer;
+}
+.agenda-dia:hover { border-color: rgba(110, 231, 200, 0.5); }
+.agenda-dia.ativo {
+    border-color: var(--accent-mac);
+    background: rgba(110, 231, 200, 0.1);
+}
+.agenda-dia-sem { font-size: 0.6rem; color: var(--text-muted); letter-spacing: 0.05em; }
+.agenda-dia-num {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem; font-weight: 700; line-height: 1.2;
+}
+.agenda-dia-vagas { font-size: 0.58rem; color: var(--accent-mac); }
+
+.agenda-horas { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.agenda-hora {
+    padding: 0.4rem 0.7rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem; cursor: pointer;
+}
+.agenda-hora:hover {
+    border-color: var(--accent-mac);
+    color: var(--accent-mac);
+}
+.agenda-aviso {
+    margin-top: 0.6rem;
+    font-size: 0.8rem; color: var(--text-muted);
+}
+.agenda-aviso.erro { color: #ff6b5e; }
 
 /* ================= LINHA DO TEMPO ================= */
 .linha-tempo {

@@ -110,15 +110,26 @@
         }));
     }
 
-    /** A contagem de pendentes aparece na aba: é o que exige ação sua. */
-    function marcarPendentes(n) {
-        var botao = document.getElementById('btn-aba-verificacao');
+    /**
+     * O contador de cada aba, para a esteira ser visível de longe.
+     *
+     * É o mesmo número andando: sai da Verificação quando você confere, entra
+     * na Triagem, e de lá vai para Chamados quando o horário é marcado. Sem
+     * isso, o item some de uma aba e você precisa abrir a outra para saber
+     * que ele continua existindo.
+     *
+     * Âmbar quando a vez é sua; cinza quando a bola está com o cliente.
+     */
+    function marcarAba(id, rotulo, n, urgente) {
+        var botao = document.getElementById('btn-aba-' + id);
         if (!botao) return;
         D.trocar(botao, [
-            document.createTextNode('Verificação de OAB'),
-            n > 0 ? el('span.aba-selo', { texto: String(n) }) : null
+            document.createTextNode(rotulo),
+            n > 0 ? el('span.aba-selo' + (urgente ? '' : '.calmo'), { texto: String(n) }) : null
         ]);
     }
+
+    global.AdminBadge = marcarAba;
 
     function marcarHora() {
         if (relogio) relogio.textContent = 'Atualizado às ' + new Date().toLocaleTimeString('pt-BR');
@@ -137,7 +148,10 @@
         telaLogin.style.display = 'none';
         telaPainel.style.display = 'block';
 
-        global.AdminFilaVerificacao.montar(document.getElementById('aba-verificacao'), marcarPendentes);
+        global.AdminFilaVerificacao.montar(
+            document.getElementById('aba-verificacao'),
+            function (n) { marcarAba('verificacao', 'Verificação de OAB', n, true); }
+        );
         global.AdminTriagem.montar(document.getElementById('aba-triagem'));
         global.AdminFilaChamados.montar(document.getElementById('aba-chamados'));
         global.AdminIndicadores.montar(document.getElementById('aba-indicadores'));

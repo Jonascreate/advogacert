@@ -74,6 +74,19 @@
             return pedir('/admin/triagem');
         },
 
+        horariosLivres: function () {
+            // mesma rota que a tela pública usa: uma fonte só de verdade
+            // sobre o que está livre
+            return pedir('/agenda/horarios');
+        },
+
+        agendar: function (verificacao_id, inicio) {
+            return pedir('/admin/agendar', {
+                metodo: 'POST',
+                corpo: { verificacao_id: verificacao_id, inicio: inicio }
+            });
+        },
+
         linhaTempo: function (inscricao) {
             return pedir('/admin/linha-tempo' + query({ inscricao: inscricao }));
         },

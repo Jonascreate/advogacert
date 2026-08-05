@@ -2236,6 +2236,131 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // ============ PAINEL: POST /admin/agendar ============
+    // Marca o horário pelo painel, sem esperar o cliente entrar no site.
+    // É o que faz a esteira andar: liberada a OAB, você escolhe a hora e o
+    // item sai da triagem e vira chamado.
+    //
+    // Usa a mesma conferência de vaga da tela pública — inclusive a segunda,
+    // na hora de gravar. Você e um cliente podem estar escolhendo o mesmo
+    // horário no mesmo instante.
+    if (method === 'POST' && url === '/admin/agendar') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            const responder = (status, payload) => {
+                res.writeHead(status, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(payload));
+            };
+
+            if (!sessaoAdmin(req)) {
+                responder(401, { success: false, error: 'Sessão expirada' });
+                return;
+            }
+
+            try {
+                const { verificacao_id, inicio } = JSON.parse(body || '{}');
+                const db = loadJsonDb();
+                const v = (db.verificacoes_oab || []).find(x => x.id === verificacao_id);
+
+                if (!v) {
+                    responder(404, { success: false, error: 'Verificação não encontrada' });
+                    return;
+                }
+                if (v.status !== 'confere') {
+                    responder(400, { success: false, error: 'Confira a inscrição antes de marcar.' });
+                    return;
+                }
+                if ((db.agendamentos || []).some(a => a.verificacao_id === v.id)) {
+                    responder(400, { success: false, error: 'Esta inscrição já tem atendimento marcado.' });
+                    return;
+                }
+
+                const vaga = horarioValido(db, inicio);
+                if (!vaga.ok) {
+                    responder(200, { success: false, error: vaga.erro, recarregar_agenda: true });
+                    return;
+                }
+
+                const rotulo = `${v.inscricao}/${v.uf}`;
+                const soDigitos = s => String(s || '').replace(/\D/g, '');
+                const dono = (db.usuarios || []).find(u =>
+                    (v.email && String(u.email || '').toLowerCase() === String(v.email).toLowerCase()) ||
+                    (v.contato && soDigitos(u.telefone) === soDigitos(v.contato))) || null;
+                const tipo = dono && assinaturaAtiva(db, dono.id) ? 'premium' : 'free';
+
+                const agora = new Date().toISOString();
+                const chamadoId = proximoId(db.chamados);
+                db.chamados.push({
+                    id: chamadoId,
+                    usuario_id: dono ? dono.id : null,
+                    oab: rotulo,
+                    uf: v.uf,
+                    tipo,
+                    descricao: 'Atendimento marcado pelo painel',
+                    status: 'aberto',
+                    responsavel: null,
+                    primeiro_retorno_em: null,
+                    fechado_em: null,
+                    reaberturas: 0,
+                    atualizado_em: agora,
+                    verificacao_id: v.id,
+                    criado_em: agora
+                });
+
+                const fim = new Date(vaga.quando.getTime() + AGENDA.duracaoMin * 60000);
+                db.agendamentos.push({
+                    id: proximoId(db.agendamentos),
+                    chamado_id: chamadoId,
+                    usuario_id: dono ? dono.id : null,
+                    oab: rotulo,
+                    nome: v.nome_declarado || '',
+                    inicio: vaga.quando.toISOString(),
+                    fim: fim.toISOString(),
+                    status: 'marcado',
+                    verificacao_id: v.id,
+                    criado_em: agora
+                });
+
+                auditar(db, {
+                    acao: 'agendado_pelo_painel',
+                    alvo: `OAB ${rotulo}`,
+                    detalhe: `Chamado #${chamadoId} para ${vaga.quando.toISOString()}`,
+                    ip: ipDoPedido(req)
+                });
+                saveJsonDb(db);
+
+                console.log(`📅 Marcado pelo painel: ${rotulo} → ${vaga.quando.toISOString()}`);
+
+                // Avisa quem foi marcado: ele não escolheu, então precisa saber.
+                if (v.email) {
+                    const quando = vaga.quando.toLocaleString('pt-BR', {
+                        weekday: 'long', day: '2-digit', month: '2-digit',
+                        hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo'
+                    });
+                    enviarEmailBrevo(
+                        v.email,
+                        'Seu atendimento foi marcado — AdvogaCert',
+                        `<p>Olá, ${v.nome_declarado}.</p>
+                         <p>Seu atendimento ficou marcado para <strong>${quando}</strong>.</p>
+                         <p>Se o horário não servir, responda este e-mail que a gente remarca.</p>`
+                    ).catch(e => console.error('Aviso de agendamento não saiu:', e.message));
+                }
+
+                responder(200, {
+                    success: true,
+                    msg: 'Marcado. O chamado foi aberto e o cliente avisado por e-mail.',
+                    chamado_id: chamadoId
+                });
+
+            } catch (err) {
+                console.error('Erro ao marcar pelo painel:', err.message);
+                responder(400, { success: false, error: 'Erro interno' });
+            }
+        });
+        return;
+    }
+
     // ============ PAINEL: GET /admin/linha-tempo ============
     // A história daquela inscrição, em ordem. Montada na hora a partir das
     // tabelas que já existem — não há tabela de eventos, e criar uma exigiria
