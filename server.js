@@ -2162,16 +2162,45 @@ const server = http.createServer((req, res) => {
         const agendamentos = db.agendamentos || [];
         const agora = Date.now();
 
-        // Liberados que ainda não marcaram: a bola está com o cliente.
+        /**
+         * Para onde essa pessoa vai: grátis ou Premium.
+         * A verificação não guarda isso — ela nasce do fluxo gratuito. Quem
+         * responde é a assinatura: se existe uma valendo para a conta que usa
+         * aquele e-mail ou telefone, é assinante, e o atendimento dele não é
+         * o gratuito de teste. Sem essa leitura, o painel trataria os dois
+         * como iguais na hora de priorizar.
+         */
+        function tipoDoContato(v) {
+            const soDigitos = s => String(s || '').replace(/\D/g, '');
+            const dono = (db.usuarios || []).find(u =>
+                (v.email && String(u.email || '').toLowerCase() === String(v.email).toLowerCase()) ||
+                (v.contato && soDigitos(u.telefone) === soDigitos(v.contato)));
+            return dono && assinaturaAtiva(db, dono.id) ? 'premium' : 'free';
+        }
+
+        const resumir = v => ({
+            verificacao_id: v.id,
+            inscricao: `${v.inscricao}/${v.uf}`,
+            nome: v.nome_declarado,
+            contato: v.contato,
+            email: v.email,
+            tipo: tipoDoContato(v)
+        });
+
+        // Etapa 1 — ainda não conferida: a bola está com você, no CNA.
+        const aguardandoVerificacao = (db.verificacoes_oab || [])
+            .filter(v => v.status === 'pendente')
+            .map(v => Object.assign(resumir(v), {
+                pedido_em: v.criado_em,
+                horas_desde: Math.floor((agora - new Date(v.criado_em).getTime()) / 3600000)
+            }))
+            .sort((a, b) => b.horas_desde - a.horas_desde);
+
+        // Etapa 2 — liberados que ainda não marcaram: a bola está com o cliente.
         const aguardandoMarcar = (db.verificacoes_oab || [])
             .filter(v => v.status === 'confere')
             .filter(v => !agendamentos.some(a => a.verificacao_id === v.id))
-            .map(v => ({
-                verificacao_id: v.id,
-                inscricao: `${v.inscricao}/${v.uf}`,
-                nome: v.nome_declarado,
-                contato: v.contato,
-                email: v.email,
+            .map(v => Object.assign(resumir(v), {
                 liberado_em: v.decidido_em,
                 horas_desde: Math.floor((agora - new Date(v.decidido_em || v.criado_em).getTime()) / 3600000)
             }))
@@ -2181,20 +2210,25 @@ const server = http.createServer((req, res) => {
         // passou da hora sem você dar baixa.
         const marcados = agendamentos
             .filter(a => a.status === 'marcado')
-            .map(a => ({
-                id: a.id,
-                chamado_id: a.chamado_id,
-                inscricao: a.oab,
-                nome: a.nome,
-                inicio: a.inicio,
-                fim: a.fim,
-                passou: new Date(a.inicio).getTime() < agora
-            }))
+            .map(a => {
+                const chamado = (db.chamados || []).find(c => c.id === a.chamado_id);
+                return {
+                    id: a.id,
+                    chamado_id: a.chamado_id,
+                    inscricao: a.oab,
+                    nome: a.nome,
+                    inicio: a.inicio,
+                    fim: a.fim,
+                    tipo: chamado ? chamado.tipo : 'free',
+                    passou: new Date(a.inicio).getTime() < agora
+                };
+            })
             .sort((a, b) => new Date(a.inicio) - new Date(b.inicio));
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
             success: true,
+            aguardando_verificacao: aguardandoVerificacao,
             aguardando_marcar: aguardandoMarcar,
             marcados,
             atrasados: marcados.filter(m => m.passou).length
