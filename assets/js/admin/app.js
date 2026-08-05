@@ -80,16 +80,12 @@
     }
 
     // ---------------- navegação ----------------
-    // As abas são a linha do tempo de UM atendimento: cada uma é uma etapa
-    // que ele atravessa, da verificação da OAB ao chamado fechado.
-    //
-    // Cadastros e agenda não é etapa — é a mesma pessoa em qualquer etapa,
-    // ou em nenhuma. Por isso não está aqui: é o botão "Cadastros e agenda"
-    // no topo, que abre por cima como painel de controle, sem entrar na
-    // esteira.
+    // A ordem conta a esteira: confere a OAB, tria, olha o cadastro e a
+    // agenda de quem passou, e só então o trabalho na fila de chamados.
     var ABAS = [
         { id: 'verificacao', rotulo: 'Verificação de OAB' },
         { id: 'triagem',     rotulo: 'Triagem' },
+        { id: 'cadastros',   rotulo: 'Cadastros e agenda' },
         { id: 'chamados',    rotulo: 'Chamados' },
         { id: 'indicadores', rotulo: 'Indicadores' },
         { id: 'sistema',     rotulo: 'Servidor e banco' }
@@ -117,78 +113,25 @@
     }
 
     /**
-     * O selo de cada aba, para a esteira ser visível de longe.
+     * O contador de cada aba, para a esteira ser visível de longe.
      *
-     * Cada aba conta APENAS o que está parado nela. Não existe número
-     * passando de uma para a outra: quando o item avança, ele some de um
-     * contador e aparece no outro, porque os dois foram recalculados do
-     * zero pelo servidor.
+     * É o mesmo número andando: sai da Verificação quando você confere, entra
+     * na Triagem, e de lá vai para Chamados quando o horário é marcado. Sem
+     * isso, o item some de uma aba e você precisa abrir a outra para saber
+     * que ele continua existindo.
      *
-     * Três estados, e só três:
-     *   sem selo — nada a fazer. Bolinha com "0" é ruído: ocupa o mesmo
-     *              espaço de um alerta e não pede nada.
-     *   âmbar   — tem pendência normal.
-     *   vermelho — tem coisa que já devia estar feita: item esperando há
-     *              mais de 24h, ou conflito de horário.
+     * Âmbar quando a vez é sua; cinza quando a bola está com o cliente.
      */
     function marcarAba(id, rotulo, n, urgente) {
         var botao = document.getElementById('btn-aba-' + id);
         if (!botao) return;
-
-        var classe = 'span.aba-selo' + (urgente ? '.urgente' : '');
         D.trocar(botao, [
             document.createTextNode(rotulo),
-            n > 0 ? el(classe, { texto: String(n), 'aria-hidden': 'true' }) : null
+            n > 0 ? el('span.aba-selo' + (urgente ? '' : '.calmo'), { texto: String(n) }) : null
         ]);
-
-        // O número pintado não chega ao leitor de tela — para ele, o botão
-        // diria "Triagem 3" sem dizer três do quê. O rótulo completo vai no
-        // aria-label.
-        botao.setAttribute('aria-label', n > 0
-            ? rotulo + ', ' + n + (n === 1 ? ' pendente' : ' pendentes') +
-              (urgente ? ', precisa de atenção' : '')
-            : rotulo + ', nada pendente');
     }
 
-    /**
-     * Todos os selos de uma vez, num pedido só.
-     *
-     * Roda no polling de 30 segundos E logo depois de qualquer ação minha —
-     * aprovar uma OAB, remarcar, fechar um chamado. Sem esse segundo
-     * disparo, o número certo levaria meio minuto para aparecer e a tela
-     * pareceria não ter registrado o clique.
-     */
-    var contadoresEmVoo = null;
-
-    function atualizarContadores() {
-        // Cada módulo pede a atualização depois de recarregar a sua lista, e
-        // no polling os três recarregam juntos. Sem esta trava seriam quatro
-        // pedidos idênticos a cada meio minuto para escrever os mesmos
-        // números. Quem chega enquanto um está no ar espera esse.
-        if (contadoresEmVoo) return contadoresEmVoo;
-
-        contadoresEmVoo = API.contadores().then(function (c) {
-            contadoresEmVoo = null;
-            if (!c || !c.success) return;
-            // A Verificação de OAB carrega os dois: quem ainda não foi
-            // conferido (a vez é sua) e quem já foi conferido mas não
-            // marcou hora ainda (a vez é do cliente, mas a lembrança de
-            // cobrar é sua). A Triagem só conta quem JÁ tem hora marcada —
-            // é a régua que decide o que mora em cada aba.
-            marcarAba('verificacao', 'Verificação de OAB', c.aguardando_oab + c.aguardando_hora,
-                      c.aguardando_oab_urgente || c.aguardando_hora_urgente);
-            marcarAba('triagem', 'Triagem', c.triagem, c.triagem_urgente);
-            marcarAba('chamados', 'Chamados', c.chamados_abertos, c.chamados_urgente);
-            marcarAba('sistema', 'Servidor e banco', c.saude_alertas, c.saude_alertas > 0);
-        }).catch(function () {
-            // Falha de rede não pode deixar a trava presa: o próximo ciclo
-            // precisa poder tentar de novo.
-            contadoresEmVoo = null;
-        });
-        return contadoresEmVoo;
-    }
-
-    global.AdminContadores = { atualizar: atualizarContadores };
+    global.AdminBadge = marcarAba;
 
     function marcarHora() {
         if (relogio) relogio.textContent = 'Atualizado às ' + new Date().toLocaleTimeString('pt-BR');
@@ -199,56 +142,31 @@
         return Promise.all([
             global.AdminFilaVerificacao.recarregar(),
             global.AdminTriagem.recarregar(),
-            global.AdminFilaChamados.recarregar(),
-            atualizarContadores()
+            global.AdminFilaChamados.recarregar()
         ]).then(marcarHora);
-    }
-
-    // ---------------- modal de cadastros e agenda ----------------
-    // Não faz parte da esteira, então não faz parte de mostrarAba/ABAS. É
-    // uma janela por cima: abre, você confere, fecha, e volta pra aba onde
-    // estava — nada na tela de trás muda de lugar.
-    function ligarModalCadastros() {
-        var modal = document.getElementById('modal-cadastros');
-        var abrir = document.getElementById('btn-cadastros');
-        var fechar = document.getElementById('btn-fechar-cadastros');
-        if (!modal || !abrir || !fechar) return;
-
-        function mostrar() {
-            modal.style.display = 'flex';
-            // Dados podem ter mudado desde o último boot: refaz na hora de
-            // abrir, e não fica reconsultando enquanto ninguém olha.
-            global.AdminCadastros.recarregar();
-        }
-        function esconder() { modal.style.display = 'none'; }
-
-        abrir.addEventListener('click', mostrar);
-        fechar.addEventListener('click', esconder);
-        modal.addEventListener('click', function (e) { if (e.target === modal) esconder(); });
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape' && modal.style.display !== 'none') esconder();
-        });
     }
 
     function abrirPainel() {
         telaLogin.style.display = 'none';
         telaPainel.style.display = 'block';
 
-        global.AdminFilaVerificacao.montar(document.getElementById('aba-verificacao'));
+        global.AdminFilaVerificacao.montar(
+            document.getElementById('aba-verificacao'),
+            function (n) { marcarAba('verificacao', 'Verificação de OAB', n, true); }
+        );
         global.AdminTriagem.montar(document.getElementById('aba-triagem'));
         global.AdminFilaChamados.montar(document.getElementById('aba-chamados'));
         global.AdminIndicadores.montar(document.getElementById('aba-indicadores'));
         global.AdminCadastros.montar({
             resumo: document.getElementById('resumo'),
-            pessoas: document.getElementById('modal-cadastros-pessoas'),
-            agenda: document.getElementById('modal-cadastros-agenda'),
+            pessoas: document.getElementById('aba-cadastros-pessoas'),
+            agenda: document.getElementById('aba-cadastros-agenda'),
             // o alvo é o div interno, não a seção: o bloco de ajuda embaixo
             // é conteúdo fixo e seria apagado a cada redesenho
             diagnostico: document.getElementById('aba-sistema-diag')
         });
 
         mostrarAba('verificacao');
-        atualizarContadores();
         marcarHora();
 
         clearInterval(tempoPolling);
@@ -263,8 +181,6 @@
         clearInterval(tempoPolling);
         telaPainel.style.display = 'none';
         telaLogin.style.display = 'flex';
-        var modal = document.getElementById('modal-cadastros');
-        if (modal) modal.style.display = 'none';
     }
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -274,7 +190,6 @@
 
         ligarLogin();
         ligarAbas();
-        ligarModalCadastros();
         API.aoExpirarSessao(voltarAoLogin);
 
         document.getElementById('btn-recarregar').onclick = function () {

@@ -227,12 +227,14 @@
             estado.total = d.total || 0;
             estado.semDonoHoras = d.sem_dono_horas || 8;
 
-            // O selo da aba não sai daqui. Antes saía, e só quando esta
-            // lista estava sem filtro — com "fechados" ou uma busca ativa o
-            // número teria outro significado, então ele simplesmente
-            // congelava. Quem conta agora é o servidor, sempre a mesma
-            // pergunta: quantos chamados estão abertos.
-            if (global.AdminContadores) global.AdminContadores.atualizar();
+            // só conta quando a lista é a dos abertos: com filtro de fechados
+            // o número deixaria de significar "o que falta fazer"
+            // Âmbar sempre que houver chamado aberto: a esteira inteira —
+            // verificação, triagem e chamados — fica acesa até o trabalho
+            // acabar. Só apaga quando não sobra nada para fazer.
+            if (global.AdminBadge && estado.status === 'abertos' && !estado.q) {
+                global.AdminBadge('chamados', 'Chamados', estado.total, estado.total > 0);
+            }
             desenhar();
         })
         .catch(function () {});

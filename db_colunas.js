@@ -46,23 +46,10 @@ const COLUNAS = {
     ],
     agendamentos: [
         'id', 'chamado_id', 'usuario_id', 'oab', 'nome',
-        'inicio', 'fim', 'status', 'verificacao_id', 'criado_em',
-        // triagem como central de horários: de onde veio, quem mexeu, e se
-        // o cliente já respondeu ao aviso
-        'remarcado_de', 'remarcado_por', 'motivo_remarcacao',
-        'confirmado_pelo_cliente', 'preferencia_turno', 'atualizado_em'
+        'inicio', 'fim', 'status', 'verificacao_id', 'criado_em'
     ],
     logins: [
         'id', 'usuario_id', 'metodo', 'ip', 'criado_em'
-    ],
-    agenda_config: [
-        'id', 'dia_semana', 'hora_inicio', 'hora_fim', 'capacidade', 'ativo'
-    ],
-    agenda_ajustes: [
-        'id', 'duracao_min', 'folga_min', 'antecedencia_min', 'janela_dias'
-    ],
-    agenda_bloqueios: [
-        'id', 'inicio', 'fim', 'motivo', 'criado_em'
     ]
 };
 

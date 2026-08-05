@@ -146,30 +146,6 @@
 }
 .admin-head h1 { font-family: 'Outfit', sans-serif; font-size: 1.8rem; font-weight: 600; }
 .admin-head .sub { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.2rem; }
-.admin-head-acoes { display: flex; align-items: center; gap: 0.6rem; }
-
-/* ================= MODAL DE ASSINANTES ================= */
-/* Fora da esteira de propósito: não é aba, é planilha de controle que abre
-   por cima e fecha sem mudar onde você estava. */
-.admin-modal {
-    position: fixed; inset: 0; z-index: 55;
-    display: flex; align-items: flex-start; justify-content: center;
-    padding: 4vh 1.5rem;
-    background: rgba(0, 0, 0, 0.65);
-    overflow-y: auto;
-}
-.admin-modal-caixa {
-    width: 100%; max-width: 64rem;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
-    padding: 1.5rem;
-}
-.admin-modal-topo {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 1rem; margin-bottom: 1.25rem;
-}
-.admin-modal-topo h2 { font-family: 'Outfit', sans-serif; font-size: 1.3rem; font-weight: 600; }
 
 /* ================= NÚMEROS DO TOPO ================= */
 .stats {
@@ -210,12 +186,13 @@
 .aba-selo {
     display: inline-block; min-width: 1.35rem;
     padding: 0.1rem 0.4rem; border-radius: 100px;
-    background: var(--accent-warn); color: #1a1200;
+    background: #ffb020; color: #1a1200;
     font-size: 0.7rem; font-weight: 700; text-align: center;
 }
-/* vermelho não é "tem coisa": é "tem coisa que já devia estar feita" —
-   esperando há mais de 24h, ou conflito de horário na triagem */
-.aba-selo.urgente { background: var(--accent-erro); color: #2a0000; }
+.aba-selo.calmo {
+    background: rgba(255, 255, 255, 0.09);
+    color: var(--text-secondary);
+}
 
 .bloco-topo {
     display: flex; align-items: flex-start; justify-content: space-between;
@@ -365,19 +342,6 @@ tr.abandonado td { background: rgba(255, 176, 32, 0.05); }
     overflow-wrap: anywhere;
 }
 
-/* Conferido, mas sem horário ainda: continuação do card de verificação, não
-   um cartão à parte — é o mesmo status "confere", só que aberto. */
-.verif-semhora {
-    width: 100%; margin-top: 0.75rem; padding-top: 0.75rem;
-    border-top: 1px dashed var(--border-color);
-}
-.verif-semhora.critico { border-top-color: rgba(255, 107, 94, 0.4); }
-.verif-semhora-topo {
-    display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.6rem;
-    font-size: 0.85rem; font-weight: 600;
-}
-
 /* ================= TRIAGEM ================= */
 .triagem-lista {
     display: grid;
@@ -488,291 +452,6 @@ tr.abandonado td { background: rgba(255, 176, 32, 0.05); }
     font-size: 0.8rem; color: var(--text-muted);
 }
 .agenda-aviso.erro { color: #ff6b5e; }
-
-/* ================= ALERTAS DA TRIAGEM ================= */
-/* No topo da aba fica só o que exige ação. Se não dá para fazer nada a
-   respeito, não é alerta — é informação, e informação mora no cartão. */
-.triagem-alertas {
-    display: flex; flex-direction: column; gap: 0.4rem;
-    margin-bottom: 1.5rem;
-}
-.triagem-alerta {
-    display: block; width: 100%; text-align: left;
-    padding: 0.7rem 0.95rem;
-    border: 1px solid var(--border-color);
-    border-left: 3px solid var(--accent-warn);
-    border-radius: 10px;
-    background: rgba(255, 176, 32, 0.06);
-    color: var(--text-primary);
-    font-family: inherit; font-size: 0.84rem; font-weight: 500;
-    cursor: pointer;
-}
-.triagem-alerta:hover { border-color: var(--accent-warn); }
-/* passou da hora e sobreposição são falhas consumadas; as outras duas
-   ainda dá tempo de resolver */
-.triagem-alerta.passou,
-.triagem-alerta.sobreposicao {
-    border-left-color: var(--accent-erro);
-    background: rgba(255, 107, 94, 0.07);
-}
-
-/* o cartão para onde o alerta levou, por um instante */
-.triagem-card.destacado {
-    border-color: var(--accent-mac);
-    box-shadow: 0 0 0 3px rgba(110, 231, 200, 0.15);
-}
-.triagem-falta {
-    display: inline-block; margin-left: 0.5rem;
-    color: var(--text-muted); font-size: 0.75rem;
-}
-
-/* ================= GRADE DA SEMANA ================= */
-.grade-barra {
-    display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.75rem;
-}
-.grade-nav, .grade-visao { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
-.acao.ativa { border-color: var(--accent-mac); color: var(--accent-mac); }
-
-.grade-legenda {
-    display: flex; flex-wrap: wrap; gap: 0.9rem;
-    margin-bottom: 0.75rem;
-    color: var(--text-muted); font-size: 0.74rem;
-}
-.grade-legenda-item { display: inline-flex; align-items: center; gap: 0.35rem; }
-.grade-amostra {
-    width: 0.85rem; height: 0.85rem; border-radius: 4px;
-    border: 1px solid var(--border-color); display: inline-block;
-    background: rgba(22, 22, 24, 0.35);
-}
-.grade-amostra.parcial {
-    border-color: rgba(79, 163, 255, 0.5); background: rgba(79, 163, 255, 0.12);
-}
-.grade-amostra.cheio {
-    border-color: rgba(110, 231, 200, 0.55); background: rgba(110, 231, 200, 0.18);
-}
-.grade-amostra.bloqueado {
-    border-style: dashed; border-color: var(--text-muted);
-    background: repeating-linear-gradient(
-        135deg, rgba(255, 255, 255, 0.14) 0 3px, transparent 3px 6px);
-}
-.grade-amostra.passou { opacity: 0.35; }
-
-.grade-area { display: flex; gap: 1rem; align-items: flex-start; }
-
-.grade {
-    display: grid;
-    gap: 3px;
-    flex: 1; min-width: 0;
-    overflow-x: auto;
-}
-.grade-cabeca {
-    display: flex; flex-direction: column; align-items: center;
-    padding: 0.4rem 0.2rem;
-    border-bottom: 1px solid var(--border-color);
-}
-.grade-cabeca.hoje { border-bottom-color: var(--accent-mac); }
-.grade-sem { font-size: 0.6rem; color: var(--text-muted); letter-spacing: 0.05em; }
-.grade-num { font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 700; }
-.grade-lateral {
-    display: flex; align-items: center; justify-content: flex-end;
-    padding-right: 0.5rem;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem; color: var(--text-muted);
-}
-
-.grade-celula {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 0.1rem;
-    min-height: 2.6rem; padding: 0.3rem 0.2rem;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background: rgba(22, 22, 24, 0.35);
-    color: var(--text-secondary);
-    font-family: inherit; cursor: pointer;
-}
-.grade-hora {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
-}
-/* Na grade a hora já está na lateral da linha; repeti-la dentro de cada
-   célula é ruído em 42 células. Na lista por dia não há lateral, e aí ela
-   é a única referência — por isso a regra é só para .grade. */
-.grade .grade-hora { display: none; }
-.grade-marca { font-size: 0.6rem; font-weight: 700; }
-
-/* Livre é discreto de propósito: o olho procura o que está tomado.
-   Cheio (consequência) e bloqueado (decisão sua) são visualmente
-   diferentes — hachura para o bloqueado, cor cheia para o lotado. */
-.grade-celula.livre:hover { border-color: var(--accent-mac); color: var(--accent-mac); }
-.grade-celula.parcial {
-    border-color: rgba(79, 163, 255, 0.5);
-    background: rgba(79, 163, 255, 0.12);
-    color: var(--accent-win);
-}
-.grade-celula.cheio {
-    border-color: rgba(110, 231, 200, 0.55);
-    background: rgba(110, 231, 200, 0.18);
-    color: var(--accent-mac);
-}
-.grade-celula.conflito {
-    border-color: var(--accent-erro);
-    background: rgba(255, 107, 94, 0.2);
-    color: var(--accent-erro);
-    font-weight: 700;
-}
-.grade-celula.bloqueado {
-    border-style: dashed;
-    border-color: var(--text-muted);
-    background: repeating-linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.04) 0 6px,
-        transparent 6px 12px
-    );
-    color: var(--text-muted);
-}
-.grade-celula.passou { opacity: 0.35; cursor: default; }
-.grade-celula.fora {
-    border: 1px dashed rgba(42, 42, 46, 0.6);
-    background: none; cursor: default;
-}
-.grade-celula.aberta { box-shadow: 0 0 0 2px var(--accent-mac); }
-
-/* Durante o arraste, o que não aceita apaga: você vê onde pode soltar
-   antes de soltar, e não pelo erro depois. */
-.grade-area.arrastando .grade-celula.invalido { opacity: 0.15; cursor: not-allowed; }
-.grade-area.arrastando .grade-celula.alvo { border-color: var(--accent-mac); }
-.grade-celula.sobre { background: rgba(110, 231, 200, 0.25); }
-
-/* ---- painel lateral do bloco ---- */
-.grade-lado {
-    flex: 0 0 17rem;
-    background: rgba(22, 22, 24, 0.5);
-    border: 1px solid var(--border-color);
-    border-radius: 14px;
-    padding: 1rem 1.1rem;
-}
-.grade-lado-topo {
-    display: flex; align-items: flex-start; justify-content: space-between;
-    gap: 0.5rem; margin-bottom: 0.6rem;
-}
-.grade-lado-hora {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem; color: var(--accent-win);
-}
-.grade-lado-nota { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.75rem; }
-.grade-lado-acoes { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.9rem; }
-.grade-fichas { display: flex; flex-direction: column; gap: 0.5rem; }
-.grade-ficha {
-    display: flex; flex-direction: column; gap: 0.2rem; align-items: flex-start;
-    padding: 0.6rem 0.7rem;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    cursor: grab;
-}
-.grade-ficha:active { cursor: grabbing; }
-.grade-ficha-oab {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem; font-weight: 700; color: var(--accent-mac);
-}
-
-/* ---- visão lista: o que vem pela frente ---- */
-.agenda-proximos { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; width: 100%; }
-.agenda-proximo {
-    display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 0.75rem;
-    padding: 0.8rem 1rem;
-    background: rgba(22, 22, 24, 0.35);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-}
-.agenda-proximo-quando { display: flex; flex-direction: column; }
-.agenda-falta { color: var(--accent-win); font-size: 0.74rem; }
-.agenda-proximo-quem { display: flex; flex-direction: column; }
-
-/* ---- lista por dia (tela estreita) ---- */
-.agenda-dias-lista { display: grid; gap: 1rem; width: 100%; }
-.agenda-dia-titulo {
-    font-family: 'Outfit', sans-serif; font-size: 0.9rem; font-weight: 600;
-    margin-bottom: 0.5rem;
-}
-.agenda-dia-slots {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr));
-    gap: 0.4rem;
-}
-
-/* ================= PRÉVIA DO AVISO AO CLIENTE ================= */
-/* Nada sai daqui sem passar por esta tela. Enviar é uma segunda decisão,
-   e não a consequência automática de remarcar. */
-.previa-fundo {
-    position: fixed; inset: 0; z-index: 60;
-    display: flex; align-items: center; justify-content: center;
-    padding: 1.5rem;
-    background: rgba(0, 0, 0, 0.65);
-}
-.previa {
-    width: 100%; max-width: 34rem;
-    max-height: 90vh; overflow-y: auto;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
-    padding: 1.5rem;
-}
-.previa h3 { font-family: 'Outfit', sans-serif; font-size: 1.05rem; font-weight: 600; }
-.previa-texto {
-    width: 100%; box-sizing: border-box; margin-top: 0.9rem;
-    padding: 0.8rem 0.9rem;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    color: var(--text-primary);
-    font-family: inherit; font-size: 0.86rem; line-height: 1.5;
-    resize: vertical;
-}
-.previa-texto:focus { outline: none; border-color: var(--accent-mac); }
-.previa-acoes { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
-
-/* ================= CONFIGURAÇÃO DA AGENDA ================= */
-.triagem-config {
-    margin-top: 2.5rem; padding-top: 1.5rem;
-    border-top: 1px solid var(--border-color);
-}
-.cfg-num {
-    width: 4.5rem; padding: 0.4rem 0.5rem;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    color: var(--text-primary);
-    font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;
-}
-.cfg-num:focus { outline: none; border-color: var(--accent-mac); }
-.cfg-dia { display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; }
-.cfg-gerais {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 0.75rem; margin: 1.25rem 0;
-}
-.cfg-campo { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
-.cfg-rotulo { color: var(--text-secondary); font-size: 0.82rem; }
-.cfg-bloqueios { list-style: none; margin: 0.5rem 0 1rem; padding: 0; display: grid; gap: 0.4rem; }
-.cfg-bloqueios li {
-    display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
-    padding: 0.5rem 0.8rem;
-    background: rgba(22, 22, 24, 0.35);
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    font-size: 0.82rem;
-}
-.cfg-bloqueio-novo { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
-.cfg-bloqueio-novo input {
-    padding: 0.5rem 0.7rem;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    color: var(--text-primary);
-    font-family: inherit; font-size: 0.82rem;
-}
-.cfg-bloqueio-novo input[type="text"] { flex: 1; min-width: 12rem; }
 
 /* ================= LINHA DO TEMPO ================= */
 .linha-tempo {
@@ -899,8 +578,6 @@ tr.abandonado td { background: rgba(255, 176, 32, 0.05); }
 /* ================= CELULAR: TABELA VIRA CARTÃO ================= */
 @media (max-width: 768px) {
     .admin-page { padding: 2rem 1rem 5rem; }
-    .admin-modal { padding: 0; }
-    .admin-modal-caixa { max-width: none; min-height: 100vh; border-radius: 0; }
 
     /* Sem isto seis colunas ficariam espremidas em 360px e nada se leria.
        Cada linha vira um bloco, e o rótulo da coluna aparece ao lado do
@@ -943,15 +620,6 @@ tr.abandonado td { background: rgba(255, 176, 32, 0.05); }
     .verif-dados { grid-template-columns: 1fr; gap: 0.15rem; }
     .verif-dados dt { margin-top: 0.5rem; }
     .desfazer { left: 1rem; right: 1rem; transform: none; justify-content: space-between; }
-
-    /* A grade semanal não existe aqui: sete colunas em 360px não se leem.
-       O JavaScript troca o desenho por uma lista por dia — esta regra só
-       cuida do painel lateral, que passa a ficar embaixo em vez de ao lado. */
-    .grade-area { flex-direction: column; }
-    .grade-lado { flex: 1 1 auto; width: 100%; }
-    .grade-celula { min-height: 3rem; }
-    .previa { padding: 1.1rem; }
-    .previa-acoes .acao { flex: 1 1 auto; text-align: center; }
 }
 
 @media (prefers-reduced-motion: reduce) {

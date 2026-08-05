@@ -1,37 +1,26 @@
 /* ==========================================================
-   admin/triagem.js — a central de horários
+   admin/triagem.js — o meio do caminho
    ==========================================================
-   Quem escolhe a hora é o CLIENTE, no site. Esta aba não existe para eu
-   marcar por ele: existe para eu CONFERIR o que ele marcou e, quando a vida
-   atrapalha, REMARCAR e avisar.
+   Depois que você confere a OAB, a pessoa não vira chamado na hora: ela
+   ainda precisa escolher o horário. Sem esta aba, quem é liberado sai da
+   fila de verificação e some do painel — você não saberia que existe
+   alguém autorizado que nunca voltou para marcar.
 
-   Por isso só entra aqui quem JÁ TEM hora marcada. Quem foi liberado na
-   verificação e ainda não escolheu horário nenhum não é caso de remarcação
-   — é continuação do mesmo status de "conferido", e por isso mora na aba
-   Verificação de OAB, junto com o resto da decisão sobre aquela inscrição.
+   São duas listas, e a diferença entre elas é de quem é a vez:
 
-   Daí o desenho das ações. Não há "Editar" abrindo formulário vazio para eu
-   procurar um horário — quem procura é o servidor, e o botão já nasce com a
-   resposta no rótulo: "Remarcar para qui 06/08 15h". Um clique só.
-
-   Três regras que valem para tudo aqui:
-
-     1. Botão que criaria conflito nasce desabilitado, dizendo por quê. Vale
-        mais impedir o erro do que explicá-lo depois.
-     2. Nada sai para o cliente sem eu ler antes. O aviso aparece montado e
-        editável; enviar é uma segunda decisão, não uma consequência.
-     3. Toda ação tem 10 segundos de desfazer. Nesse tempo nada foi enviado
-        nem gravado — desfazer não conserta, impede.
+     Aguardando marcar — a bola está com o cliente
+     Marcados          — a bola está com você
    ========================================================== */
 (function (global) {
     'use strict';
 
     var D = global.AdminDom;
     var el = D.el;
-    var API = global.AdminApi;
 
-    var estado = { marcados: [], alertas: [], conflitos: 0, atrasados: 0 };
-    var alvo, caixaAlertas, caixaMarcados, noAgenda, noConfig;
+    var COBRANCA_HORAS = 48;   // liberado e sem marcar: hora de lembrar
+    var VERIFICACAO_HORAS = 24;// pendente há mais de um dia: você está devendo
+    var estado = { pendentes: [], aguardando: [], marcados: [], atrasados: 0 };
+    var alvo;
 
     /** Grátis ou Premium — a etiqueta acompanha a pessoa por toda a esteira. */
     function selo(tipo) {
@@ -46,252 +35,88 @@
         return 'https://wa.me/' + so + '?text=' + encodeURIComponent(texto);
     }
 
-    // ==========================================================
-    // PRÉVIA DO AVISO — nada sai daqui sem passar por esta tela
-    // ==========================================================
-    /**
-     * abrirPrevia({ titulo, texto, item, canal, aoEnviar })
-     *
-     * aoEnviar(texto, avisar) roda depois da janela de desfazer. `avisar`
-     * false é o caso de quem já combinou por telefone e só está registrando:
-     * remarca e não manda nada.
-     */
-    function abrirPrevia(opcoes) {
-        var anterior = document.querySelector('.previa-fundo');
-        if (anterior) anterior.parentNode.removeChild(anterior);
+    function cartaoAguardando(item) {
+        var frio = item.horas_desde >= COBRANCA_HORAS;
+        var link = whatsapp(item.contato,
+            'Olá, ' + item.nome + '! Seu atendimento gratuito da AdvogaCert está liberado. ' +
+            'É só escolher o horário em https://www.agentej.us/index.html#planos');
 
-        var campo = el('textarea.previa-texto', {
-            rows: 7,
-            'aria-label': 'Texto do aviso ao cliente'
-        });
-        campo.value = opcoes.texto;
-
-        var fundo = el('div.previa-fundo', { role: 'dialog', 'aria-modal': 'true' });
-
-        function fechar() {
-            document.removeEventListener('keydown', aoTeclar);
-            if (fundo.parentNode) fundo.parentNode.removeChild(fundo);
-        }
-        function aoTeclar(e) { if (e.key === 'Escape') fechar(); }
-
-        function disparar(avisar) {
-            var texto = campo.value;
-            fechar();
-            global.AdminDesfazer.agendar({
-                texto: opcoes.resumo,
-                aoConfirmar: function () { return opcoes.aoEnviar(texto, avisar); }
-            });
-        }
-
-        var caixa = el('div.previa', {}, [
-            el('h3', { texto: opcoes.titulo }),
-            el('p.bloco-nota', { texto: opcoes.nota }),
-            campo,
-            el('div.previa-acoes', {}, [
+        return el('article.triagem-card' + (frio ? '.frio' : ''), {}, [
+            el('div.triagem-topo', {}, [
+                el('div', {}, [
+                    el('span.triagem-inscricao', { texto: item.inscricao }),
+                    el('div.fraco', { texto: item.nome || '—' })
+                ]),
+                el('div.triagem-lado', {}, [
+                    selo(item.tipo),
+                    el('span' + (frio ? '.critico' : '.fraco'), {
+                        texto: 'liberado há ' + D.fmtEspera(item.horas_desde)
+                    })
+                ])
+            ]),
+            el('div.triagem-acoes', {}, [
+                // é este botão que faz a esteira andar: marcada a hora, o
+                // item sai da triagem e vira chamado
                 el('button.acao.acao-ok', {
                     type: 'button',
-                    texto: opcoes.rotuloEnviar || 'Aplicar e avisar o cliente',
-                    aoClicar: function () { disparar(true); }
+                    texto: 'Marcar horário',
+                    aoClicar: function (e) { abrirAgenda(item, e.target); }
                 }),
+                link ? el('a.acao', {
+                    href: link, target: '_blank', rel: 'noopener noreferrer',
+                    texto: 'Lembrar pelo WhatsApp'
+                }) : null,
                 el('button.acao', {
                     type: 'button',
-                    texto: 'Aplicar sem avisar',
-                    title: 'Para quando você já combinou por telefone',
-                    aoClicar: function () { disparar(false); }
-                }),
-                el('button.acao.acao-nao', {
-                    type: 'button', texto: 'Cancelar', aoClicar: fechar
+                    texto: 'Ver linha do tempo',
+                    aoClicar: function (e) { abrirLinha(item.inscricao, e.target); }
                 })
             ])
         ]);
-
-        fundo.appendChild(caixa);
-        fundo.addEventListener('click', function (e) { if (e.target === fundo) fechar(); });
-        document.addEventListener('keydown', aoTeclar);
-        document.body.appendChild(fundo);
-        campo.focus();
-    }
-
-    /** O texto que o cliente recebe quando o horário muda. */
-    function textoRemarcacao(item, rotulo) {
-        return 'Olá, ' + (item.nome || '') + '.\n\n' +
-               'Precisamos ajustar o horário do seu atendimento da AdvogaCert. ' +
-               'O novo horário é ' + rotulo + '.\n\n' +
-               'Se não puder, é só responder que a gente remarca.';
-    }
-
-    // ==========================================================
-    // AÇÕES
-    // ==========================================================
-    /**
-     * Toda mudança de horário passa por aqui: prévia, desfazer, gravação e
-     * o tratamento do conflito de versão. Um caminho só — os cinco botões
-     * mudam o destino, não o procedimento.
-     */
-    function remarcarPara(item, destino, opcoes) {
-        opcoes = opcoes || {};
-        abrirPrevia({
-            titulo: opcoes.titulo || 'Remarcar ' + item.inscricao,
-            nota: 'De ' + D.fmtData(item.inicio) + ' para ' + destino.rotulo +
-                  '. Leia o aviso antes de mandar — ele vai como está aqui.',
-            resumo: item.inscricao + ' → ' + destino.rotulo,
-            texto: textoRemarcacao(item, destino.rotulo),
-            aoEnviar: function (texto, avisar) {
-                return API.remarcar(item.id, destino.inicio, {
-                    atualizado_em: item.atualizado_em,
-                    motivo: opcoes.motivo,
-                    aviso: texto,
-                    avisar: avisar
-                }).then(function (r) {
-                    if (!r || !r.success) {
-                        // Conflito de versão não é erro de digitação: alguém
-                        // mexeu no registro. Recarregar é parte da resposta.
-                        alert((r && r.error) || 'Não foi possível remarcar.');
-                        return carregar();
-                    }
-                    return carregar();
-                });
-            }
-        });
-    }
-
-    function sugerirTres(item) {
-        API.sugerirHorarios(item.id, { apenas_calcular: true }).then(function (r) {
-            if (!r || !r.success) {
-                alert((r && r.error) || 'Não há horário livre para sugerir.');
-                return;
-            }
-            var lista = r.opcoes.map(function (o, i) { return (i + 1) + ') ' + o.rotulo; }).join('\n');
-            abrirPrevia({
-                titulo: 'Sugerir 3 horários a ' + item.inscricao,
-                nota: 'Ele escolhe, em vez de você impor. O atendimento volta ' +
-                      'para "esperando o cliente" até a resposta chegar.',
-                resumo: item.inscricao + ' → 3 opções',
-                rotuloEnviar: 'Enviar as 3 opções',
-                texto: 'Olá, ' + (item.nome || '') + '.\n\n' +
-                       'Precisamos remarcar seu atendimento da AdvogaCert. ' +
-                       'Estes horários estão livres:\n\n' + lista + '\n\n' +
-                       'Responda com o que preferir e a gente confirma.',
-                aoEnviar: function (texto) {
-                    return API.sugerirHorarios(item.id, {
-                        atualizado_em: item.atualizado_em,
-                        texto: texto
-                    }).then(function (res) {
-                        if (!res || !res.success) alert((res && res.error) || 'Não foi possível enviar.');
-                        return carregar();
-                    });
-                }
-            });
-        });
     }
 
     /**
-     * Confirmar é o que fecha a triagem: o atendimento sai daqui e entra na
-     * fila de chamados, com o prazo correndo. Pendência de assinatura se
-     * confere no painel de controle (botão "Cadastros e agenda" no topo).
-     */
-    function confirmar(item) {
-        global.AdminDesfazer.agendar({
-            texto: item.inscricao + ' → chamado',
-            aoConfirmar: function () {
-                return API.confirmar(item.id, false, item.atualizado_em).then(function (r) {
-                    if (r && !r.success) alert(r.error || 'Não foi possível confirmar.');
-                    carregar();
-                    if (global.AdminFilaChamados) global.AdminFilaChamados.recarregar();
-                });
-            }
-        });
-    }
-
-    // ==========================================================
-    // CARTÕES
-    // ==========================================================
-    /** Um botão de remarcar, já sabendo se cabe. */
-    function botaoDestino(item, destino, rotulo, opcoes) {
-        if (!destino || (destino.ok === false && !destino.inicio)) {
-            return el('button.acao', {
-                type: 'button', texto: rotulo, disabled: true,
-                title: (destino && destino.motivo) || 'Sem horário livre'
-            });
-        }
-        return el('button.acao' + (opcoes && opcoes.principal ? '.acao-ok' : ''), {
-            type: 'button',
-            texto: rotulo,
-            disabled: destino.ok ? null : true,
-            title: destino.ok ? 'Vai para ' + destino.rotulo : destino.motivo,
-            aoClicar: function () { remarcarPara(item, destino, opcoes); }
-        });
-    }
-
-    /**
-     * Hora marcada, esperando sua conferência.
+     * Etapa 3: hora marcada, esperando sua decisão.
      *
-     * Os rótulos dos botões vêm do servidor com a data dentro, e o que não
-     * cabe já chega desabilitado com o motivo. É o cartão inteiro que
-     * responde "o que dá para fazer com isto agora".
+     * É aqui que a triagem deixa de ser lista e vira sala de decisão. Você
+     * confere se o horário ainda serve, remarca se houver força maior, e só
+     * então passa para chamado — que é quando o prazo começa a correr.
      */
     function cartaoMarcado(item) {
-        var acoes = item.acoes || {};
         var atrasado = item.passou;
-        var apertado = !atrasado && item.horas_ate < 2 && !item.confirmado_pelo_cliente;
-
         var link = whatsapp(item.contato,
             'Olá, ' + item.nome + '! Confirmando seu atendimento da AdvogaCert em ' +
-            D.fmtData(item.inicio) + '.');
+            new Date(item.inicio).toLocaleString('pt-BR', {
+                day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+            }) + '.');
 
-        var proximo = acoes.proximo_livre || {};
-
-        return el('article.triagem-card.marcado' +
-                  (atrasado ? '.critico' : apertado ? '.frio' : ''), {
-            id: 'triagem-item-' + item.id
-        }, [
+        return el('article.triagem-card.marcado' + (atrasado ? '.critico' : ''), {}, [
             el('div.triagem-topo', {}, [
                 el('div', {}, [
                     el('span.triagem-quando' + (atrasado ? '.critico' : ''), {
                         texto: D.fmtData(item.inicio)
                     }),
-                    el('span.triagem-falta', {
-                        texto: global.AdminAgenda
-                            ? global.AdminAgenda.quantoFalta(item.inicio) : ''
-                    }),
                     el('div.triagem-inscricao', { texto: item.inscricao }),
-                    el('div.fraco', { texto: item.nome || '—' }),
-                    item.remarcado_de
-                        ? el('div.fraco', { texto: 'remarcado de ' + D.fmtData(item.remarcado_de) })
-                        : null
+                    el('div.fraco', { texto: item.nome || '—' })
                 ]),
                 el('div.triagem-lado', {}, [
                     selo(item.tipo),
-                    item.confirmado_pelo_cliente
-                        ? D.tag('Confirmado pelo cliente', 'ativa')
-                        : D.tag('Sem confirmação', 'atrasada'),
                     atrasado ? D.tag('Passou da hora', 'atrasada') : null
                 ])
             ]),
-
             el('div.triagem-acoes', {}, [
-                // A ação principal fecha a triagem; as de horário vêm depois,
-                // na ordem em que se pensa nelas.
+                // O botão que fecha a triagem. Ele NÃO abre chamado: manda o
+                // atendimento para "Cadastros e agenda", que é a etapa
+                // seguinte. O chamado nasce lá, depois da conferência.
                 el('button.acao.acao-promover', {
                     type: 'button',
-                    texto: 'Confirmar e liberar chamado',
+                    texto: 'Confirmar e enviar para agenda',
                     aoClicar: function () { confirmar(item); }
                 }),
-                botaoDestino(item, proximo,
-                    proximo.ok ? 'Remarcar para ' + proximo.rotulo : 'Sem horário livre',
-                    { principal: true, motivo: 'próximo livre' }),
                 el('button.acao', {
                     type: 'button',
-                    texto: 'Sugerir 3 horários',
-                    title: 'Manda três opções e deixa o cliente escolher',
-                    aoClicar: function () { sugerirTres(item); }
-                }),
-                botaoDestino(item, acoes.empurrar_1h, 'Empurrar 1 hora', { motivo: 'empurrado 1h' }),
-                botaoDestino(item, acoes.empurrar_1d, 'Empurrar 1 dia', { motivo: 'empurrado 1 dia' }),
-                el('button.acao', {
-                    type: 'button',
-                    texto: 'Outro horário',
-                    aoClicar: function (e) { abrirAgenda(item, e.target); }
+                    texto: 'Remarcar',
+                    aoClicar: function (e) { abrirAgenda(item, e.target, true); }
                 }),
                 link ? el('a.acao', {
                     href: link, target: '_blank', rel: 'noopener noreferrer',
@@ -302,53 +127,46 @@
                     texto: 'Linha do tempo',
                     aoClicar: function (e) { abrirLinha(item.inscricao, e.target); }
                 })
-            ]),
-
-            proximo.ok && proximo.turno_preferido === false && item.preferencia_turno
-                ? el('div.fraco', {
-                    texto: 'Sem vaga no turno da ' + item.preferencia_turno +
-                           ', que é o que ele prefere — o horário acima é de outro turno.'
-                })
-                : null
+            ])
         ]);
     }
 
-    // ==========================================================
-    // ALERTAS — só o que exige ação
-    // ==========================================================
-    function blocoAlertas() {
-        if (!estado.alertas.length) return null;
+    /**
+     * Fecha a triagem: o atendimento sai daqui e passa para Cadastros e
+     * agenda. O chamado ainda não existe — nasce lá, no botão "Abrir
+     * chamado", depois que você confere o cadastro.
+     */
+    function confirmar(item) {
+        if (!confirm('Confirmar ' + item.inscricao + ' e enviar para Cadastros e agenda?\n\n' +
+                     'Ele sai da triagem. O chamado é aberto lá, na próxima aba.')) return;
 
-        return el('div.triagem-alertas', { role: 'region', 'aria-label': 'Alertas da agenda' },
-            estado.alertas.map(function (a) {
-                return el('button.triagem-alerta.' + a.tipo, {
-                    type: 'button',
-                    texto: a.texto,
-                    'aria-label': a.texto + ' — ir para o atendimento',
-                    aoClicar: function () {
-                        var no = document.getElementById('triagem-item-' + a.agendamento_id);
-                        if (!no) return;
-                        no.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        no.classList.add('destacado');
-                        setTimeout(function () { no.classList.remove('destacado'); }, 2000);
-                    }
-                });
-            }));
+        global.AdminDesfazer.agendar({
+            texto: item.inscricao + ' → agenda',
+            aoConfirmar: function () {
+                return global.AdminApi.confirmar(item.id)
+                    .then(function () {
+                        carregar();
+                        if (global.AdminCadastros) global.AdminCadastros.recarregar();
+                    });
+            }
+        });
     }
 
-    // ==========================================================
-    // ESCOLHA MANUAL DE HORÁRIO (para remarcar; marcar pela 1ª vez é
-    // decisão do cliente, ou fica na aba Verificação de OAB enquanto ele
-    // não decide)
-    // ==========================================================
-    function abrirAgenda(item, botao) {
+    /**
+     * Escolha do horário pelo painel.
+     *
+     * A lista vem da mesma rota que a tela pública usa — uma fonte só sobre o
+     * que está livre. E o servidor confere de novo ao gravar: você e um
+     * cliente podem estar clicando no mesmo horário no mesmo instante.
+     */
+    function abrirAgenda(item, botao, remarcando) {
         var caixa = botao.parentNode.querySelector('.agenda-inline');
         if (caixa) { caixa.parentNode.removeChild(caixa); return; }
 
         caixa = el('div.agenda-inline', {}, el('div.fraco', { texto: 'Carregando horários...' }));
         botao.parentNode.appendChild(caixa);
 
-        API.horariosLivres().then(function (d) {
+        global.AdminApi.horariosLivres().then(function (d) {
             var dias = (d && d.dias) || [];
             if (!dias.length) {
                 D.trocar(caixa, el('div.fraco', { texto: 'Sem horário livre nos próximos dias.' }));
@@ -356,6 +174,7 @@
             }
 
             var diaAtual = dias[0];
+            var aviso = el('div.agenda-aviso');
 
             function pintar() {
                 D.trocar(caixa, [
@@ -373,17 +192,36 @@
                         return el('button.agenda-hora', {
                             type: 'button',
                             texto: h.rotulo,
-                            aoClicar: function () { escolher(h); }
+                            aoClicar: function () { confirmar(h); }
                         });
-                    }))
+                    })),
+                    aviso
                 ]);
             }
 
-            function escolher(h) {
-                var rotulo = diaAtual.rotulo + ' às ' + h.rotulo;
-                caixa.parentNode.removeChild(caixa);
-                remarcarPara(item, { inicio: h.inicio, rotulo: rotulo, ok: true },
-                             { motivo: 'escolhido no painel' });
+            function confirmar(h) {
+                var verbo = remarcando ? 'Remarcar' : 'Marcar';
+                if (!confirm(verbo + ' ' + item.inscricao + ' para ' +
+                             diaAtual.rotulo + ' às ' + h.rotulo + '?' +
+                             (remarcando ? '\n\nO cliente será avisado do novo horário.' : ''))) return;
+
+                aviso.textContent = remarcando ? 'Remarcando...' : 'Marcando...';
+                var chamada = remarcando
+                    ? global.AdminApi.remarcar(item.id, h.inicio)
+                    : global.AdminApi.agendar(item.verificacao_id, h.inicio);
+
+                chamada.then(function (r) {
+                    if (!r || !r.success) {
+                        aviso.textContent = (r && r.error) || 'Não foi possível marcar.';
+                        aviso.className = 'agenda-aviso erro';
+                        return;
+                    }
+                    carregar();                       // o item muda de etapa
+                    if (global.AdminFilaChamados) global.AdminFilaChamados.recarregar();
+                }).catch(function () {
+                    aviso.textContent = 'Erro de conexão.';
+                    aviso.className = 'agenda-aviso erro';
+                });
             }
 
             pintar();
@@ -404,7 +242,7 @@
         var caixa = el('div.linha-tempo', {}, el('div.fraco', { texto: 'Carregando...' }));
         botao.parentNode.appendChild(caixa);
 
-        API.linhaTempo(inscricao).then(function (d) {
+        global.AdminApi.linhaTempo(inscricao).then(function (d) {
             if (!d || !d.success) return;
             if (!d.eventos.length) {
                 D.trocar(caixa, el('div.fraco', { texto: 'Sem histórico.' }));
@@ -420,86 +258,57 @@
         }).catch(function () {});
     }
 
-    // ==========================================================
-    // DESENHO
-    // ==========================================================
-    /**
-     * A moldura é montada UMA vez. Só as listas são redesenhadas a cada
-     * carga — se a aba inteira fosse refeita, a grade da semana perderia a
-     * semana em que você estava e o painel lateral fecharia sozinho a cada
-     * 30 segundos do polling.
-     */
-    function montarMoldura() {
-        caixaAlertas = el('div');
-        caixaMarcados = el('div');
-        noAgenda = el('div');
-        noConfig = el('div.triagem-config');
-
-        D.trocar(alvo, [
+    function desenhar() {
+        var blocos = [
             el('div.bloco-topo', {}, el('div', {}, [
                 el('h2', { texto: 'Triagem' }),
                 el('p.bloco-nota', {
-                    texto: 'Remarcação de quem já tem hora marcada. Quem ainda não ' +
-                           'escolheu horário está na aba Verificação de OAB.'
+                    texto: 'Tempo real. Aqui se resolve o horário — a conferência da OAB é na aba anterior.'
                 })
             ])),
-            caixaAlertas,
-            noAgenda,
-            caixaMarcados,
-            noConfig
-        ]);
 
-        global.AdminAgenda.montar(noAgenda, {
-            // arrastar o cartão para outro bloco cai aqui, no mesmo caminho
-            // do botão: prévia do aviso, desfazer, gravação
-            aoSoltar: function (carga, slot) {
-                var item = estado.marcados.filter(function (m) {
-                    return m.id === carga.agendamento_id;
-                })[0];
-                if (!item) { carregar(); return; }
-                remarcarPara(item, {
-                    inicio: slot.inicio,
-                    rotulo: D.fmtData(slot.inicio),
-                    ok: true
-                }, { motivo: 'arrastado na grade' });
-            },
-            aoMudarAgenda: function () { carregar(); }
-        });
-        global.AdminAgenda.montarConfig(noConfig);
-    }
-
-    function desenhar() {
-        if (!alvo || !caixaMarcados) return;
-
-        D.trocar(caixaAlertas, blocoAlertas());
-
-        D.trocar(caixaMarcados, [
             el('h3.ind-sub', {
-                texto: 'Horário marcado — confira e confirme (' + estado.marcados.length +
+                texto: '1. Sem horário marcado (' + estado.aguardando.length + ')'
+            }),
+            estado.aguardando.length
+                ? el('div.triagem-lista', {}, estado.aguardando.map(cartaoAguardando))
+                : el('div.vazio', { texto: 'Ninguém liberado esperando para marcar.' }),
+
+            el('h3.ind-sub', {
+                texto: '2. Horário marcado — revise e confirme (' + estado.marcados.length +
                        (estado.atrasados ? ' · ' + estado.atrasados + ' passaram da hora' : '') + ')'
             }),
             estado.marcados.length
                 ? el('div.triagem-lista', {}, estado.marcados.map(cartaoMarcado))
                 : el('div.vazio', { texto: 'Nada esperando confirmação.' })
-        ]);
+        ];
+
+        D.trocar(alvo, blocos);
     }
 
     function carregar() {
-        return API.triagem().then(function (d) {
+        return global.AdminApi.triagem().then(function (d) {
             if (!d || !d.success) return;
+            estado.pendentes = d.aguardando_verificacao || [];
+            estado.aguardando = d.aguardando_marcar || [];
             estado.marcados = d.marcados || [];
-            estado.alertas = d.alertas || [];
-            estado.conflitos = d.conflitos || 0;
             estado.atrasados = d.atrasados || 0;
+
+            // o contador da aba conta a esteira inteira, e fica âmbar quando
+            // há algo esperando você — verificar ou dar baixa
+            // A bola da triagem fica âmbar enquanto houver qualquer coisa
+            // dentro dela — inclusive marcado esperando ser priorizado. Ela só
+            // apaga quando tudo passou para chamado, que é o fim da triagem.
+            if (global.AdminBadge) {
+                var total = estado.aguardando.length + estado.marcados.length;
+                global.AdminBadge('triagem', 'Triagem', total, total > 0);
+            }
             desenhar();
-            if (global.AdminAgenda) global.AdminAgenda.recarregar(true);
-            // o selo da aba é recalculado no servidor, não somado aqui
-            if (global.AdminContadores) global.AdminContadores.atualizar();
         }).catch(function () {});
     }
 
     global.AdminTriagem = {
-        montar: function (no) { alvo = no; montarMoldura(); return carregar(); },
+        montar: function (no) { alvo = no; desenhar(); return carregar(); },
         recarregar: carregar,
         abrirLinha: abrirLinha
     };

@@ -74,63 +74,6 @@
             return pedir('/admin/triagem');
         },
 
-        /**
-         * Todos os selos das abas num pedido só.
-         * Antes cada módulo mandava o seu depois de carregar a lista inteira:
-         * três respostas grandes para mostrar três números, e a aba que você
-         * nunca abria ficava sem contador nenhum.
-         */
-        contadores: function () {
-            return pedir('/admin/contadores');
-        },
-
-        // ---- agenda ----
-        // O navegador não calcula agenda: pede a ocupação já classificada
-        // (livre, cheio, bloqueado) e desenha.
-        ocupacao: function (de, ate) {
-            return pedir('/admin/agenda/ocupacao' + query({ de: de, ate: ate }));
-        },
-
-        agendaConfig: function () {
-            return pedir('/admin/agenda/config');
-        },
-
-        salvarAgendaConfig: function (config) {
-            return pedir('/admin/agenda/config', { metodo: 'POST', corpo: config });
-        },
-
-        bloquear: function (inicio, fim, motivo) {
-            return pedir('/admin/agenda/bloqueio', {
-                metodo: 'POST',
-                corpo: { acao: 'criar', inicio: inicio, fim: fim, motivo: motivo }
-            });
-        },
-
-        desbloquear: function (id) {
-            return pedir('/admin/agenda/bloqueio', {
-                metodo: 'POST',
-                corpo: { acao: 'remover', id: id }
-            });
-        },
-
-        /**
-         * Três opções ao cliente, em vez de impor uma.
-         * Com apenas_calcular, só devolve os horários — é o que monta a
-         * prévia do aviso antes de qualquer coisa sair.
-         */
-        sugerirHorarios: function (agendamento_id, opcoes) {
-            opcoes = opcoes || {};
-            return pedir('/admin/sugerir-horarios', {
-                metodo: 'POST',
-                corpo: {
-                    agendamento_id: agendamento_id,
-                    atualizado_em: opcoes.atualizado_em,
-                    texto: opcoes.texto,
-                    apenas_calcular: opcoes.apenas_calcular === true
-                }
-            });
-        },
-
         horariosLivres: function () {
             // mesma rota que a tela pública usa: uma fonte só de verdade
             // sobre o que está livre
@@ -144,35 +87,24 @@
             });
         },
 
-        /**
-         * opcoes.atualizado_em é o carimbo que a tela leu. Se o registro
-         * mudou desde então — o cliente remarcou pelo site, outra aba
-         * confirmou — o servidor recusa em vez de sobrescrever.
-         * opcoes.avisar false remarca sem mandar nada ao cliente.
-         */
-        remarcar: function (agendamento_id, inicio, opcoes) {
-            opcoes = opcoes || {};
+        remarcar: function (agendamento_id, inicio) {
             return pedir('/admin/remarcar', {
                 metodo: 'POST',
-                corpo: {
-                    agendamento_id: agendamento_id,
-                    inicio: inicio,
-                    atualizado_em: opcoes.atualizado_em,
-                    motivo: opcoes.motivo,
-                    aviso: opcoes.aviso,
-                    avisar: opcoes.avisar !== false
-                }
+                corpo: { agendamento_id: agendamento_id, inicio: inicio }
             });
         },
 
-        confirmar: function (agendamento_id, voltar, atualizado_em) {
+        confirmar: function (agendamento_id, voltar) {
             return pedir('/admin/confirmar', {
                 metodo: 'POST',
-                corpo: {
-                    agendamento_id: agendamento_id,
-                    voltar: voltar === true,
-                    atualizado_em: atualizado_em
-                }
+                corpo: { agendamento_id: agendamento_id, voltar: voltar === true }
+            });
+        },
+
+        promover: function (agendamento_id, prioridade) {
+            return pedir('/admin/promover', {
+                metodo: 'POST',
+                corpo: { agendamento_id: agendamento_id, prioridade: prioridade }
             });
         },
 

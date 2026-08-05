@@ -1,13 +1,9 @@
 /* ==========================================================
-   admin/cadastros.js — cadastros, agenda e estado do sistema
+   admin/cadastros.js — pessoas, agenda e estado do sistema
    ==========================================================
-   Painel de controle: todo cadastro, com plano, chamado grátis e a agenda
-   marcada. Não é etapa de atendimento — por isso não vive na barra de
-   abas, e sim atrás do botão "Cadastros e agenda" no topo, aberto por cima
-   como uma janela que você fecha quando termina de olhar.
-
-   Nome, e-mail, OAB e telefone vêm do cadastro do próprio usuário — por
-   isso tudo entra por textContent, nunca por innerHTML.
+   O que já existia no painel antigo, reconstruído sem innerHTML: nome,
+   e-mail, OAB e telefone vêm do cadastro do próprio usuário e, montados por
+   template string, permitiam injetar HTML dentro do painel logado.
    ========================================================== */
 (function (global) {
     'use strict';
@@ -154,10 +150,6 @@
     }
 
     // ---------------- agenda ----------------
-    // Só leitura: quem confirma e abre o chamado é a Triagem, na hora. O que
-    // aparece aqui como "aguarda triagem" é o de sempre; "confirmado" sem
-    // chamado é sobra de registro anterior a essa mudança — raro, mas se
-    // aparecer, resolve-se voltando pela Triagem, não por aqui.
     function desenharAgenda() {
         if (!alvoAgenda || !estado.dados) return;
         var lista = estado.dados.agendamentos || [];
@@ -169,12 +161,22 @@
                      : a.status === 'cancelado' ? ['Cancelado', 'sem']
                      : ['Na triagem', 'sem'];
 
+            // O último passo da esteira: confirmado na agenda, vira trabalho.
+            // Só aparece no que foi confirmado e ainda não virou chamado.
+            var acao = (a.confirmado && !a.virou_chamado)
+                ? el('button.acao.acao-promover', {
+                    type: 'button', texto: 'Abrir chamado',
+                    aoClicar: function () { abrirChamado(a); }
+                  })
+                : (a.confirmado || a.virou_chamado ? null : el('span.fraco', { texto: 'aguarda triagem' }));
+
             return el('tr', {}, [
                 el('td', { 'data-rotulo': 'Quando' },
                     el('span.mono' + (passou ? '.critico' : ''), { texto: D.fmtData(a.inicio) })),
                 el('td', { 'data-rotulo': 'Quem', texto: a.nome || '—' }),
                 el('td', { 'data-rotulo': 'OAB' }, el('span.mono', { texto: a.oab || '—' })),
-                el('td', { 'data-rotulo': 'Status' }, D.tag(mapa[0], mapa[1]))
+                el('td', { 'data-rotulo': 'Status' }, D.tag(mapa[0], mapa[1])),
+                el('td', { 'data-rotulo': '' }, acao || document.createTextNode(''))
             ]);
         });
 
@@ -185,7 +187,7 @@
             ])),
             el('div.tabela-wrap.responsiva', {}, [
                 el('table', {}, [
-                    el('thead', {}, el('tr', {}, ['Quando', 'Quem', 'OAB', 'Status'].map(function (t) {
+                    el('thead', {}, el('tr', {}, ['Quando', 'Quem', 'OAB', 'Status', ''].map(function (t) {
                         return el('th', { texto: t });
                     }))),
                     el('tbody', {}, linhas)
@@ -227,6 +229,22 @@
                 ]);
             }))
         ]);
+    }
+
+    /** Último passo: o atendimento confirmado vira trabalho na fila. */
+    function abrirChamado(a) {
+        if (!confirm('Abrir chamado para ' + (a.oab || a.nome) + '?\n\n' +
+                     'A partir daqui o prazo de atendimento começa a correr.')) return;
+
+        global.AdminDesfazer.agendar({
+            texto: (a.oab || a.nome) + ' → chamado',
+            aoConfirmar: function () {
+                return global.AdminApi.promover(a.id).then(function () {
+                    carregar();
+                    if (global.AdminFilaChamados) global.AdminFilaChamados.recarregar();
+                });
+            }
+        });
     }
 
     function carregar() {
