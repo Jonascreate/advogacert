@@ -568,13 +568,16 @@ function lerCookie(req, nome) {
     return '';
 }
 
-// No ambiente local isolado (BANCO_LOCAL=1), o painel abre direto: ele usa
-// apenas usuarios.json e não expõe os dados reais do Supabase. A produção
-// continua exigindo senha e 2FA. ADMIN_SEM_SENHA permanece como opção
-// explícita para testes antigos, mas nunca deve ser definida no Render.
-const ADMIN_SEM_SENHA_LOCAL = process.env.BANCO_LOCAL === '1' || process.env.ADMIN_SEM_SENHA === '1';
+// Abrir o painel sem senha é decisão à parte de usar o banco local. Antes as
+// duas andavam juntas (BANCO_LOCAL=1 fazia as duas coisas), e isso impedia
+// testar a tela de entrada — senha e autenticador — com dados de teste. Pior:
+// bastava alguém definir BANCO_LOCAL no Render para o painel de produção
+// abrir sem senha para qualquer um.
+//
+// Agora só ADMIN_SEM_SENHA=1 abre a porta, e ela nunca deve existir no Render.
+const ADMIN_SEM_SENHA_LOCAL = process.env.ADMIN_SEM_SENHA === '1';
 if (ADMIN_SEM_SENHA_LOCAL) {
-    console.warn('⚠️  Painel SEM senha em ambiente local. Nunca habilite esse modo em produção.');
+    console.warn('⚠️  Painel SEM senha (ADMIN_SEM_SENHA=1). Nunca habilite isso em produção.');
 }
 
 function sessaoAdmin(req) {
