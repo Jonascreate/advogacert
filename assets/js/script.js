@@ -1149,15 +1149,44 @@ document.addEventListener('DOMContentLoaded', function() {
                 : 'pay-bandeira';
         }
 
+        /**
+         * Leva ao Mercado Pago.
+         *
+         * O site NÃO recebe dados de cartão. O formulário que existia aqui era
+         * um placeholder: validava o formato, esperava 1,6s e anunciava
+         * "pagamento confirmado" sem falar com servidor nenhum — ninguém era
+         * cobrado e nada chegava ao painel. Além de não cobrar, receber cartão
+         * no próprio site traria obrigações de PCI que não se quer ter.
+         *
+         * Agora o servidor diz qual link usar (um por plano, porque o valor
+         * mora dentro do link), e quem confirma o pagamento é o webhook.
+         */
         function abrirCheckout(plano, valor) {
+            var ehPlus = /plus/i.test(plano || '');
             modal.querySelector('#checkout-plano').textContent = plano;
             modal.querySelector('#checkout-valor').innerHTML =
                 'R$ ' + Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) +
-                ' <small>/ mês</small>';
-            msg.textContent = '';
+                ' <small>/ ' + (ehPlus ? 'mês' : 'dia') + '</small>';
+            msg.style.color = '#8a8a90';
+            msg.textContent = 'Levando você ao Mercado Pago…';
             overlay.classList.add('aberto');
             document.body.style.overflow = 'hidden';   // trava o fundo enquanto o modal está aberto
-            setTimeout(() => modal.querySelector('#checkout-nome').focus(), 60);
+
+            fetch(window.apiUrl('/pagamento/link?plano=' + (ehPlus ? 'plus' : 'premium')))
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    if (d && d.success && d.url) {
+                        window.location.href = d.url;
+                        return;
+                    }
+                    msg.style.color = '#ffb020';
+                    msg.textContent = (d && d.error) ||
+                        'Não foi possível abrir o pagamento agora.';
+                })
+                .catch(function () {
+                    msg.style.color = '#ff6b5e';
+                    msg.textContent = 'Sem conexão com o servidor. Tente de novo.';
+                });
         }
 
         function fecharCheckout() {
@@ -1173,51 +1202,15 @@ document.addEventListener('DOMContentLoaded', function() {
             if (e.key === 'Escape' && overlay.classList.contains('aberto')) fecharCheckout();
         });
 
-        function processarPagamento(dadosPlano) {
-            // Placeholder de processamento — trocar pela integração real
-            // com a API de pagamento (InfinityPay ou similar) quando disponível.
-            return new Promise(resolve => setTimeout(resolve, 1600));
+        // O formulário de cartão sai da tela: quem pede cartão é o Mercado
+        // Pago, na página dele. Sobra o resumo do plano e o aviso de que o
+        // cliente está sendo levado para lá. O <form> continua no HTML para
+        // não quebrar as referências de campo criadas acima.
+        var formCartao = modal.querySelector('#checkout-form');
+        if (formCartao) {
+            formCartao.style.display = 'none';
+            formCartao.addEventListener('submit', function (e) { e.preventDefault(); });
         }
-
-        modal.querySelector('#checkout-form').addEventListener('submit', function (e) {
-            e.preventDefault();
-
-            // conferências básicas antes de mostrar "processando"
-            const numero = campoNumero.value.replace(/\D/g, '');
-            const validade = campoValidade.value.replace(/\D/g, '');
-            const mes = parseInt(validade.slice(0, 2), 10);
-
-            const erro =
-                !modal.querySelector('#checkout-nome').value.trim() ? 'Informe o nome impresso no cartão.' :
-                numero.length < 13 ? 'Número do cartão incompleto.' :
-                validade.length < 4 || mes < 1 || mes > 12 ? 'Validade inválida.' :
-                campoCvv.value.length < 3 ? 'CVV incompleto.' : null;
-
-            if (erro) {
-                msg.style.color = '#ff6b5e';
-                msg.textContent = erro;
-                return;
-            }
-
-            btnEnviar.disabled = true;
-            btnTexto.textContent = 'Processando...';
-            btnEnviar.querySelector('i').outerHTML = '<span class="pay-girando"></span>';
-            msg.style.color = '#8a8a90';
-            msg.textContent = 'Confirmando pagamento com segurança...';
-
-            processarPagamento().then(() => {
-                msg.style.color = '#6ee7c8';
-                msg.textContent = '✓ Pagamento confirmado! Redirecionando...';
-                setTimeout(() => {
-                    fecharCheckout();
-                    // vai para a confirmação, que explica o passo a passo do
-                    // atendimento — antes caía na home sem dizer nada
-                    const usuario = getUsuarioLogado();
-                    const oab = usuario && usuario.oab ? '?oab=' + encodeURIComponent(usuario.oab) : '';
-                    window.location.href = 'agradecimento-premium.html' + oab;
-                }, 1500);
-            });
-        });
 
         botoesPlano.forEach(btn => {
             btn.addEventListener('click', () => {

@@ -663,6 +663,12 @@ tr.abandonado td { background: rgba(255, 176, 32, 0.05); }
 }
 .acao:hover { border-color: var(--accent-mac); color: var(--accent-mac); }
 .acao:disabled { opacity: 0.4; cursor: default; }
+/* Enquanto busca, o ícone gira: é o sinal de que o clique foi ouvido. */
+.acao.carregando i { animation: girando 0.9s linear infinite; }
+@keyframes girando { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+    .acao.carregando i { animation: none; }
+}
 .acao-ok:hover { border-color: var(--accent-mac); color: var(--accent-mac); }
 .acao-nao:hover { border-color: #ff6b5e; color: #ff6b5e; }
 .obs-input {

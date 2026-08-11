@@ -513,6 +513,11 @@ function loadPagamentoConfig() {
     return {
         mp: {
             link: process.env.MP_LINK || file.mercadopago?.link || '',
+            // Um link por plano: são preços diferentes, e o link do Mercado
+            // Pago carrega o valor dentro dele. Sem separar, os dois botões
+            // cobrariam o mesmo. Cai no link geral se só houver um.
+            linkMes: process.env.MP_LINK_MES || file.mercadopago?.link_mes || '',
+            linkDia: process.env.MP_LINK_DIA || file.mercadopago?.link_dia || '',
             accessToken: process.env.MP_ACCESS_TOKEN || file.mercadopago?.access_token || '',
             emailAviso: process.env.MP_EMAIL_AVISO || file.mercadopago?.email_aviso || ''
         },
@@ -1699,6 +1704,35 @@ const server = http.createServer((req, res) => {
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, dias }));
+        return;
+    }
+
+    // ============ PAGAMENTO: GET /pagamento/link ============
+    // Onde o cliente paga de verdade. O site não processa cartão — quem
+    // processa é o Mercado Pago, no domínio dele. Esta rota só diz para qual
+    // link mandar a pessoa, conforme o plano escolhido.
+    //
+    // Antes o checkout do site era uma encenação: validava o formato do
+    // cartão, esperava 1,6s e dizia "pagamento confirmado" sem falar com
+    // ninguém. Nada era cobrado e nada aparecia no painel.
+    if (method === 'GET' && url.split('?')[0] === '/pagamento/link') {
+        const q = new URL(url, `http://${req.headers.host}`).searchParams;
+        const plano = q.get('plano') === 'plus' ? 'plus' : 'premium';
+        const escolhido = plano === 'plus'
+            ? (MP.linkMes || MP.link)
+            : (MP.linkDia || MP.link);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(escolhido
+            ? { success: true, plano, url: escolhido, valor: PLANOS[plano].valor }
+            : {
+                success: false,
+                // Mensagem para o cliente, não para o desenvolvedor: ele não
+                // tem culpa de faltar configuração, e não pode ficar olhando
+                // um botão que não faz nada.
+                error: 'O pagamento online está sendo configurado. ' +
+                       'Fale com a gente pelo WhatsApp que liberamos seu atendimento.'
+            }));
         return;
     }
 

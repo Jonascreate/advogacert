@@ -242,12 +242,34 @@
         ligarModalCadastros();
         API.aoExpirarSessao(voltarAoLogin);
 
+        // O botão recarregava tudo, mas em silêncio: sem travar, sem dizer que
+        // está buscando e sem avisar se falhou. Numa tela que não mudou nada,
+        // isso é indistinguível de um botão morto — e era assim que parecia.
         var btnRecarregar = document.getElementById('btn-recarregar');
-        if (btnRecarregar) btnRecarregar.onclick = function () {
-            atualizarTempoReal();
-            global.AdminCadastros.recarregar();
-            global.AdminIndicadores.recarregar();
-        };
+        if (btnRecarregar) {
+            var textoOriginal = btnRecarregar.innerHTML;
+            btnRecarregar.onclick = function () {
+                if (btnRecarregar.disabled) return;      // clique repetido não empilha
+                btnRecarregar.disabled = true;
+                btnRecarregar.classList.add('carregando');
+                btnRecarregar.innerHTML =
+                    '<i class="fas fa-arrows-rotate" aria-hidden="true"></i> Atualizando…';
+
+                Promise.all([
+                    atualizarTempoReal(),
+                    global.AdminCadastros.recarregar(),
+                    global.AdminIndicadores.recarregar()
+                ]).then(function () {
+                    marcarHora();
+                }).catch(function () {
+                    if (relogio) relogio.textContent = 'Não foi possível atualizar. Tente de novo.';
+                }).then(function () {
+                    btnRecarregar.disabled = false;
+                    btnRecarregar.classList.remove('carregando');
+                    btnRecarregar.innerHTML = textoOriginal;
+                });
+            };
+        }
 
         // Já havia sessão viva? O cookie responde por si: se /admin/dados
         // devolver 200, entra direto; se der 401, cai no login.
