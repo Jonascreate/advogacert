@@ -366,17 +366,24 @@
         'html, body { margin:0; padding:0; background:#e9e4d3; color:var(--ink); font-family:"Georgia","Times New Roman","Times",serif; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }\n' +
         '.sheet { background:var(--paper); background-image:repeating-linear-gradient(0deg,rgba(0,0,0,0.012) 0 1px,transparent 1px 38px),repeating-linear-gradient(90deg,rgba(0,0,0,0.012) 0 1px,transparent 1px 38px); max-width:880px; margin:24px auto; padding:56px 64px 64px; box-shadow:0 1px 0 rgba(255,255,255,0.6) inset,0 2px 6px rgba(0,0,0,0.05),0 24px 60px -20px rgba(0,0,0,0.35); border:1px solid var(--rule-soft); position:relative; }\n' +
         '.sheet::before { content:""; position:absolute; inset:24px; border:1px solid var(--rule-soft); pointer-events:none; }\n' +
-        '.letterhead { display:grid; grid-template-columns:1fr auto; align-items:end; gap:24px; padding-bottom:18px; border-bottom:3px double var(--rule); margin-bottom:6px; }\n' +
-        '.lh-left { display:flex; align-items:center; gap:18px; }\n' +
+        // Timbre clássico: marca centralizada no alto, título embaixo dela e a
+        // numeração do documento numa faixa por último. Antes era marca à
+        // esquerda e numeração à direita, na mesma linha — arranjo de
+        // relatório de sistema, não de papel timbrado.
+        '.letterhead { text-align:center; padding-bottom:16px; border-bottom:3px double var(--rule); margin-bottom:6px; }\n' +
+        '.lh-left { display:block; }\n' +
         // O PNG da marca tem o "ADV" branco (feito para fundo escuro) e sumiria
         // no papel creme. Mesma solução do site (ver .logo-mask em contato.html):
         // o arquivo vira máscara e a cor vem do fundo — aqui, azul chapado da
         // marca. print-color-adjust obriga a impressora a manter esse azul.
-        '.brand { height:70px; aspect-ratio:768/332; flex-shrink:0; background:var(--marca); -webkit-mask-image:var(--logo); mask-image:var(--logo); -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-position:left center; mask-position:left center; -webkit-mask-size:contain; mask-size:contain; -webkit-print-color-adjust:exact; print-color-adjust:exact; }\n' +
-        '.lh-sep { width:1px; align-self:stretch; background:var(--rule-soft); }\n' +
+        '.brand { height:70px; aspect-ratio:768/332; margin:0 auto 14px; background:var(--marca); -webkit-mask-image:var(--logo); mask-image:var(--logo); -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-position:center; mask-position:center; -webkit-mask-size:contain; mask-size:contain; -webkit-print-color-adjust:exact; print-color-adjust:exact; }\n' +
+        // A régua vertical separava marca e título quando estavam lado a lado.
+        // Empilhados, ela não tem o que separar.
+        '.lh-sep { display:none; }\n' +
         '.lh-title h1 { margin:0; font-size:26px; letter-spacing:0.02em; font-weight:700; text-transform:uppercase; }\n' +
         '.lh-title p { margin:4px 0 0; font-size:12px; color:var(--ink-2); letter-spacing:0.08em; text-transform:uppercase; }\n' +
-        '.lh-meta { text-align:right; font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; font-size:11px; line-height:1.7; color:var(--ink-2); border-left:1px solid var(--rule-soft); padding-left:18px; }\n' +
+        // Numeração vira faixa horizontal centralizada, abaixo do título.
+        '.lh-meta { display:flex; justify-content:center; flex-wrap:wrap; gap:22px; margin-top:12px; padding-top:10px; border-top:1px solid var(--rule-soft); font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; font-size:11px; line-height:1.7; color:var(--ink-2); }\n' +
         '.lh-meta .k { color:var(--ink-3); text-transform:uppercase; letter-spacing:0.1em; }\n' +
         '.lh-meta .v { color:var(--ink); font-weight:700; }\n' +
         '.subhead { display:flex; justify-content:space-between; align-items:baseline; padding:10px 0 18px; border-bottom:1px solid var(--rule); font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink-2); }\n' +
@@ -418,7 +425,7 @@
         '.signoff { margin-top:32px; padding-top:18px; border-top:1px solid var(--rule); display:grid; grid-template-columns:1fr 1fr 1fr; gap:28px; font-size:11px; color:var(--ink-2); text-align:center; }\n' +
         '.signoff .sig { border-top:1px solid var(--rule); padding-top:6px; font-family:ui-monospace,Menlo,monospace; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink); font-weight:700; }\n' +
         'footer { margin-top:18px; padding-top:8px; border-top:1px dashed var(--rule-soft); display:flex; justify-content:space-between; font-size:10px; color:var(--ink-3); font-family:ui-monospace,Menlo,monospace; letter-spacing:0.1em; text-transform:uppercase; }\n' +
-        '@media (max-width:760px) { .sheet { margin:0; padding:32px 22px; box-shadow:none; border:none; } .sheet::before { inset:8px; } .letterhead { grid-template-columns:1fr; } .lh-meta { text-align:left; border-left:none; border-top:1px solid var(--rule-soft); padding-left:0; padding-top:10px; } dl.specs { grid-template-columns:1fr; column-gap:0; } .signoff { grid-template-columns:1fr; gap:14px; } .headline h2 { font-size:22px; } }\n' +
+        '@media (max-width:760px) { .sheet { margin:0; padding:32px 22px; box-shadow:none; border:none; } .sheet::before { inset:8px; } .brand { height:54px; } .lh-title h1 { font-size:21px; } .lh-meta { gap:14px; } dl.specs { grid-template-columns:1fr; column-gap:0; } .signoff { grid-template-columns:1fr; gap:14px; } .headline h2 { font-size:22px; } }\n' +
         '@media print { html, body { background:#fff; } .sheet { margin:0; padding:0; border:none; box-shadow:none; background-image:none; } .sheet::before { display:none; } section { page-break-inside:avoid; } footer { color:#555; } }\n';
 
     /** Carimbos de data do documento: emissão legível, UTC e número. */
