@@ -372,7 +372,7 @@
         // no papel creme. Mesma solução do site (ver .logo-mask em contato.html):
         // o arquivo vira máscara e a cor vem do fundo — aqui, azul chapado da
         // marca. print-color-adjust obriga a impressora a manter esse azul.
-        '.brand { height:46px; aspect-ratio:768/332; flex-shrink:0; background:var(--marca); -webkit-mask-image:var(--logo); mask-image:var(--logo); -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-position:left center; mask-position:left center; -webkit-mask-size:contain; mask-size:contain; -webkit-print-color-adjust:exact; print-color-adjust:exact; }\n' +
+        '.brand { height:70px; aspect-ratio:768/332; flex-shrink:0; background:var(--marca); -webkit-mask-image:var(--logo); mask-image:var(--logo); -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-position:left center; mask-position:left center; -webkit-mask-size:contain; mask-size:contain; -webkit-print-color-adjust:exact; print-color-adjust:exact; }\n' +
         '.lh-sep { width:1px; align-self:stretch; background:var(--rule-soft); }\n' +
         '.lh-title h1 { margin:0; font-size:26px; letter-spacing:0.02em; font-weight:700; text-transform:uppercase; }\n' +
         '.lh-title p { margin:4px 0 0; font-size:12px; color:var(--ink-2); letter-spacing:0.08em; text-transform:uppercase; }\n' +
