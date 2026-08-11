@@ -293,7 +293,10 @@ body {
 .login-box > * { position: relative; z-index: 1; }
 
 .login-logo {
-    height: 34px;
+    /* 34px sumia dentro da caixa de 400px. A proporção é travada em
+       720/232, então a altura é o único número: 52px dão ~161px de largura,
+       o suficiente para a marca liderar a caixa sem competir com o título. */
+    height: 52px;
     aspect-ratio: 720 / 232;
     margin: 0 auto 1.75rem;
     background: linear-gradient(135deg, var(--accent-mac), var(--accent-win));
