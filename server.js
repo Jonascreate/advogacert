@@ -527,6 +527,12 @@ function loadPagamentoConfig() {
     };
 }
 
+// Preço do Plano Premium em um lugar só. Estava escrito à mão em dois pontos
+// do servidor (webhook do Mercado Pago e liberação manual) e em quatro telas —
+// mudar de preço obrigava a caçar todos, e esquecer um grava assinatura com
+// valor errado, que depois aparece torto no faturamento dos indicadores.
+const PLANO_PREMIUM_VALOR = Number(process.env.PLANO_PREMIUM_VALOR || 59);
+
 const PAGAMENTO = loadPagamentoConfig();
 const MP = PAGAMENTO.mp;
 const ADMIN = PAGAMENTO.admin;
@@ -1875,7 +1881,7 @@ const server = http.createServer((req, res) => {
                     id: proximoId(db.assinaturas),
                     usuario_id: user ? user.id : null,
                     plano: 'Plano Premium',
-                    valor: evento.data?.transaction_amount || 90,
+                    valor: evento.data?.transaction_amount || PLANO_PREMIUM_VALOR,
                     // sem a chave da API não dá para confirmar de verdade
                     status: MP.accessToken ? 'ativa' : 'pendente_confirmacao',
                     gateway: 'mercadopago',
@@ -2434,7 +2440,7 @@ const server = http.createServer((req, res) => {
             }
 
             try {
-                const { verificacao_id, inicio } = JSON.parse(body || '{}');
+                const { verificacao_id, inicio, sem_horario } = JSON.parse(body || '{}');
                 const db = loadJsonDb();
                 const v = (db.verificacoes_oab || []).find(x => x.id === verificacao_id);
 
@@ -2451,8 +2457,15 @@ const server = http.createServer((req, res) => {
                     return;
                 }
 
-                const vaga = horarioValido(db, inicio);
-                if (!vaga.ok) {
+                // Atendimento sem hora combinada: o painel decidiu atender
+                // agora, sem passar pela grade. Mesma forma que o Premium já
+                // usa (sem_horario: true) — o "quando" é o momento do clique.
+                // Sem isto, abrir chamado a partir de quem foi liberado e
+                // nunca marcou exigiria inventar um horário na agenda.
+                const semHorario = sem_horario === true;
+
+                const vaga = semHorario ? null : horarioValido(db, inicio);
+                if (!semHorario && !vaga.ok) {
                     responder(200, { success: false, error: vaga.erro, recarregar_agenda: true });
                     return;
                 }
@@ -2469,7 +2482,8 @@ const server = http.createServer((req, res) => {
                 // fila de trabalho — depois de conferir horário e prioridade, e
                 // com a chance de remarcar antes. chamado_id fica null até lá.
                 const agora = new Date().toISOString();
-                const fim = new Date(vaga.quando.getTime() + AGENDA.duracaoMin * 60000);
+                const quando = semHorario ? new Date() : vaga.quando;
+                const fim = new Date(quando.getTime() + AGENDA.duracaoMin * 60000);
                 const agendamentoId = proximoId(db.agendamentos);
                 db.agendamentos.push({
                     id: agendamentoId,
@@ -2477,26 +2491,30 @@ const server = http.createServer((req, res) => {
                     usuario_id: dono ? dono.id : null,
                     oab: rotulo,
                     nome: v.nome_declarado || '',
-                    inicio: vaga.quando.toISOString(),
+                    inicio: quando.toISOString(),
                     fim: fim.toISOString(),
                     status: 'marcado',
                     verificacao_id: v.id,
+                    sem_horario: semHorario || undefined,
                     criado_em: agora
                 });
 
                 auditar(db, {
-                    acao: 'agendado_pelo_painel',
+                    acao: semHorario ? 'atendido_sem_horario' : 'agendado_pelo_painel',
                     alvo: `OAB ${rotulo}`,
-                    detalhe: `Agendamento #${agendamentoId} para ${vaga.quando.toISOString()} (${tipo})`,
+                    detalhe: `Agendamento #${agendamentoId} para ${quando.toISOString()} (${tipo})` +
+                             (semHorario ? ' — sem hora combinada' : ''),
                     ip: ipDoPedido(req)
                 });
                 saveJsonDb(db);
 
-                console.log(`📅 Marcado pelo painel: ${rotulo} → ${vaga.quando.toISOString()}`);
+                console.log(`📅 ${semHorario ? 'Atendimento direto' : 'Marcado'} pelo painel: ` +
+                            `${rotulo} → ${quando.toISOString()}`);
 
                 // Avisa quem foi marcado: ele não escolheu, então precisa saber.
-                if (v.email) {
-                    const quando = vaga.quando.toLocaleString('pt-BR', {
+                // Sem hora combinada não há o que avisar — o atendimento é agora.
+                if (v.email && !semHorario) {
+                    const quandoTexto = vaga.quando.toLocaleString('pt-BR', {
                         weekday: 'long', day: '2-digit', month: '2-digit',
                         hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo'
                     });
@@ -2504,14 +2522,16 @@ const server = http.createServer((req, res) => {
                         v.email,
                         'Seu atendimento foi marcado — AdvogaCert',
                         `<p>Olá, ${v.nome_declarado}.</p>
-                         <p>Seu atendimento ficou marcado para <strong>${quando}</strong>.</p>
+                         <p>Seu atendimento ficou marcado para <strong>${quandoTexto}</strong>.</p>
                          <p>Se o horário não servir, responda este e-mail que a gente remarca.</p>`
                     ).catch(e => console.error('Aviso de agendamento não saiu:', e.message));
                 }
 
                 responder(200, {
                     success: true,
-                    msg: 'Horário marcado. Revise na triagem e passe para chamado quando quiser.',
+                    msg: semHorario
+                        ? 'Atendimento registrado sem hora combinada.'
+                        : 'Horário marcado. Revise na triagem e passe para chamado quando quiser.',
                     agendamento_id: agendamentoId
                 });
 
@@ -2574,10 +2594,19 @@ const server = http.createServer((req, res) => {
                 a.fim = new Date(vaga.quando.getTime() + AGENDA.duracaoMin * 60000).toISOString();
                 a.status = 'marcado';
 
+                // Premium (e o grátis atendido na hora) nasce sem hora
+                // combinada. Ao receber um horário de verdade ele deixa de ser
+                // "pedido direto" — sem limpar a marca, a tela continuaria
+                // dizendo que não há horário, com um horário marcado ao lado.
+                const eraSemHorario = !!a.sem_horario;
+                if (eraSemHorario) delete a.sem_horario;
+
                 auditar(db, {
-                    acao: 'remarcado',
+                    acao: eraSemHorario ? 'horario_marcado' : 'remarcado',
                     alvo: `OAB ${a.oab}`,
-                    detalhe: `${antigo} -> ${a.inicio}`,
+                    detalhe: eraSemHorario
+                        ? `pedido sem hora -> ${a.inicio}`
+                        : `${antigo} -> ${a.inicio}`,
                     ip: ipDoPedido(req)
                 });
                 saveJsonDb(db);
@@ -2807,8 +2836,12 @@ const server = http.createServer((req, res) => {
                     oab: a.oab,
                     uf: v ? v.uf : null,
                     tipo,
+                    // "sem horário" deixou de ser exclusividade do Premium:
+                    // um grátis liberado que nunca marcou também pode ser
+                    // atendido na hora pelo painel. O texto passa a dizer o
+                    // tipo real em vez de assumir Premium.
                     descricao: a.sem_horario
-                        ? (a.pedido || 'Pedido registrado pelo painel (Premium, sem horário)')
+                        ? (a.pedido || `Pedido registrado pelo painel (${tipo === 'premium' ? 'Premium' : 'Grátis'}, sem horário)`)
                         : 'Atendimento de ' + new Date(a.inicio).toLocaleString('pt-BR', {
                             day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
                             timeZone: 'America/Sao_Paulo'
@@ -3272,7 +3305,7 @@ const server = http.createServer((req, res) => {
                     id: proximoId(db.assinaturas),
                     usuario_id: user.id,
                     plano: 'Plano Premium',
-                    valor: 90,
+                    valor: PLANO_PREMIUM_VALOR,
                     status: 'ativa',
                     gateway: 'manual',
                     gateway_ref: null,
@@ -3716,7 +3749,7 @@ e mandam o cliente para uma tela de erro.
    - https://www.agentej.us/index.html#planos
      "Ao assinar, você garante suporte contínuo". Tem exatamente DOIS planos:
        • "1 chamado grátis" — R$0, botão "Quero testar grátis", leva para a página de contato.
-       • "Plano Premium" — R$90 por mês, chamados ilimitados e atendimento prioritário,
+       • "Plano Premium" — R$59 por mês, chamados ilimitados e atendimento prioritário,
          botão "Assinar agora", que abre a tela de pagamento ali mesmo.
      O pagamento NÃO exige login nem criar conta: o botão abre o checkout direto.
 
@@ -3747,7 +3780,7 @@ Para orientar o cliente a fazer algo, use SEMPRE este formato de passos,
 com a linha de traços e o link da seção logo abaixo:
 
 Passo 1 _________________________________________
-Escolha o plano que atende você: 1 chamado grátis (R$0) ou Plano Premium (R$90/mês).
+Escolha o plano que atende você: 1 chamado grátis (R$0) ou Plano Premium (R$59/mês).
 👉 https://www.agentej.us/index.html#planos
 
 Passo 2 _________________________________________

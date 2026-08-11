@@ -109,6 +109,14 @@
             });
         },
 
+        /** Atendimento sem hora combinada: entra direto, fora da grade. */
+        agendarSemHorario: function (verificacao_id) {
+            return pedir('/admin/agendar', {
+                metodo: 'POST',
+                corpo: { verificacao_id: verificacao_id, sem_horario: true }
+            });
+        },
+
         promover: function (agendamento_id, prioridade) {
             return pedir('/admin/promover', {
                 metodo: 'POST',

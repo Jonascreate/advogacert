@@ -64,14 +64,11 @@
                 el('button.acao.acao-promover', {
                     type: 'button',
                     texto: 'Abrir chamado',
-                    // Sem horário não há o que promover: escolhe a hora e o
-                    // resto vai junto, sem obrigar dois cliques em botões
-                    // diferentes.
-                    aoClicar: function (e) {
-                        abrirAgenda(item, e.target, false, function (agendamentoId) {
-                            promoverDireto(item, agendamentoId);
-                        });
-                    }
+                    // Abre o chamado na hora, sem passar pelo calendário: o
+                    // atendimento é agora, não numa data futura. O servidor
+                    // cria o agendamento com sem_horario, do mesmo jeito que
+                    // o Premium já fazia.
+                    aoClicar: function () { abrirChamadoDireto(item); }
                 }),
                 el('button.acao', {
                     type: 'button',
@@ -82,11 +79,39 @@
         ]);
     }
 
+    /**
+     * Abre o chamado de quem foi liberado e não marcou hora nenhuma.
+     *
+     * Três chamadas encadeadas nas rotas que já existiam: cria o agendamento
+     * sem hora combinada, confirma e promove. Nenhuma delas foi inventada
+     * para isto — é o mesmo caminho do Premium, que também não marca hora.
+     */
+    function abrirChamadoDireto(item) {
+        if (!confirm('Abrir chamado para ' + item.inscricao + ' agora?\n\n' +
+                     'O atendimento entra na fila sem hora marcada. ' +
+                     'Se preferir combinar um horário antes, use "Remarcar".')) return;
+
+        global.AdminDesfazer.agendar({
+            texto: item.inscricao + ' → chamado',
+            aoConfirmar: function () {
+                return global.AdminApi.agendarSemHorario(item.verificacao_id)
+                    .then(function (r) {
+                        if (!r || !r.success) throw new Error(r && r.error);
+                        return promoverDireto(item, r.agendamento_id);
+                    })
+                    .catch(function (e) {
+                        alert((e && e.message) || 'Não foi possível abrir o chamado.');
+                        carregar();
+                    });
+            }
+        });
+    }
+
     /** Confirma e promove um agendamento recém-criado, sem passo extra. */
     function promoverDireto(item, agendamentoId) {
         if (!agendamentoId) { carregar(); return; }
 
-        global.AdminApi.confirmar(agendamentoId)
+        return global.AdminApi.confirmar(agendamentoId)
             .then(function (r) {
                 if (!r || !r.success) throw new Error(r && r.error);
                 return global.AdminApi.promover(agendamentoId);
@@ -140,10 +165,12 @@
                     texto: 'Abrir chamado',
                     aoClicar: function () { confirmar(item); }
                 }),
-                // Remarcar só faz sentido pra quem tem horário real marcado
-                item.sem_horario ? null : el('button.acao', {
+                // Vale para os dois casos: quem tem hora troca de hora, e quem
+                // entrou sem hora combinada (Premium, ou grátis atendido na
+                // hora) ganha uma. A rota é a mesma; muda só o rótulo.
+                el('button.acao', {
                     type: 'button',
-                    texto: 'Remarcar',
+                    texto: item.sem_horario ? 'Marcar horário' : 'Remarcar',
                     aoClicar: function (e) { abrirAgenda(item, e.target, true); }
                 })
             ])

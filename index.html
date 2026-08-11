@@ -1085,6 +1085,62 @@
             box-shadow: 0 15px 30px rgba(110, 231, 200, 0.3);
         }
 
+        /* === DUAS OFERTAS NO MESMO CARTÃO ===
+           Avulso e mensal dividem o cartão do Premium: os benefícios comuns
+           ficam acima, uma vez só, e aqui embaixo cada forma de pagar tem o
+           seu preço e o seu botão. A linha entre as duas é o que deixa claro
+           que são escolhas independentes, e não um preço em duas partes. */
+        .plan-split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin-top: auto;
+        }
+        .plan-opcao {
+            display: flex;
+            flex-direction: column;
+            padding: 1.1rem 1rem;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .plan-opcao.destaque {
+            border-color: rgba(110, 231, 200, 0.35);
+            background: rgba(110, 231, 200, 0.07);
+        }
+        .plan-opcao-nome {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.4rem;
+        }
+        .plan-opcao .plan-price { font-size: 1.7rem; }
+        .plan-opcao-nota {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin: 0.35rem 0 1rem;
+            flex-grow: 1;
+        }
+        /* O botão do avulso é secundário: o mensal é a oferta que você quer
+           destacar, e dois botões cheios lado a lado competiriam entre si. */
+        .plan-card.paid .plan-opcao:not(.destaque) .plan-btn {
+            background: transparent;
+            border: 1px solid rgba(110, 231, 200, 0.45);
+            color: var(--accent-mac);
+        }
+        .plan-card.paid .plan-opcao:not(.destaque) .plan-btn:hover {
+            background: rgba(110, 231, 200, 0.1);
+            box-shadow: none;
+        }
+        /* Num celular as duas ofertas empilham: lado a lado, cada uma teria
+           menos de 160px e o preço quebraria linha. */
+        @media (max-width: 560px) {
+            .plan-split { grid-template-columns: 1fr; }
+        }
+
         /* === QUEM ESTÁ POR TRÁS (CREDIBILIDADE) === */
         .founder-section {
             position: relative;
@@ -1556,17 +1612,32 @@
                 <button type="button" class="plan-btn" id="btn-suporte-free">1 suporte grátis. Usar?</button>
             </div>
 
+            <!-- Um cartão só, dividido em duas ofertas independentes: avulso
+                 por atendimento e mensal. Cada metade tem o seu botão, e os
+                 benefícios comuns ficam em cima, sem repetir. -->
             <div class="plan-card paid">
                 <div class="plan-tag"><i class="fas fa-star"></i> Melhor custo-benefício</div>
-                <h3>Plano Premium</h3>
-                <div class="plan-price">R$90 <small>/ mês</small></div>
-                <p class="plan-desc">Suporte contínuo todo mês, com prioridade no atendimento e checagens de segurança contra fraude de identidade.</p>
+                <h3>Premium</h3>
+                <p class="plan-desc">Prioridade no atendimento e checagem de segurança contra fraude de identidade. Escolha pagar só quando precisar ou ter suporte o mês inteiro.</p>
                 <ul>
-                    <li><i class="fas fa-check"></i> Chamados ilimitados todo mês</li>
                     <li><i class="fas fa-check"></i> Atendimento prioritário em no máximo 30 minutos de espera</li>
                     <li><i class="fas fa-check"></i> Checklist antifraude incluso</li>
+                    <li><i class="fas fa-check"></i> Suporte para Mac ou Windows</li>
                 </ul>
-                <button type="button" class="plan-btn" id="btn-assinar-plano" data-plano="Plano Premium" data-valor="90.00">Assinar agora</button>
+
+                <div class="plan-split">
+                    <div class="plan-opcao">
+                        <div class="plan-price">R$59 <small>/dia</small></div>
+                        <p class="plan-opcao-nota">Sem mensalidade. Você paga quando precisar.</p>
+                        <button type="button" class="plan-btn" id="btn-assinar-plano" data-plano="Premium" data-valor="59.00">Atendimento</button>
+                    </div>
+
+                    <div class="plan-opcao destaque">
+                        <div class="plan-price">R$199 <small>/mês</small></div>
+                        <p class="plan-opcao-nota">Chamados ilimitados, sem fidelidade.</p>
+                        <button type="button" class="plan-btn" id="btn-assinar-plus" data-plano="Premium Plus" data-valor="199.00">Assinar agora</button>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
