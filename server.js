@@ -522,7 +522,8 @@ function loadPagamentoConfig() {
             // e assim o site funciona sem depender de configuração no Render.
             // A variável de ambiente continua vencendo, para trocar o link sem
             // precisar publicar.
-            linkMes: process.env.MP_LINK_MES || file.mercadopago?.link_mes || '',
+            linkMes: process.env.MP_LINK_MES || file.mercadopago?.link_mes ||
+                     'https://mpago.la/2LNAdyX',
             linkDia: process.env.MP_LINK_DIA || file.mercadopago?.link_dia ||
                      'https://mpago.la/1MQBvYi',
             accessToken: process.env.MP_ACCESS_TOKEN || file.mercadopago?.access_token || '',
