@@ -617,6 +617,13 @@ tr.abandonado td { background: rgba(255, 176, 32, 0.05); }
 .tag.usado { background: rgba(255, 107, 94, 0.15); color: #ff6b5e; }
 .tag.livre { background: oklch(var(--acento-frio) / 0.15); color: var(--accent-win); }
 .tag.feito { background: oklch(var(--verde-feito) / 0.18); color: oklch(var(--verde-feito)); }
+/* Plus é o plano mensal: precisa se distinguir do Premium diário à primeira
+   vista, então ganha fundo cheio em vez de etiqueta lavada. */
+.tag.plus {
+    background: oklch(var(--acento-quente) / 0.9);
+    color: oklch(22% 0.03 70);
+    font-weight: 800;
+}
 .tag.atrasada { background: rgba(255, 176, 32, 0.16); color: #ffb020; }
 
 /* Etiqueta de tipo na fila de Chamados: mais peso que a .tag genérica —
@@ -701,7 +708,16 @@ tr.abandonado td { background: rgba(255, 176, 32, 0.05); }
     font-family: 'JetBrains Mono', monospace;
     font-size: 1.15rem; font-weight: 700; color: var(--accent-mac);
 }
-.verif-espera { color: var(--text-muted); font-size: 0.8rem; }
+/* O relógio do prazo e o selo do plano andam juntos: o selo é o que explica
+   por que o prazo de um é 30 min e o do outro é 2 h. */
+.verif-prazo {
+    display: flex; align-items: center; gap: 0.45rem;
+    flex-shrink: 0;
+}
+.verif-espera { color: var(--text-muted); font-size: 0.8rem; white-space: nowrap; }
+/* último terço do prazo: ainda dá tempo, mas é para olhar agora */
+.verif-espera.apertado { color: #ffb020; font-weight: 700; }
+/* prazo estourado: a promessa do site já quebrou */
 .verif-espera.critico { color: #ff6b5e; font-weight: 700; }
 
 .verif-dados {

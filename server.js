@@ -1108,6 +1108,33 @@ function ipDoPedido(req) {
 //
 // Mudar as regras abaixo muda a agenda inteira — é o único lugar a mexer.
 // ============================================================
+// O prazo que o site promete, em minutos. Está escrito nas telas de planos
+// ("atendimento em até 2 horas" no grátis, "no máximo 30 minutos de espera"
+// no Premium) e agora o painel cobra o mesmo número. Mudar a promessa no
+// site sem mudar aqui faz o painel parar de avisar na hora certa.
+const SLA_MINUTOS = { premium: 30, free: 120 };
+
+// Os dois planos pagos. O gateway só devolve o valor pago, então é o valor
+// que diz qual plano é — não havia outro jeito sem mexer no checkout. Antes
+// tudo virava "Plano Premium" e Plus e diário ficavam indistinguíveis no
+// painel, mesmo cobrando R$199 e R$59.
+const PLANOS = {
+    plus:    { nome: 'Premium Plus', valor: 199, periodo: 'mes' },
+    premium: { nome: 'Premium',      valor: 59,  periodo: 'dia' }
+};
+
+/** Qual plano corresponde ao valor pago. Acima de 100 é o Plus. */
+function planoPeloValor(valor) {
+    return Number(valor) >= 100 ? PLANOS.plus : PLANOS.premium;
+}
+
+/** 'plus' | 'premium' — a chave do plano de uma assinatura já gravada. */
+function chaveDoPlano(assinatura) {
+    if (!assinatura) return null;
+    return String(assinatura.plano || '').toLowerCase().includes('plus') ||
+           Number(assinatura.valor) >= 100 ? 'plus' : 'premium';
+}
+
 const AGENDA = {
     // 0 = domingo ... 6 = sábado. Todos os dias.
     dias: [0, 1, 2, 3, 4, 5, 6],
@@ -1877,11 +1904,15 @@ const server = http.createServer((req, res) => {
                 const validaAte = new Date();
                 validaAte.setMonth(validaAte.getMonth() + 1);
 
+                const valorPago = evento.data?.transaction_amount || PLANO_PREMIUM_VALOR;
+                const planoPago = planoPeloValor(valorPago);
+
                 db.assinaturas.push({
                     id: proximoId(db.assinaturas),
                     usuario_id: user ? user.id : null,
-                    plano: 'Plano Premium',
-                    valor: evento.data?.transaction_amount || PLANO_PREMIUM_VALOR,
+                    // o nome vem do valor: é o único sinal que o gateway manda
+                    plano: planoPago.nome,
+                    valor: valorPago,
                     // sem a chave da API não dá para confirmar de verdade
                     status: MP.accessToken ? 'ativa' : 'pendente_confirmacao',
                     gateway: 'mercadopago',
@@ -2203,21 +2234,50 @@ const server = http.createServer((req, res) => {
                 : new Date(b.decidido_em || b.criado_em) - new Date(a.decidido_em || a.criado_em));
 
         const inicio = (pagina - 1) * porPagina;
-        const itens = todas.slice(inicio, inicio + porPagina).map(v => ({
-            id: v.id,
-            inscricao: `${v.inscricao}/${v.uf}`,
-            uf: v.uf,
-            nome_declarado: v.nome_declarado,
-            contato: v.contato,
-            email: v.email,
-            status: v.status,
-            observacao: v.observacao,
-            decidido_por: v.decidido_por,
-            decidido_em: v.decidido_em,
-            criado_em: v.criado_em,
-            espera_horas: Math.floor((Date.now() - new Date(v.criado_em).getTime()) / 3600000),
-            sinais: sinaisDeFraude(db, v)
-        }));
+        const soDigitos = s => String(s || '').replace(/\D/g, '');
+
+        const itens = todas.slice(inicio, inicio + porPagina).map(v => {
+            // Quem é o dono do pedido decide o prazo: o site promete 30
+            // minutos ao Premium e 2 horas ao gratuito. Sem saber o plano, o
+            // painel cobrava 24 horas de todo mundo — 48x o prometido a quem
+            // paga. A ligação é por e-mail ou WhatsApp, os mesmos campos que
+            // o resto do sistema usa para achar a conta.
+            const dono = (db.usuarios || []).find(u =>
+                (v.email && String(u.email || '').toLowerCase() === String(v.email).toLowerCase()) ||
+                (v.contato && soDigitos(u.telefone) === soDigitos(v.contato))) || null;
+            const assinatura = dono ? assinaturaAtiva(db, dono.id) : null;
+            // 'plus' | 'premium' | 'free' — o painel precisa dos três para
+            // mostrar quem paga R$199 por mês, quem paga R$59 pelo dia e quem
+            // está no gratuito. Os dois pagos têm o mesmo prazo de 30 min.
+            const tipo = assinatura ? chaveDoPlano(assinatura) : 'free';
+            const prazoMin = tipo === 'free' ? SLA_MINUTOS.free : SLA_MINUTOS.premium;
+
+            // Em minutos, não em horas: 55 minutos arredondados para baixo
+            // viravam "menos de 1 h" e escondiam um prazo de 30 já estourado.
+            const esperaMin = Math.floor((Date.now() - new Date(v.criado_em).getTime()) / 60000);
+
+            return {
+                id: v.id,
+                inscricao: `${v.inscricao}/${v.uf}`,
+                uf: v.uf,
+                nome_declarado: v.nome_declarado,
+                contato: v.contato,
+                email: v.email,
+                status: v.status,
+                observacao: v.observacao,
+                decidido_por: v.decidido_por,
+                decidido_em: v.decidido_em,
+                criado_em: v.criado_em,
+                espera_horas: Math.floor(esperaMin / 60),
+                espera_minutos: esperaMin,
+                tipo,
+                plano: assinatura ? assinatura.plano : null,
+                prazo_minutos: prazoMin,
+                // negativo = prazo estourado; é o número que a tela mostra
+                restante_minutos: prazoMin - esperaMin,
+                sinais: sinaisDeFraude(db, v)
+            };
+        });
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
@@ -3304,8 +3364,9 @@ const server = http.createServer((req, res) => {
                 db.assinaturas.push({
                     id: proximoId(db.assinaturas),
                     usuario_id: user.id,
-                    plano: 'Plano Premium',
-                    valor: PLANO_PREMIUM_VALOR,
+                    // "Liberar 1 mês" pelo painel é o plano mensal, o Plus
+                    plano: PLANOS.plus.nome,
+                    valor: PLANOS.plus.valor,
                     status: 'ativa',
                     gateway: 'manual',
                     gateway_ref: null,

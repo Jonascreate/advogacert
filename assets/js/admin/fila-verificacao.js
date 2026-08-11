@@ -34,7 +34,18 @@
 
     /** Um item da fila: tudo o que a decisão exige, numa tela só. */
     function cartao(item) {
-        var critico = item.espera_horas >= ESPERA_CRITICA && item.status === 'pendente';
+        // O prazo é o do plano da pessoa (30 min no Premium, 2 h no grátis),
+        // e vem calculado do servidor. Antes o vermelho só acendia com 24 h
+        // para todo mundo — quando acendia, a promessa do site já tinha
+        // quebrado havia muito.
+        var pendente = item.status === 'pendente';
+        var restante = item.restante_minutos;
+        var estourado = pendente && restante != null && restante < 0;
+        // aviso amarelo no último terço do prazo, antes de virar problema
+        var apertado = pendente && !estourado && restante != null &&
+                       restante <= (item.prazo_minutos || 0) / 3;
+        var critico = estourado ||
+                      (pendente && restante == null && item.espera_horas >= ESPERA_CRITICA);
 
         var botaoCopiar = el('button.mini', { type: 'button', texto: 'copiar' });
         botaoCopiar.addEventListener('click', function () {
@@ -46,9 +57,27 @@
                 el('span.verif-inscricao', { texto: item.inscricao }),
                 botaoCopiar
             ]),
-            el('span.verif-espera' + (critico ? '.critico' : ''), {
-                texto: 'esperando há ' + D.fmtEspera(item.espera_horas)
-            })
+            el('div.verif-prazo', {}, [
+                // O selo do plano fica ao lado do relógio de propósito: é ele
+                // que explica por que um tem 30 minutos e o outro tem 2 horas.
+                item.tipo ? D.tag(
+                    item.tipo === 'plus' ? 'Plus' : item.tipo === 'premium' ? 'Premium' : 'Grátis',
+                    item.tipo === 'plus' ? 'plus' : item.tipo === 'premium' ? 'ativa' : 'livre'
+                ) : null,
+                el('span.verif-espera' +
+                   (critico ? '.critico' : apertado ? '.apertado' : ''), {
+                    texto: pendente && restante != null
+                        ? D.fmtPrazo(restante)
+                        : 'esperou ' + D.fmtEspera(item.espera_horas),
+                    title: pendente && item.prazo_minutos
+                        ? 'Prazo prometido no site: ' +
+                          (item.prazo_minutos >= 60
+                              ? (item.prazo_minutos / 60) + ' h'
+                              : item.prazo_minutos + ' min') +
+                          ' — esperando há ' + D.fmtPrazo(-item.espera_minutos).replace('atrasado ', '')
+                        : ''
+                })
+            ])
         ]);
 
         var dados = el('dl.verif-dados', {}, [

@@ -119,6 +119,20 @@
         return d + ' d' + (h ? ' ' + h + ' h' : '');
     }
 
+    /**
+     * Prazo do atendimento, em texto curto. Recebe minutos restantes; negativo
+     * quer dizer prazo estourado. Minuto a minuto até uma hora, porque o
+     * Premium tem 30 minutos e arredondar para hora esconderia o estouro.
+     */
+    function fmtPrazo(minutos) {
+        if (minutos == null) return '—';
+        var m = Math.abs(Math.round(minutos));
+        var texto = m < 60 ? m + ' min'
+                  : m < 1440 ? Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + (m % 60) + ' min' : '')
+                  : Math.floor(m / 1440) + ' d';
+        return minutos < 0 ? 'atrasado ' + texto : 'faltam ' + texto;
+    }
+
     function fmtHoras(v) {
         return v == null ? '—' : (v < 1 ? Math.round(v * 60) + ' min' : v + ' h');
     }
@@ -146,6 +160,7 @@
     global.AdminDom = {
         el: el, trocar: trocar, tag: tag, badge: badge, svg: svg,
         fmtData: fmtData, fmtDia: fmtDia, fmtEspera: fmtEspera, fmtHoras: fmtHoras,
+        fmtPrazo: fmtPrazo,
         copiar: copiar
     };
 })(window);
