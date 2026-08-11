@@ -516,8 +516,15 @@ function loadPagamentoConfig() {
             // Um link por plano: são preços diferentes, e o link do Mercado
             // Pago carrega o valor dentro dele. Sem separar, os dois botões
             // cobrariam o mesmo. Cai no link geral se só houver um.
+            //
+            // O padrão fica aqui no código de propósito: link de pagamento é
+            // endereço público (qualquer cliente o vê ao pagar), não segredo,
+            // e assim o site funciona sem depender de configuração no Render.
+            // A variável de ambiente continua vencendo, para trocar o link sem
+            // precisar publicar.
             linkMes: process.env.MP_LINK_MES || file.mercadopago?.link_mes || '',
-            linkDia: process.env.MP_LINK_DIA || file.mercadopago?.link_dia || '',
+            linkDia: process.env.MP_LINK_DIA || file.mercadopago?.link_dia ||
+                     'https://mpago.la/1MQBvYi',
             accessToken: process.env.MP_ACCESS_TOKEN || file.mercadopago?.access_token || '',
             emailAviso: process.env.MP_EMAIL_AVISO || file.mercadopago?.email_aviso || ''
         },
