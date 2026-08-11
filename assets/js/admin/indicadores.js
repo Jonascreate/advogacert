@@ -19,25 +19,18 @@
     var alvo;
 
     function bloco(rotulo, valor, dica) {
-        return el('div.ind-item', {}, [
+        // a dica vira título (dica ao passar o mouse) em vez de linha visível:
+        // só ela empurrava a altura de alguns cards, deixando uns finos e
+        // outros quadrados dentro do mesmo grid
+        return el('div.ind-item', dica ? { title: dica } : {}, [
             el('div.ind-rot', { texto: rotulo }),
-            el('div.ind-val', { texto: valor }),
-            dica ? el('div.ind-dica', { texto: dica }) : null
+            el('div.ind-val', { texto: valor })
         ]);
     }
 
     function desenhar() {
         var d = estado.dados;
         if (!d) { D.trocar(alvo, el('div.vazio', { texto: 'Carregando indicadores...' })); return; }
-
-        var seletor = el('select', {
-            aoMudar: function (e) { estado.janela = e.target.value; carregar(); }
-        }, [
-            el('option', { value: 'hoje', texto: 'Hoje' }),
-            el('option', { value: '7d', texto: 'Últimos 7 dias' }),
-            el('option', { value: '30d', texto: 'Últimos 30 dias' })
-        ]);
-        seletor.value = estado.janela;
 
         var b = d.backlog || {};
         var v = d.verificacao || {};
@@ -46,14 +39,10 @@
             el('div.bloco-topo', {}, [
                 el('div', {}, [
                     el('h2', { texto: 'Indicadores' }),
-                    el('p.bloco-nota', {
-                        texto: 'Backlog e fila de verificação são de agora. O resto olha a janela escolhida.'
-                    })
-                ]),
-                seletor
+                    el('p.bloco-nota', { texto: 'Backlog e fila de verificação, de agora.' })
+                ])
             ]),
 
-            el('h3.ind-sub', { texto: 'Agora' }),
             el('div.ind-grid', {}, [
                 bloco('Backlog até 2 dias', String(b.ate_2d != null ? b.ate_2d : '—')),
                 bloco('Backlog 3 a 7 dias', String(b.de_3_a_7d != null ? b.de_3_a_7d : '—')),
@@ -63,16 +52,6 @@
                 bloco('Espera média na fila', D.fmtHoras(v.espera_media_horas)),
                 bloco('Taxa de reprovação', (v.reprovacao_pct != null ? v.reprovacao_pct : '—') + '%',
                       'Inscrições que não conferiram')
-            ]),
-
-            el('h3.ind-sub', { texto: 'Na janela de ' + d.janela_dias + ' dia(s)' }),
-            el('div.ind-grid', {}, [
-                bloco('Entraram', String(d.entrada != null ? d.entrada : '—')),
-                bloco('Foram fechados', String(d.fechamento != null ? d.fechamento : '—')),
-                bloco('Tempo até o 1º retorno', D.fmtHoras(d.frt_horas), 'FRT — média'),
-                bloco('Tempo até resolver', D.fmtHoras(d.mttr_horas), 'MTTR — média'),
-                bloco('Taxa de reabertura', (d.reabertura_pct != null ? d.reabertura_pct : '—') + '%',
-                      'Sobre todos os chamados')
             ])
         ]);
     }

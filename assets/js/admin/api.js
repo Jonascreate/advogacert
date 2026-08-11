@@ -101,6 +101,14 @@
             });
         },
 
+        /** Baixa do atendimento gratuito. desfazer === true volta atrás. */
+        atendido: function (agendamento_id, desfazer) {
+            return pedir('/admin/atendido', {
+                metodo: 'POST',
+                corpo: { agendamento_id: agendamento_id, desfazer: desfazer === true }
+            });
+        },
+
         promover: function (agendamento_id, prioridade) {
             return pedir('/admin/promover', {
                 metodo: 'POST',
@@ -132,6 +140,20 @@
             return pedir('/admin/assinatura', {
                 metodo: 'POST',
                 corpo: { usuario_id: usuario_id, acao: acao, meses: 1 }
+            });
+        },
+
+        observacao: function (usuario_id, texto) {
+            return pedir('/admin/observacao', {
+                metodo: 'POST',
+                corpo: { usuario_id: usuario_id, texto: texto }
+            });
+        },
+
+        solicitarPremium: function (usuario_id, descricao) {
+            return pedir('/admin/premium/solicitar', {
+                metodo: 'POST',
+                corpo: { usuario_id: usuario_id, descricao: descricao }
             });
         }
     };

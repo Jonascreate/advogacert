@@ -667,8 +667,26 @@
         // já leva o contexto na conversa: a equipe não precisa perguntar quem é
         const texto = `Olá! Quero usar meu chamado de suporte gratuito da AdvogaCert${oab ? ' (OAB ' + oab + ')' : ''}`
             + (quandoTexto ? `, marcado para ${quandoTexto}` : '') + '.';
-        document.getElementById('btn-whats').href =
-            'https://wa.me/5561986241570?text=' + encodeURIComponent(texto);
+        const btnWhats = document.getElementById('btn-whats');
+        btnWhats.href = 'https://wa.me/5561986241570?text=' + encodeURIComponent(texto);
+
+        // Mesmo registro da tela premium (ver agradecimento-premium.html, onde
+        // o porquê de cada escolha está explicado): o clique sai do site para o
+        // WhatsApp e precisa deixar rastro na auditoria, que o servidor
+        // sincroniza com o Supabase. sendBeacon sobrevive à navegação; o
+        // text/plain evita a checagem prévia de permissão que mataria o envio
+        // no domínio público.
+        btnWhats.addEventListener('click', function () {
+            try {
+                navigator.sendBeacon(apiUrl('/evento/suporte'), new Blob([JSON.stringify({
+                    origem: 'free',
+                    oab: oab,
+                    usuario_id: usuario && usuario.id,
+                    email: usuario && usuario.email,
+                    telefone: usuario && usuario.telefone
+                })], { type: 'text/plain;charset=UTF-8' }));
+            } catch (e) { /* registro nunca atrapalha a ida para o WhatsApp */ }
+        });
 
         // Cada sistema tem seu instalador: baixar o errado não roda. Detectamos
         // e destacamos o certo, mas deixamos os dois visíveis — a pessoa pode

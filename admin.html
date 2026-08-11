@@ -9,9 +9,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
-    <link rel="stylesheet" href="assets/css/admin.css?v=8">
+    <link rel="stylesheet" href="assets/css/admin.css?v=73">
 </head>
 <body>
+    <a class="admin-pular" href="#conteudo-admin">Ir para o conteúdo do painel</a>
     <div class="blush-container">
         <div class="blush blush-1" id="blush1"></div>
         <div class="blush blush-2" id="blush2"></div>
@@ -26,8 +27,9 @@
             <h1>Painel de Controle</h1>
             <p class="desc">Área interna da AdvogaCert. Verificação de inscrições, chamados e assinaturas.</p>
 
-            <form id="form-login">
+            <form id="form-login" aria-describedby="erro-login">
                 <div class="campo-senha">
+                    <label class="sr-only" for="senha">Senha do painel</label>
                     <input type="password" id="senha" placeholder="Senha do painel" autocomplete="current-password" required>
                     <i class="fas fa-key"></i>
                     <button type="button" class="ver-senha" id="ver-senha" aria-label="Mostrar senha">
@@ -36,14 +38,15 @@
                 </div>
                 <!-- só aparece quando o servidor avisa que o 2FA está ligado -->
                 <div class="campo-senha" id="campo-codigo" style="display:none;">
+                    <label class="sr-only" for="codigo">Código do autenticador</label>
                     <input type="text" id="codigo" placeholder="Código do autenticador"
-                           inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+                           inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}">
                     <i class="fas fa-mobile-screen"></i>
                 </div>
                 <button type="submit" class="btn-entrar" id="btn-entrar">
                     <span id="btn-entrar-texto">Entrar no painel</span>
                 </button>
-                <div class="erro" id="erro-login"></div>
+                <div class="erro" id="erro-login" role="alert" aria-live="polite"></div>
             </form>
 
             <div class="login-rodape">
@@ -53,32 +56,32 @@
     </div>
 
     <!-- ================= PAINEL ================= -->
-    <div id="tela-painel" class="admin-page" style="display:none;">
-        <div class="admin-head">
+    <main id="tela-painel" class="admin-page" style="display:none;" tabindex="-1">
+        <header class="admin-head" id="conteudo-admin">
             <div>
                 <h1>Painel de Controle</h1>
-                <div class="sub" id="atualizado"></div>
+                <div class="sub" id="atualizado" role="status" aria-live="polite"></div>
             </div>
-            <button class="acao" id="btn-recarregar">Atualizar agora</button>
-        </div>
+            <div class="admin-head-acoes">
+                <button class="acao" id="btn-recarregar" type="button">
+                    <i class="fas fa-arrows-rotate" aria-hidden="true"></i>
+                    Atualizar dados
+                </button>
+            </div>
+        </header>
 
-        <div class="stats" id="resumo"></div>
+        <div class="stats" id="resumo" aria-label="Resumo do painel"></div>
 
-        <nav class="abas" id="abas"></nav>
+        <nav class="abas" id="abas" aria-label="Seções do painel"></nav>
 
         <!-- Cada aba é preenchida pelo seu módulo. Nada de conteúdo fixo
              aqui: o que entra vem do servidor e é montado via DOM. -->
-        <section id="aba-verificacao" class="aba-conteudo"></section>
-        <section id="aba-triagem" class="aba-conteudo" style="display:none;"></section>
-        <section id="aba-chamados" class="aba-conteudo" style="display:none;"></section>
-        <section id="aba-indicadores" class="aba-conteudo" style="display:none;"></section>
+        <section id="aba-verificacao" class="aba-conteudo" role="tabpanel"></section>
+        <section id="aba-triagem" class="aba-conteudo" role="tabpanel" style="display:none;"></section>
+        <section id="aba-chamados" class="aba-conteudo" role="tabpanel" style="display:none;"></section>
+        <section id="aba-indicadores" class="aba-conteudo" role="tabpanel" style="display:none;"></section>
 
-        <section id="aba-cadastros" class="aba-conteudo" style="display:none;">
-            <div id="aba-cadastros-pessoas"></div>
-            <div id="aba-cadastros-agenda" style="margin-top:2.5rem;"></div>
-        </section>
-
-        <section id="aba-sistema" class="aba-conteudo" style="display:none;">
+        <section id="aba-sistema" class="aba-conteudo" role="tabpanel" style="display:none;">
             <div id="aba-sistema-diag"></div>
             <details class="diag-ajuda">
                 <summary>Quando algo quebra — o que fazer</summary>
@@ -122,19 +125,34 @@
                 </dl>
             </details>
         </section>
+    </main>
+
+    <!-- ================= CADASTROS E AGENDA =================
+         Mesma section de sempre, mesmos ids internos — cadastros.js não
+         muda uma linha. Só a moldura ao redor é diferente: abre por cima,
+         você fecha quando termina, e a aba onde você estava continua lá. -->
+    <div id="aba-cadastros" class="admin-modal" style="display:none;" role="dialog" aria-modal="true" aria-label="Cadastros e agenda">
+        <div class="admin-modal-caixa" tabindex="-1">
+            <div class="admin-modal-topo">
+                <h2>Cadastros e agenda</h2>
+                <button class="acao" id="btn-fechar-cadastros" type="button" aria-label="Fechar cadastros e agenda">Fechar</button>
+            </div>
+            <div id="aba-cadastros-pessoas"></div>
+            <div id="aba-cadastros-agenda"></div>
+        </div>
     </div>
 
-    <script src="assets/js/api.js?v=8"></script>
-    <script src="assets/js/script.js?v=8"></script>
+    <script src="assets/js/api.js?v=35"></script>
+    <script src="assets/js/script.js?v=36"></script>
 
-    <script src="assets/js/admin/dom.js?v=8"></script>
-    <script src="assets/js/admin/api.js?v=8"></script>
-    <script src="assets/js/admin/desfazer.js?v=8"></script>
-    <script src="assets/js/admin/fila-verificacao.js?v=8"></script>
-    <script src="assets/js/admin/triagem.js?v=8"></script>
-    <script src="assets/js/admin/fila-chamados.js?v=8"></script>
-    <script src="assets/js/admin/indicadores.js?v=8"></script>
-    <script src="assets/js/admin/cadastros.js?v=8"></script>
-    <script src="assets/js/admin/app.js?v=8"></script>
+    <script src="assets/js/admin/dom.js?v=35"></script>
+    <script src="assets/js/admin/api.js?v=36"></script>
+    <script src="assets/js/admin/desfazer.js?v=35"></script>
+    <script src="assets/js/admin/fila-verificacao.js?v=35"></script>
+    <script src="assets/js/admin/triagem.js?v=37"></script>
+    <script src="assets/js/admin/fila-chamados.js?v=35"></script>
+    <script src="assets/js/admin/indicadores.js?v=35"></script>
+    <script src="assets/js/admin/cadastros.js?v=37"></script>
+    <script src="assets/js/admin/app.js?v=36"></script>
 </body>
 </html>

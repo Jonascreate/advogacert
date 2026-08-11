@@ -13,7 +13,7 @@
 
     var D = global.AdminDom;
     var el = D.el;
-    var PRAZO = 10;   // segundos
+    var PRAZO = 4;   // segundos
 
     var caixa = null;
     var tempo = null;

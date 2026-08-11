@@ -67,6 +67,36 @@
         return el('span.tag' + (classe ? '.' + classe : ''), { texto: texto });
     }
 
+    /** Pílula de status, para os cards de diagnóstico. */
+    function badge(texto, classe) {
+        return el('span.badge.' + classe, {}, [
+            document.createTextNode(texto)
+        ]);
+    }
+
+    var SVG_NS = 'http://www.w3.org/2000/svg';
+
+    /**
+     * Ícone de contorno (24x24, mesmo estilo em toda parte). `formas` é uma
+     * lista de [tagSvg, { atributos }] — nunca vem de dado, só de listas
+     * fixas escritas aqui, então não passa por textContent/innerHTML.
+     */
+    function svg(formas) {
+        var s = document.createElementNS(SVG_NS, 'svg');
+        s.setAttribute('viewBox', '0 0 24 24');
+        s.setAttribute('fill', 'none');
+        s.setAttribute('stroke', 'currentColor');
+        s.setAttribute('stroke-width', '2');
+        s.setAttribute('stroke-linecap', 'round');
+        s.setAttribute('stroke-linejoin', 'round');
+        formas.forEach(function (f) {
+            var no = document.createElementNS(SVG_NS, f[0]);
+            Object.keys(f[1]).forEach(function (k) { no.setAttribute(k, f[1][k]); });
+            s.appendChild(no);
+        });
+        return s;
+    }
+
     // ---- formatação ----
     function fmtData(iso) {
         if (!iso) return '—';
@@ -114,7 +144,7 @@
     }
 
     global.AdminDom = {
-        el: el, trocar: trocar, tag: tag,
+        el: el, trocar: trocar, tag: tag, badge: badge, svg: svg,
         fmtData: fmtData, fmtDia: fmtDia, fmtEspera: fmtEspera, fmtHoras: fmtHoras,
         copiar: copiar
     };

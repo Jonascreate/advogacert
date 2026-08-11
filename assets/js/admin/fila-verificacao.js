@@ -22,25 +22,13 @@
     var alvo, aoMudarContagem;
 
     function cabecalho() {
-        var seletor = el('select.filtro-status', {
-            aoMudar: function (e) { estado.filtro = e.target.value; carregar(); }
-        }, [
-            el('option', { value: 'pendente', texto: 'Aguardando decisão' }),
-            el('option', { value: 'confere', texto: 'Conferidas' }),
-            el('option', { value: 'nao_confere', texto: 'Não conferem' }),
-            el('option', { value: 'nao_encontrado', texto: 'Não encontradas' }),
-            el('option', { value: 'todos', texto: 'Todas' })
-        ]);
-        seletor.value = estado.filtro;
-
         return el('div.bloco-topo', {}, [
             el('div', {}, [
                 el('h2', { texto: 'Aguardando verificação de OAB' }),
                 el('p.bloco-nota', {
                     texto: 'Tempo real. O atendimento gratuito fica bloqueado até a decisão.'
                 })
-            ]),
-            seletor
+            ])
         ]);
     }
 
@@ -154,9 +142,7 @@
     function desenhar() {
         var corpo = estado.itens.length
             ? estado.itens.map(cartao)
-            : [el('div.vazio', { texto: estado.filtro === 'pendente'
-                ? 'Nenhuma inscrição aguardando conferência.'
-                : 'Nada nesta lista.' })];
+            : [el('div.vazio', { texto: 'Nenhuma inscrição aguardando conferência.' })];
 
         D.trocar(alvo, [cabecalho(), el('div.verif-lista', {}, corpo)]);
     }

@@ -80,23 +80,38 @@
     }
 
     // ---------------- navegação ----------------
-    // A ordem conta a esteira: confere a OAB, tria, olha o cadastro e a
-    // agenda de quem passou, e só então o trabalho na fila de chamados.
+    // A ordem conta a esteira: confere a OAB, tria, e só então o trabalho na
+    // fila de chamados. "Cadastros e agenda" fecha a fila, depois de "Servidor
+    // e banco": é aba na barra, mas abre o modal em vez de trocar de seção
+    // (mostrarAba, abaixo). A SECTION é a mesma de sempre, com os mesmos ids;
+    // só a moldura ao redor mudou. Nada do fluxo (server.js, cadastros.js)
+    // foi tocado.
     var ABAS = [
-        { id: 'verificacao', rotulo: 'Verificação de OAB' },
-        { id: 'triagem',     rotulo: 'Triagem' },
-        { id: 'cadastros',   rotulo: 'Cadastros e agenda' },
-        { id: 'chamados',    rotulo: 'Chamados' },
-        { id: 'indicadores', rotulo: 'Indicadores' },
-        { id: 'sistema',     rotulo: 'Servidor e banco' }
+        { id: 'verificacao',  rotulo: 'Verificação de OAB' },
+        { id: 'triagem',      rotulo: 'Triagem' },
+        { id: 'chamados',     rotulo: 'Chamados' },
+        { id: 'indicadores',  rotulo: 'Indicadores' },
+        { id: 'sistema',      rotulo: 'Servidor e banco' },
+        { id: 'cadastros-tab', rotulo: 'Cadastros e agenda' }
     ];
 
     function mostrarAba(id) {
         ABAS.forEach(function (a) {
             var secao = document.getElementById('aba-' + a.id);
             var botao = document.getElementById('btn-aba-' + a.id);
+            if (a.id === 'cadastros-tab') {
+                // Cadastros e agenda: abre o modal em vez de trocar de seção.
+                // O modal já carrega via carregar() dentro de ligarModalCadastros.
+                if (id === 'cadastros-tab') abrirModalCadastros();
+                if (botao) botao.classList.remove('ativa');
+                return;
+            }
             if (secao) secao.style.display = a.id === id ? 'block' : 'none';
-            if (botao) botao.classList.toggle('ativa', a.id === id);
+            if (botao) {
+                botao.classList.toggle('ativa', a.id === id);
+                if (a.id === id) botao.setAttribute('aria-current', 'page');
+                else botao.removeAttribute('aria-current');
+            }
         });
     }
 
@@ -106,6 +121,7 @@
             return el('button.aba', {
                 type: 'button',
                 id: 'btn-aba-' + a.id,
+                'aria-controls': a.id === 'cadastros-tab' ? 'aba-cadastros' : 'aba-' + a.id,
                 texto: a.rotulo,
                 aoClicar: function () { mostrarAba(a.id); }
             });
@@ -146,9 +162,40 @@
         ]).then(marcarHora);
     }
 
+    // ---------------- modal de cadastros e agenda ----------------
+    // Aberto pela aba "Cadastros e agenda", a última da barra de navegação.
+    var modalCadastros, btnAbrirCadastros, btnFecharCadastros, focoAntesDoModal;
+
+    function abrirModalCadastros() {
+        if (!modalCadastros) return;
+        focoAntesDoModal = document.activeElement;
+        modalCadastros.style.display = 'flex';
+        modalCadastros.querySelector('.admin-modal-caixa').focus();
+        global.AdminCadastros.recarregar();
+    }
+    function fecharModalCadastros() {
+        if (modalCadastros) modalCadastros.style.display = 'none';
+        if (focoAntesDoModal && typeof focoAntesDoModal.focus === 'function') focoAntesDoModal.focus();
+    }
+
+    function ligarModalCadastros() {
+        modalCadastros = document.getElementById('aba-cadastros');
+        btnAbrirCadastros = document.getElementById('btn-cadastros');
+        btnFecharCadastros = document.getElementById('btn-fechar-cadastros');
+        if (!modalCadastros || !btnFecharCadastros) return;
+
+        if (btnAbrirCadastros) btnAbrirCadastros.addEventListener('click', abrirModalCadastros);
+        btnFecharCadastros.addEventListener('click', fecharModalCadastros);
+        modalCadastros.addEventListener('click', function (e) { if (e.target === modalCadastros) fecharModalCadastros(); });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && modalCadastros.style.display !== 'none') fecharModalCadastros();
+        });
+    }
+
     function abrirPainel() {
         telaLogin.style.display = 'none';
         telaPainel.style.display = 'block';
+        telaPainel.focus();
 
         global.AdminFilaVerificacao.montar(
             document.getElementById('aba-verificacao'),
@@ -181,6 +228,8 @@
         clearInterval(tempoPolling);
         telaPainel.style.display = 'none';
         telaLogin.style.display = 'flex';
+        var modal = document.getElementById('aba-cadastros');
+        if (modal) modal.style.display = 'none';
     }
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -190,9 +239,11 @@
 
         ligarLogin();
         ligarAbas();
+        ligarModalCadastros();
         API.aoExpirarSessao(voltarAoLogin);
 
-        document.getElementById('btn-recarregar').onclick = function () {
+        var btnRecarregar = document.getElementById('btn-recarregar');
+        if (btnRecarregar) btnRecarregar.onclick = function () {
             atualizarTempoReal();
             global.AdminCadastros.recarregar();
             global.AdminIndicadores.recarregar();

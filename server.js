@@ -568,7 +568,18 @@ function lerCookie(req, nome) {
     return '';
 }
 
+// No ambiente local isolado (BANCO_LOCAL=1), o painel abre direto: ele usa
+// apenas usuarios.json e não expõe os dados reais do Supabase. A produção
+// continua exigindo senha e 2FA. ADMIN_SEM_SENHA permanece como opção
+// explícita para testes antigos, mas nunca deve ser definida no Render.
+const ADMIN_SEM_SENHA_LOCAL = process.env.BANCO_LOCAL === '1' || process.env.ADMIN_SEM_SENHA === '1';
+if (ADMIN_SEM_SENHA_LOCAL) {
+    console.warn('⚠️  Painel SEM senha em ambiente local. Nunca habilite esse modo em produção.');
+}
+
 function sessaoAdmin(req) {
+    if (ADMIN_SEM_SENHA_LOCAL) return 'sem-senha-local';
+
     limparExpirados(adminSessoes, ADMIN_SESSAO_TTL);
     const doCookie = lerCookie(req, 'admin_sessao');
     if (doCookie && adminSessoes.has(doCookie)) return doCookie;
@@ -674,11 +685,20 @@ const COLECOES = [
     'verificacoes_oab', 'auditoria'
 ];
 
-const SUPABASE_URL = (process.env.SUPABASE_URL || SECRETS.supabase?.url || '').replace(/\/$/, '');
+// BANCO_LOCAL=1 força o arquivo usuarios.json mesmo com chave do Supabase
+// em secrets_config.json — dois ambientes de verdade: o que roda na sua
+// máquina nunca toca o banco real do Render, mesmo que a chave esteja
+// configurada (ela fica lá pra quando você quiser testar contra o Supabase
+// de propósito). NUNCA defina essa variável no Render.
+const BANCO_LOCAL_FORCADO = process.env.BANCO_LOCAL === '1';
+const SUPABASE_URL = BANCO_LOCAL_FORCADO ? '' : (process.env.SUPABASE_URL || SECRETS.supabase?.url || '').replace(/\/$/, '');
 // service_role: ignora as políticas de RLS. Só pode viver no servidor —
 // nunca no HTML, ou qualquer visitante lê e escreve a base inteira.
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || SECRETS.supabase?.service_key || '';
+const SUPABASE_KEY = BANCO_LOCAL_FORCADO ? '' : (process.env.SUPABASE_SERVICE_KEY || SECRETS.supabase?.service_key || '');
 const SUPABASE_ATIVO = Boolean(SUPABASE_URL && SUPABASE_KEY);
+if (BANCO_LOCAL_FORCADO) {
+    console.warn('⚠️  BANCO_LOCAL=1: usando usuarios.json, ignorando o Supabase de propósito. Só para teste local.');
+}
 
 function supabaseHeaders(extra = {}) {
     return {
@@ -1192,7 +1212,8 @@ function situacaoDoUsuario(db, u) {
         chamados_free: chamados.filter(c => c.tipo === 'free').length,
         chamados_premium: chamados.filter(c => c.tipo === 'premium').length,
         // contabilizado pela OAB: vale para todos os cadastros da mesma inscrição
-        free_usado: freeUsadoPelaOab(db, u.oab) || chamados.some(c => c.tipo === 'free')
+        free_usado: freeUsadoPelaOab(db, u.oab) || chamados.some(c => c.tipo === 'free'),
+        observacao: u.observacao || ''
     };
 }
 
@@ -1893,6 +1914,108 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // ============ EVENTO: POST /evento/suporte ============
+    // O botão "Chamar o suporte" das telas de agradecimento leva a pessoa
+    // direto para o WhatsApp — e, até aqui, essa saída não deixava rastro
+    // nenhum: a conversa começava no celular e o banco não sabia que ela
+    // tinha acontecido. Esta rota grava o clique na auditoria (que é uma das
+    // coleções sincronizadas com o Supabase), com quem clicou e de qual tela.
+    //
+    // É só registro: não valida sessão, não abre chamado e não muda plano.
+    // Responde 204 sempre, porque quem chama é um sendBeacon disparado na
+    // hora em que a aba já está indo embora — não há ninguém para ler a
+    // resposta, e um erro aqui jamais pode atrapalhar a ida para o WhatsApp.
+    if (method === 'POST' && url === '/evento/suporte') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            try {
+                const e = JSON.parse(body || '{}');
+                const origem = e.origem === 'free' ? 'free' : 'premium';
+                const db = loadJsonDb();
+
+                // Quem é a pessoa, do mais confiável para o menos: o cadastro
+                // no banco manda mais que o que veio do navegador, que é de
+                // sessionStorage e pode ter sido adulterado.
+                const user = (db.usuarios || []).find(u => u.id === e.usuario_id) || null;
+                const oab = normalizarOab(e.oab) || (user && user.oab) || '';
+                const telefone = normalizarTelefone(e.telefone) || (user && user.telefone) || '';
+                const email = (user && user.email) || String(e.email || '').trim().toLowerCase();
+
+                auditar(db, {
+                    ator: 'site',
+                    acao: 'suporte_whatsapp',
+                    alvo: oab || email || telefone || 'visitante não identificado',
+                    detalhe: `Clique em "Chamar o suporte" na tela de agradecimento ${origem}.` +
+                             (user ? ` Cadastro #${user.id}.` : ' Sem cadastro identificado.') +
+                             (telefone ? ` WhatsApp ${telefone}.` : ''),
+                    ip: ipDoPedido(req)
+                });
+
+                // A auditoria é histórico: ninguém abre o painel para lê-la, e
+                // um clique registrado só lá não vira trabalho à vista. Quem
+                // chamou o suporte está esperando atendimento AGORA, então o
+                // pedido entra na Triagem — é o que acende o número âmbar da
+                // aba e o coloca em "revise e confirme", pronto para virar
+                // chamado. Mesma mecânica do pedido Premium feito pelo painel
+                // (ver POST /admin/premium/solicitar): verificação já nascida
+                // conferida e agendamento sem_horario, porque Premium não
+                // marca hora — o "quando" é o momento do clique.
+                const assinante = user && assinaturaAtiva(db, user.id);
+                const jaEspera = user && (db.agendamentos || []).some(a =>
+                    a.usuario_id === user.id && a.sem_horario && !a.chamado_id);
+
+                if (assinante && !jaEspera) {
+                    const agora = new Date().toISOString();
+                    const [oabNumero, oabUf] = String(user.oab || '').split('/');
+
+                    db.verificacoes_oab = db.verificacoes_oab || [];
+                    const verificacaoId = proximoId(db.verificacoes_oab);
+                    db.verificacoes_oab.push({
+                        id: verificacaoId,
+                        inscricao: oabNumero || 'S/OAB',
+                        uf: oabUf || '--',
+                        nome_declarado: user.nome || '',
+                        contato: user.telefone || '',
+                        email: user.email || '',
+                        status: 'confere',
+                        observacao: 'Assinante Premium — chamou o suporte pelo WhatsApp, sem verificação de OAB.',
+                        decidido_por: 'site (botão de suporte)',
+                        decidido_em: agora,
+                        ip: ipDoPedido(req),
+                        criado_em: agora
+                    });
+
+                    db.agendamentos = db.agendamentos || [];
+                    db.agendamentos.push({
+                        id: proximoId(db.agendamentos),
+                        chamado_id: null,
+                        usuario_id: user.id,
+                        oab: user.oab || null,
+                        nome: user.nome || '',
+                        inicio: agora,
+                        fim: agora,
+                        status: 'marcado',
+                        verificacao_id: verificacaoId,
+                        sem_horario: true,
+                        pedido: 'Chamou o suporte pelo WhatsApp na tela de agradecimento.',
+                        criado_em: agora
+                    });
+                }
+
+                saveJsonDb(db);
+
+                console.log(`📲 Suporte chamado pelo WhatsApp (${origem}): ${oab || email || 'não identificado'}` +
+                            (assinante && !jaEspera ? ' → esperando na Triagem' : ''));
+            } catch (err) {
+                console.error('Evento de suporte não registrado:', err.message);
+            }
+            res.writeHead(204);
+            res.end();
+        });
+        return;
+    }
+
     // ============ PAINEL: POST /admin/entrar ============
     if (method === 'POST' && url === '/admin/entrar') {
         let body = '';
@@ -2027,7 +2150,9 @@ const server = http.createServer((req, res) => {
                     // a agenda precisa saber em que ponto da esteira o item
                     // está para oferecer o botão certo
                     virou_chamado: !!a.chamado_id,
-                    confirmado: a.status === 'confirmado'
+                    confirmado: a.status === 'confirmado',
+                    // a baixa do atendimento: o que pinta a linha de verde
+                    atendido: a.status === 'atendido'
                 })),
             assinaturas: db.assinaturas.slice().reverse(),
             // vai com o nome e o contato de quem abriu: o painel lista os
@@ -2263,7 +2388,11 @@ const server = http.createServer((req, res) => {
                     inicio: a.inicio,
                     fim: a.fim,
                     tipo: dono && assinaturaAtiva(db, dono.id) ? 'premium' : 'free',
-                    passou: new Date(a.inicio).getTime() < agora
+                    // Premium sem_horario não tem hora real marcada — nunca
+                    // "passa da hora", e o painel mostra "pedido direto" em
+                    // vez de uma data que confundiria com agendamento de fato
+                    sem_horario: !!a.sem_horario,
+                    passou: !a.sem_horario && new Date(a.inicio).getTime() < agora
                 };
             })
             .sort((a, b) => new Date(a.inicio) - new Date(b.inicio));
@@ -2536,6 +2665,87 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // ============ PAINEL: POST /admin/atendido ============
+    // A baixa do atendimento gratuito. Até aqui a esteira sabia marcar,
+    // confirmar e promover a chamado, mas nada dizia "isto já foi feito" — o
+    // status 'atendido' era previsto em vagaLivre() e nunca era gravado por
+    // ninguém. Sem a baixa, um horário passado ficava para sempre com cara de
+    // pendência e não havia como saber o que já foi entregue.
+    //
+    // Vale para agendamento em qualquer ponto (marcado, confirmado ou já
+    // virado chamado): a baixa é sobre o encontro ter acontecido, não sobre
+    // a papelada em volta. Só não vale para cancelado.
+    //
+    // 'desfazer: true' devolve ao estado anterior, guardado em status_antes.
+    if (method === 'POST' && url === '/admin/atendido') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            const responder = (status, payload) => {
+                res.writeHead(status, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(payload));
+            };
+
+            if (!sessaoAdmin(req)) {
+                responder(401, { success: false, error: 'Sessão expirada' });
+                return;
+            }
+
+            try {
+                const { agendamento_id, desfazer } = JSON.parse(body || '{}');
+                const db = loadJsonDb();
+                const a = (db.agendamentos || []).find(x => x.id === agendamento_id);
+
+                if (!a) {
+                    responder(404, { success: false, error: 'Agendamento não encontrado' });
+                    return;
+                }
+                if (a.status === 'cancelado') {
+                    responder(400, { success: false, error: 'Agendamento cancelado.' });
+                    return;
+                }
+
+                if (desfazer) {
+                    if (a.status !== 'atendido') {
+                        responder(400, { success: false, error: 'Este atendimento não tem baixa.' });
+                        return;
+                    }
+                    // status_antes guarda de onde veio; sem ele o padrão é
+                    // 'confirmado', que é o estado normal na hora da baixa.
+                    a.status = a.status_antes || 'confirmado';
+                    delete a.status_antes;
+                    delete a.atendido_em;
+                } else {
+                    if (a.status === 'atendido') {
+                        responder(400, { success: false, error: 'Já está marcado como atendido.' });
+                        return;
+                    }
+                    a.status_antes = a.status;
+                    a.status = 'atendido';
+                    a.atendido_em = new Date().toISOString();
+                }
+
+                auditar(db, {
+                    acao: desfazer ? 'baixa_desfeita' : 'atendimento_realizado',
+                    alvo: `OAB ${a.oab}`,
+                    detalhe: `Agendamento #${a.id} em ${a.inicio}`,
+                    ip: ipDoPedido(req)
+                });
+                saveJsonDb(db);
+
+                responder(200, {
+                    success: true,
+                    msg: desfazer ? 'Baixa desfeita.' : 'Atendimento registrado.'
+                });
+
+            } catch (err) {
+                console.error('Erro ao dar baixa:', err.message);
+                responder(400, { success: false, error: 'Erro interno' });
+            }
+        });
+        return;
+    }
+
     // ============ PAINEL: POST /admin/promover ============
     // O passo que você pediu: só o que foi priorizado na triagem vira chamado.
     // Até aqui existia um horário combinado; daqui em diante existe trabalho
@@ -2594,10 +2804,12 @@ const server = http.createServer((req, res) => {
                     oab: a.oab,
                     uf: v ? v.uf : null,
                     tipo,
-                    descricao: 'Atendimento de ' + new Date(a.inicio).toLocaleString('pt-BR', {
-                        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
-                        timeZone: 'America/Sao_Paulo'
-                    }),
+                    descricao: a.sem_horario
+                        ? (a.pedido || 'Pedido registrado pelo painel (Premium, sem horário)')
+                        : 'Atendimento de ' + new Date(a.inicio).toLocaleString('pt-BR', {
+                            day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+                            timeZone: 'America/Sao_Paulo'
+                        }),
                     status: 'aberto',
                     responsavel: null,
                     primeiro_retorno_em: null,
@@ -2734,7 +2946,12 @@ const server = http.createServer((req, res) => {
                 ...c,
                 nome: (agend && agend.nome) || (dono && (dono.nome || dono.email)) || '',
                 contato: (dono && (dono.telefone || dono.email)) || '',
-                idade_horas: Math.floor((Date.now() - new Date(c.criado_em).getTime()) / 3600000)
+                idade_horas: Math.floor((Date.now() - new Date(c.criado_em).getTime()) / 3600000),
+                // só existe quando o pedido veio da agenda do site (grátis, ou
+                // premium que também marcou hora); aberto direto pelo painel
+                // ou pela rota /chamado/premium fica null de propósito — o
+                // painel mostra "sem horário" em vez de deixar em branco
+                horario_marcado: agend ? agend.inicio : null
             };
         });
 
@@ -3072,6 +3289,162 @@ const server = http.createServer((req, res) => {
         });
         return;
     }
+
+    // ============ PAINEL: POST /admin/observacao ============
+    // Anotação livre por pessoa, editável na aba Cadastros — não é lida por
+    // nenhuma regra do sistema, é só bloco de notas do painel.
+    if (method === 'POST' && url === '/admin/observacao') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            const responder = (status, payload) => {
+                res.writeHead(status, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(payload));
+            };
+
+            if (!sessaoAdmin(req)) {
+                responder(401, { success: false, error: 'Sessão expirada' });
+                return;
+            }
+
+            try {
+                const { usuario_id, texto } = JSON.parse(body || '{}');
+                const db = loadJsonDb();
+                const user = db.usuarios.find(u => u.id === usuario_id);
+
+                if (!user) {
+                    responder(404, { success: false, error: 'Usuário não encontrado' });
+                    return;
+                }
+
+                user.observacao = String(texto || '').slice(0, 500);
+                saveJsonDb(db);
+                responder(200, { success: true });
+
+            } catch (err) {
+                responder(400, { success: false, error: 'Erro interno' });
+            }
+        });
+        return;
+    }
+
+    // ============ PAINEL: POST /admin/premium/solicitar ============
+    // Pedido de atendimento Premium pelo painel — para quando o cliente avisa
+    // por telefone ou WhatsApp em vez de usar o site.
+    //
+    // Passa pela Triagem como o gratuito, só que pulando dois passos que não
+    // fazem sentido pra quem já paga: não precisa conferir OAB (o cliente já
+    // é cadastrado) e não precisa marcar horário (Premium não agenda, ver
+    // AGENDA DO SUPORTE GRATUITO acima — é atendido a qualquer momento). Por
+    // isso a verificação nasce direto como "confere" e o agendamento nasce
+    // direto como "marcado", sem_horario: true — cai igual ao gratuito na
+    // seção "revise e confirme" da Triagem, pronto para "Abrir chamado".
+    if (method === 'POST' && url === '/admin/premium/solicitar') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            const responder = (status, payload) => {
+                res.writeHead(status, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(payload));
+            };
+
+            if (!sessaoAdmin(req)) {
+                responder(401, { success: false, error: 'Sessão expirada' });
+                return;
+            }
+
+            try {
+                const { usuario_id, descricao } = JSON.parse(body || '{}');
+                const db = loadJsonDb();
+                const user = db.usuarios.find(u => u.id === usuario_id);
+
+                if (!user) {
+                    responder(404, { success: false, error: 'Usuário não encontrado' });
+                    return;
+                }
+
+                const cobranca = situacaoDeCobranca(db, user.id);
+                if (cobranca.estado !== 'ativa') {
+                    const motivo = {
+                        'inadimplente': `O plano venceu há ${cobranca.dias_atraso} dia(s). Renove antes de abrir o chamado.`,
+                        'cancelada': 'O plano foi cancelado. É preciso assinar de novo.',
+                        'sem plano': 'Esta pessoa não tem o Plano Premium.'
+                    }[cobranca.estado];
+                    responder(200, { success: false, error: motivo });
+                    return;
+                }
+
+                const jaTemPedido = (db.agendamentos || []).some(a =>
+                    a.usuario_id === user.id && a.sem_horario && !a.chamado_id);
+                if (jaTemPedido) {
+                    responder(200, {
+                        success: false,
+                        error: 'Esta pessoa já tem um pedido esperando revisão na Triagem.'
+                    });
+                    return;
+                }
+
+                const [oabNumero, oabUf] = String(user.oab || '').split('/');
+                const agora = new Date().toISOString();
+
+                db.verificacoes_oab = db.verificacoes_oab || [];
+                const verificacaoId = proximoId(db.verificacoes_oab);
+                db.verificacoes_oab.push({
+                    id: verificacaoId,
+                    inscricao: oabNumero || 'S/OAB',
+                    uf: oabUf || '--',
+                    nome_declarado: user.nome || '',
+                    contato: user.telefone || '',
+                    email: user.email || '',
+                    status: 'confere',
+                    observacao: 'Assinante Premium — pedido pelo painel, sem verificação de OAB.',
+                    decidido_por: 'painel (premium)',
+                    decidido_em: agora,
+                    ip: ipDoPedido(req),
+                    criado_em: agora
+                });
+
+                const agendamentoId = proximoId(db.agendamentos);
+                db.agendamentos.push({
+                    id: agendamentoId,
+                    chamado_id: null,
+                    usuario_id: user.id,
+                    oab: user.oab || null,
+                    nome: user.nome || '',
+                    inicio: agora,
+                    fim: agora,
+                    status: 'marcado',
+                    verificacao_id: verificacaoId,
+                    // sem horário real: Premium não agenda, isso só marca "pedido
+                    // registrado agora" — ver leitura em GET /admin/triagem e em
+                    // POST /admin/promover
+                    sem_horario: true,
+                    pedido: String(descricao || '').slice(0, 500),
+                    criado_em: agora
+                });
+
+                auditar(db, {
+                    acao: 'premium_solicitado_painel',
+                    alvo: user.email || user.telefone || ('usuário #' + user.id),
+                    detalhe: String(descricao || ''),
+                    ip: ipDoPedido(req)
+                });
+                saveJsonDb(db);
+
+                console.log(`⭐ Pedido Premium registrado pelo painel: ${user.email || user.telefone}`);
+                responder(200, {
+                    success: true,
+                    msg: 'Pedido registrado. Revise na aba Triagem para abrir o chamado.'
+                });
+
+            } catch (err) {
+                console.error('Erro ao registrar pedido premium pelo painel:', err.message);
+                responder(400, { success: false, error: 'Erro interno' });
+            }
+        });
+        return;
+    }
+
     // ================== API: POST /login.php ==================
     if (method === 'POST' && url === '/login.php') {
         let body = '';

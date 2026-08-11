@@ -594,8 +594,37 @@
 
         // já leva o contexto na conversa: a equipe não precisa perguntar quem é
         const texto = `Olá! Acabei de assinar o Plano Premium da AdvogaCert${oab ? ' (OAB ' + oab + ')' : ''} e preciso de suporte.`;
-        document.getElementById('btn-whats').href =
-            'https://wa.me/5561986241570?text=' + encodeURIComponent(texto);
+        const btnWhats = document.getElementById('btn-whats');
+        btnWhats.href = 'https://wa.me/5561986241570?text=' + encodeURIComponent(texto);
+
+        // O clique leva a pessoa embora do site, para o WhatsApp — e sem isto
+        // essa saída não ficava registrada em lugar nenhum: a conversa começava
+        // no celular e o banco nunca soube que ela existiu. Aqui o evento vai
+        // para a auditoria (uma das coleções que o servidor sincroniza com o
+        // Supabase), com a inscrição e o cadastro de quem clicou.
+        //
+        // sendBeacon, e não fetch: a aba já está indo embora quando isto roda,
+        // e um fetch normal seria cancelado na navegação. O beacon é entregue
+        // pelo navegador depois, mesmo com a página fechada. Ele também não
+        // devolve resposta — de propósito: registrar é problema nosso, e nada
+        // aqui pode segurar ou atrapalhar a ida para o WhatsApp.
+        //
+        // text/plain é obrigatório: application/json obrigaria uma checagem de
+        // permissão antes do envio (preflight), que sendBeacon não sabe fazer,
+        // e o registro morreria calado em www.agentej.us — onde a página e o
+        // servidor estão em domínios diferentes. O servidor lê o JSON do corpo
+        // sem olhar esse rótulo.
+        btnWhats.addEventListener('click', function () {
+            try {
+                navigator.sendBeacon(apiUrl('/evento/suporte'), new Blob([JSON.stringify({
+                    origem: 'premium',
+                    oab: oab,
+                    usuario_id: usuario && usuario.id,
+                    email: usuario && usuario.email,
+                    telefone: usuario && usuario.telefone
+                })], { type: 'text/plain;charset=UTF-8' }));
+            } catch (e) { /* registro nunca atrapalha a ida para o WhatsApp */ }
+        });
 
         // Cada sistema tem seu instalador: baixar o errado não roda. Detectamos
         // e destacamos o certo, mas deixamos os dois visíveis — a pessoa pode

@@ -15,13 +15,6 @@
     var D = global.AdminDom;
     var el = D.el;
 
-    var STATUS = [
-        ['aberto', 'Aberto'],
-        ['em_atendimento', 'Em atendimento'],
-        ['aguardando_cliente', 'Aguardando cliente'],
-        ['fechado', 'Fechado']
-    ];
-
     var estado = {
         status: 'abertos', tipo: 'todos', dias: 0, q: '',
         pagina: 1, total: 0, itens: [], semDonoHoras: 8
@@ -29,37 +22,9 @@
     var alvo, buscaTempo;
 
     function filtros() {
-        var selStatus = el('select', {
-            aoMudar: function (e) { estado.status = e.target.value; estado.pagina = 1; carregar(); }
-        }, [el('option', { value: 'abertos', texto: 'Todos os abertos' })]
-            .concat(STATUS.map(function (s) {
-                return el('option', { value: s[0], texto: s[1] });
-            }))
-            .concat([el('option', { value: 'todos', texto: 'Tudo, inclusive fechados' })]));
-        selStatus.value = estado.status;
-
-        var selTipo = el('select', {
-            aoMudar: function (e) { estado.tipo = e.target.value; estado.pagina = 1; carregar(); }
-        }, [
-            el('option', { value: 'todos', texto: 'Grátis e Premium' }),
-            el('option', { value: 'premium', texto: 'Só Premium' }),
-            el('option', { value: 'free', texto: 'Só grátis' })
-        ]);
-        selTipo.value = estado.tipo;
-
-        var selPeriodo = el('select', {
-            aoMudar: function (e) { estado.dias = Number(e.target.value); estado.pagina = 1; carregar(); }
-        }, [
-            el('option', { value: '0', texto: 'Qualquer data' }),
-            el('option', { value: '1', texto: 'Hoje' }),
-            el('option', { value: '7', texto: 'Últimos 7 dias' }),
-            el('option', { value: '30', texto: 'Últimos 30 dias' })
-        ]);
-        selPeriodo.value = String(estado.dias);
-
         var busca = el('input.busca-chamados', {
             type: 'search',
-            placeholder: 'Buscar por OAB, nome, WhatsApp ou e-mail',
+            placeholder: 'Por OAB, por nome e por WhatsApp',
             valor: estado.q
         });
         // espera a digitação parar: sem isso cada tecla vira uma consulta
@@ -71,29 +36,16 @@
             }, 350);
         });
 
-        return el('div.filtros', {}, [busca, selStatus, selTipo, selPeriodo]);
+        return el('div.filtros', {}, busca);
     }
 
-    function seletorStatus(item) {
-        var sel = el('select.status-sel', {
-            aoMudar: function (e) { mudarStatus(item, e.target.value, sel); }
-        }, STATUS.map(function (s) {
-            return el('option', { value: s[0], texto: s[1] });
-        }));
-        sel.value = item.status;
-        return sel;
-    }
-
-    function mudarStatus(item, novo, sel) {
-        if (novo === 'fechado' && !confirm('Fechar o chamado #' + item.id + '?')) {
-            sel.value = item.status;
-            return;
-        }
-        global.AdminApi.mudarStatusChamado(item.id, novo)
+    function fechar(item) {
+        if (!confirm('Fechar o chamado #' + item.id + '?')) return;
+        global.AdminApi.mudarStatusChamado(item.id, 'fechado')
             .then(function (d) {
-                if (d && d.success) { item.status = novo; carregar(); }
+                if (d && d.success) { item.status = 'fechado'; carregar(); }
             })
-            .catch(function () { sel.value = item.status; });
+            .catch(function () {});
     }
 
     function linha(item) {
@@ -108,30 +60,44 @@
                 typeof conteudo === 'string' ? [document.createTextNode(conteudo)] : [conteudo]);
         }
 
-        // Apagar só aparece no que está fechado: chamado aberto é trabalho em
-        // andamento, e um clique errado custaria o atendimento de alguém.
+        // Fechado só pode apagar; em aberto (qualquer estado intermediário)
+        // só pode fechar — um clique errado em "apagar" custaria o
+        // atendimento de alguém, então essa ação some assim que fecha.
         var acoes = item.status === 'fechado'
             ? el('button.acao.acao-nao', {
                 type: 'button',
                 texto: 'Apagar',
                 aoClicar: function () { apagar([item]); }
               })
-            : null;
+            : el('button.acao', {
+                type: 'button',
+                texto: 'Fechar',
+                aoClicar: function () { fechar(item); }
+              });
+
+        // Só existe quando o pedido veio da agenda do site (grátis, ou
+        // premium que também marcou hora). Aberto direto pelo painel ou pela
+        // rota /chamado/premium fica sem horário — e isso fica visível em
+        // vez de deixar a célula em branco, pra não parecer esquecimento.
+        var horario = item.horario_marcado
+            ? el('span.mono', { texto: D.fmtData(item.horario_marcado) })
+            : el('span.fraco', { texto: 'Sem horário (aberto direto)' });
+
+        var tagTipo = el('span.tag-tipo.' + (item.tipo === 'premium' ? 'premium' : 'gratis'), {}, [
+            el('i.fas.' + (item.tipo === 'premium' ? 'fa-crown' : 'fa-gift'), { 'aria-hidden': 'true' }),
+            document.createTextNode(item.tipo === 'premium' ? 'Premium' : 'Grátis')
+        ]);
 
         return el('tr' + (abandonado ? '.abandonado' : ''), {}, [
-            td('Idade', el('span' + (abandonado ? '.critico' : ''), {
-                texto: D.fmtEspera(item.idade_horas)
-            })),
             td('Quem', el('div', {}, [
                 el('div.forte', { texto: item.nome || '—' }),
                 el('div.fraco', { texto: item.contato || '' })
             ])),
             td('OAB', el('span.mono', { texto: item.oab || '—' })),
-            td('Tipo', D.tag(item.tipo === 'premium' ? 'Premium' : 'Grátis',
-                item.tipo === 'premium' ? 'ativa' : 'livre')),
+            td('Tipo', tagTipo),
+            td('Horário marcado', horario),
             td('Pedido', el('span.pedido', { texto: item.descricao || '—' })),
-            td('Status', seletorStatus(item)),
-            td('', acoes || document.createTextNode(''))
+            td('', acoes)
         ]);
     }
 
@@ -181,7 +147,7 @@
     }
 
     function desenhar() {
-        var cabecalhos = ['Idade', 'Quem', 'OAB', 'Tipo', 'Pedido', 'Status', ''];
+        var cabecalhos = ['Quem', 'OAB', 'Tipo', 'Horário marcado', 'Pedido', ''];
         var tabela = el('table', {}, [
             el('thead', {}, el('tr', {}, cabecalhos.map(function (t) {
                 return el('th', { texto: t });

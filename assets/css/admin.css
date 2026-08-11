@@ -11,19 +11,244 @@
    cada célula.
    ========================================================== */
 
+/* A barra de rolagem some e volta conforme a aba aberta (verificação de OAB
+   é curta, chamados é longa). Sem gutter reservado, o painel escorregava uns
+   pixels para o lado a cada troca de aba e parecia fora do centro. Com
+   scrollbar-gutter: stable o espaço fica sempre reservado, então o centro é
+   o mesmo em toda aba. */
+html { scrollbar-gutter: stable; overflow-y: scroll; }
+
+/* ==========================================================
+   TOKENS — a régua deste arquivo
+   ==========================================================
+   Opacidade em degraus de 5%, como a caixa de opacidade de camada do
+   Photoshop. Nenhum valor solto no meio do arquivo: cada camada visual tem
+   um nome e aponta para um degrau. Ajuste é "sobe um degrau", não um decimal
+   novo inventado na hora.
+   ========================================================== */
+:root {
+    --o-05: 0.05; --o-10: 0.10; --o-15: 0.15; --o-20: 0.20;
+    --o-25: 0.25; --o-30: 0.30; --o-35: 0.35; --o-40: 0.40;
+    --o-50: 0.50; --o-60: 0.60; --o-70: 0.70; --o-85: 0.85;
+
+    /* Camadas, de trás para a frente */
+    --foto-veu-topo:   var(--o-40);   /* escurecido sobre a montanha, topo  */
+    --foto-veu-base:   var(--o-60);   /* idem, base (texto vive mais aqui)  */
+    --luz-forca:       var(--o-30);   /* mancha de luz do mouse             */
+    --vidro-tinta:     var(--o-20);   /* opacidade do painel                */
+    --vidro-poente:    var(--o-15);   /* clarão quente subindo da base      */
+    --vidro-ceu:       var(--o-05);   /* resto de céu frio, escorrendo do topo */
+    --vidro-grao:      var(--o-10);   /* jateado                            */
+
+    /* Cor da luz, em oklch: L = claridade, C = saturação, H = matiz.
+       Eixos separados, como no seletor do Illustrator — dá para clarear sem
+       mudar a cor, ou saturar sem clarear. 85° é o amarelo-âmbar. */
+    --luz-cor: 92% 0.11 85;
+
+    /* Vidro e desfoques */
+    --vidro-blur: 44px;
+    --vidro-cor: 21% 0.008 60;   /* vidro morno, não cinza-azulado */
+    --luz-raio: 300px;   /* diâmetro do miolo da luz */
+    --luz-blur: 30px;    /* só antisserrilhado: a maciez vem do degradê */
+
+    /* ---- Paleta tirada da própria foto ----
+       Tudo num matiz só de cada lado: 60-75° é o rosa-pêssego do horizonte,
+       245° é o azul-névoa das montanhas. Nada de marrom: a foto é fria, e
+       marrom ao lado desse azul fica barrento. O calor entra pela claridade
+       (luz), não pela superfície. */
+    --acento-quente: 84% 0.10 75;    /* substitui o verde da marca */
+    --acento-frio:   80% 0.055 245;  /* substitui o azul elétrico  */
+    /* Amarelo queimado: mesmo matiz do quente, com a claridade baixa e o
+       croma alto — é isso que dá o "queimado" em vez de amarelo limpo. */
+    --amarelo-queimado: 62% 0.13 68;
+    /* Verde da baixa: reservado a "atendimento realizado" e a mais nada.
+       Claridade alta o bastante para ler sobre o vidro escuro. */
+    --verde-feito: 76% 0.15 152;
+
+    /* Neutros mornos: mesma claridade de antes, matiz puxado para o quente.
+       O muted do site (#6b6b70) some sobre a foto — estes não. */
+    --text-primary: oklch(96% 0.006 60);
+    --text-secondary: oklch(85% 0.012 60);
+    --text-muted: oklch(70% 0.014 60);
+
+    /* Os acentos da marca, reescritos para esta página. Como as variáveis já
+       existem no style.css, todo o painel (botões, abas, selos, números)
+       acompanha sem precisar caçar seletor por seletor. */
+    --accent-mac: oklch(var(--acento-quente));
+    --accent-win: oklch(var(--acento-frio));
+    --accent-gold: oklch(var(--acento-quente));
+    --accent-gold-light: oklch(var(--acento-frio));
+}
+
+/* Plano de fundo do painel. O admin.css só é carregado no admin.html, então
+   mexer no body aqui não afeta o site. O véu escuro por cima do degradê
+   mantém o texto legível sobre a foto, e o fixed faz a imagem ficar parada
+   enquanto a página rola. */
+body {
+    background:
+        linear-gradient(
+            rgb(10 10 11 / var(--foto-veu-topo)),
+            rgb(10 10 11 / var(--foto-veu-base))),
+        url("../../img/abstract-studio-mountains-4356017_1920.jpg") center / cover no-repeat fixed;
+    background-color: var(--bg-primary);
+
+    /* Caixa de centralização vertical do painel. Ver a nota em .admin-page:
+       o par é "body em flex" + "margin-block: auto" no cartão. O padding é a
+       folga mínima que o cartão nunca invade. */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-block: clamp(1.25rem, 5vh, 3rem);
+}
+
+/* ================= LUZ DO MOUSE =================
+   Uma luz só: as três manchas do site perseguem o cursor com atrasos
+   diferentes (0.05, 0.03 e 0.02 no script.js) e se abrem em leque quando o
+   mouse anda — daí as "três bolas". Sobra a primeira.
+
+   A queda é uma gaussiana amostrada de 10 em 10% do raio, α = e^-(r/0.42)².
+   É isso que separa um degradê de verdade de um radial-gradient de duas
+   paradas: com duas paradas o CSS interpola em linha reta e o olho enxerga o
+   ponto onde a reta encosta no zero — a borda de disco. Com a curva
+   amostrada não há esse ponto, a luz só desaparece. Mesma coisa que o
+   Illustrator faz ao converter uma malha gaussiana em paradas.
+
+   O blur de 30px aqui não é para esfumaçar (o degradê já esfumaça): é para
+   dissolver o banding das faixas de 8 bits nas partes mais escuras. */
+.blush-2, .blush-3 { display: none; }
+
+.blush-1 {
+    /* O script.js desconta 200px fixos do cursor (blush1X = mouseX - 200),
+       conta feita para os 400px originais. A margem devolve a diferença
+       entre 400 e o raio atual, mantendo a luz centrada no ponteiro. */
+    width: var(--luz-raio); height: var(--luz-raio);
+    margin: calc((400px - var(--luz-raio)) / 2) 0 0 calc((400px - var(--luz-raio)) / 2);
+    filter: blur(var(--luz-blur));
+    opacity: var(--luz-forca);
+    background: radial-gradient(circle,
+        oklch(var(--luz-cor) / 1)      0%,
+        oklch(var(--luz-cor) / 0.95)  10%,
+        oklch(var(--luz-cor) / 0.82)  20%,
+        oklch(var(--luz-cor) / 0.64)  30%,
+        oklch(var(--luz-cor) / 0.45)  40%,
+        oklch(var(--luz-cor) / 0.29)  50%,
+        oklch(var(--luz-cor) / 0.17)  60%,
+        oklch(var(--luz-cor) / 0.09)  70%,
+        oklch(var(--luz-cor) / 0.04)  80%,
+        oklch(var(--luz-cor) / 0.015) 90%,
+        oklch(var(--luz-cor) / 0)    100%);
+}
+
 .admin-page {
     position: relative;
     z-index: 1;
-    max-width: 1240px;
-    margin: 0 auto;
-    padding: 3rem 1.5rem 6rem;
+    box-sizing: border-box;
+    /* Escala em clamp, sem número fixo: a folga lateral e o padding crescem
+       com a largura da tela e travam nos extremos. min-height só um piso —
+       o cartão para de ser esticado até a altura toda da janela. */
+    width: calc(100% - clamp(1.5rem, 10vw, 12rem));
+    max-width: 960px;
+    /* Centralização vertical que não corta quando o conteúdo cresce.
+       "margin-block: auto" dentro de um flex container divide a sobra igual
+       em cima e embaixo: com poucas abas o cartão fica no meio da tela.
+       Quando o conteúdo passa da altura da janela não há sobra para dividir,
+       a margem vira zero e o cartão volta a começar no topo, rolando inteiro.
+       align-items: center faria o contrário: centraria sempre e decepaparia o
+       topo do cartão, que é justamente o que não pode acontecer ao abrir uma
+       aba grande. */
+    margin-inline: auto;
+    margin-block: auto;
+    padding: clamp(1.25rem, 2.4vw, 2rem);
+    /* Vidro iluminado pelo poente. Na foto a fonte de luz é a faixa clara do
+       horizonte, atrás e abaixo do cartão — então a luz entra por baixo, não
+       por cima. Três camadas, de cima para baixo no empilhamento:
+         1. brilho do céu, frio e fraco, escorrendo do topo;
+         2. o poente propriamente dito: clarão quente subindo da base;
+         3. a tinta do vidro.
+       Luz vindo de baixo é o que denuncia entardecer — de cima o olho lê
+       como lâmpada de teto. */
+    background:
+        linear-gradient(180deg,
+            oklch(var(--acento-frio) / var(--vidro-ceu)),
+            oklch(var(--acento-frio) / 0) 40%),
+        radial-gradient(140% 90% at 50% 118%,
+            oklch(var(--luz-cor) / var(--vidro-poente)) 0%,
+            oklch(var(--luz-cor) / calc(var(--vidro-poente) * 0.45)) 35%,
+            oklch(var(--luz-cor) / 0) 72%),
+        oklch(var(--vidro-cor) / var(--vidro-tinta));
+    backdrop-filter: blur(var(--vidro-blur)) saturate(150%);
+    -webkit-backdrop-filter: blur(var(--vidro-blur)) saturate(150%);
+    border: none;
+    border-radius: 20px;
+    /* A sombra também esquenta: sombra de sol poente puxa o âmbar do
+       ambiente, não o cinza neutro de luz de estúdio. */
+    box-shadow: 0 25px 60px oklch(18% 0.02 60 / 0.45);
+}
+/* ================= BOTÃO DO ROBÔ =================
+   O script.js monta este botão com estilo inline, e inline vence folha de
+   estilo — daí o !important, que aqui não é gambiarra e sim o único jeito
+   sem reescrever o JS do site inteiro. O verde original é da marca antiga e
+   destoava da paleta do poente; vira o mesmo âmbar da luz. No site público
+   ele continua verde: esta regra só existe no admin.css. */
+#chat-bot-btn {
+    background: oklch(var(--acento-quente) / 0.14) !important;
+    border: 1px solid oklch(var(--acento-quente) / 0.4) !important;
+    color: oklch(var(--acento-quente)) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    /* A animação inline pulsa em verde; esta sombra fixa, em âmbar, entra
+       por cima dela. */
+    box-shadow: 0 4px 16px rgb(0 0 0 / 0.35),
+                0 0 26px oklch(var(--acento-quente) / 0.3) !important;
+    animation: none !important;
+    transition: box-shadow 240ms ease, transform 240ms ease;
+}
+#chat-bot-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgb(0 0 0 / 0.4),
+                0 0 40px oklch(var(--acento-quente) / 0.45) !important;
+}
+
+/* O grão do vidro jateado: ruído fractal em SVG, sem nenhum arquivo externo.
+   Fica em cima do fundo e embaixo do conteúdo, e não pega clique. */
+.admin-page::before {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: var(--vidro-grao);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.admin-page > * { position: relative; z-index: 1; }
+
+/* O app.js dá focus() no <main tabindex="-1"> depois do login. Sem isto o
+   navegador desenha o anel de foco padrão em volta do painel inteiro. */
+.admin-page:focus,
+.admin-page:focus-visible { outline: none; }
+
+/* Acesso por teclado: o atalho só aparece quando recebe foco. */
+.admin-pular {
+    position: fixed; top: 0.75rem; left: 0.75rem; z-index: 10010;
+    padding: 0.65rem 0.9rem; border-radius: 8px;
+    background: var(--accent-mac); color: #062018;
+    font-weight: 700; text-decoration: none;
+    transform: translateY(-160%); transition: transform 160ms ease;
+}
+.admin-pular:focus { transform: translateY(0); }
+.sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
 
 /* ================= ENTRADA ================= */
 .admin-login {
     position: relative;
     z-index: 1;
-    min-height: 100vh;
+    /* O body agora é flex com padding: 100vh aqui somaria ao padding e criaria
+       rolagem à toa. Ocupar a sobra dá o mesmo resultado sem isso. */
+    flex: 1;
+    min-height: auto;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -58,11 +283,12 @@
     animation: borderRun 4s linear infinite;
     background: conic-gradient(from var(--border-angle),
         transparent 0deg, transparent 190deg,
-        rgba(79, 163, 255, 0) 210deg,
-        #1f6fd1 250deg, #6ee7c8 300deg, #fff 330deg, #4fa3ff 350deg,
-        rgba(110, 231, 200, 0) 360deg);
+        oklch(var(--acento-frio) / 0) 210deg,
+        oklch(var(--acento-frio)) 250deg, oklch(var(--acento-quente)) 300deg,
+        #fff 330deg, oklch(var(--acento-frio)) 350deg,
+        oklch(var(--acento-quente) / 0) 360deg);
     opacity: 0.6;
-    filter: drop-shadow(0 0 2px rgba(79, 163, 255, 0.5));
+    filter: drop-shadow(0 0 2px oklch(var(--acento-frio) / 0.5));
 }
 .login-box > * { position: relative; z-index: 1; }
 
@@ -71,8 +297,8 @@
     aspect-ratio: 720 / 232;
     margin: 0 auto 1.75rem;
     background: linear-gradient(135deg, var(--accent-mac), var(--accent-win));
-    -webkit-mask-image: url('../img/logo-footer.png');
-    mask-image: url('../img/logo-footer.png');
+    -webkit-mask-image: url('../img/logo.png');
+    mask-image: url('../img/logo.png');
     -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
     -webkit-mask-position: center; mask-position: center;
     -webkit-mask-size: contain; mask-size: contain;
@@ -81,8 +307,8 @@
     display: inline-flex; align-items: center; gap: 0.45rem;
     padding: 0.35rem 0.85rem; margin-bottom: 1.25rem;
     border-radius: 100px;
-    background: rgba(110, 231, 200, 0.1);
-    border: 1px solid rgba(110, 231, 200, 0.28);
+    background: oklch(var(--acento-quente) / 0.1);
+    border: 1px solid oklch(var(--acento-quente) / 0.28);
     color: var(--accent-mac);
     font-size: 0.72rem; font-weight: 700;
     letter-spacing: 0.06em; text-transform: uppercase;
@@ -114,7 +340,7 @@
 .campo-senha input:focus {
     outline: none;
     border-color: var(--accent-mac);
-    box-shadow: 0 0 0 3px rgba(110, 231, 200, 0.12);
+    box-shadow: 0 0 0 3px oklch(var(--acento-quente) / 0.12);
 }
 .ver-senha {
     position: absolute; right: 0.6rem; top: 50%;
@@ -140,35 +366,162 @@
 .erro { color: #ff6b5e; font-size: 0.85rem; margin-top: 0.5rem; }
 
 /* ================= CABEÇALHO ================= */
+/* O <header> daqui é só o topo do painel, não a barra do site. Sem este
+   reset ele herda o seletor global "header" do style.css — barra fixa, fundo
+   chapado, desfoque e linha embaixo. */
 .admin-head {
+    position: static;
+    z-index: auto;
+    padding: 0;
+    background: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-bottom: none;
     display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;
+    flex-wrap: wrap; gap: 1.5rem; margin-bottom: 2.5rem;
 }
 .admin-head h1 { font-family: 'Outfit', sans-serif; font-size: 1.8rem; font-weight: 600; }
 .admin-head .sub { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.2rem; }
+.admin-head-acoes { display: flex; align-items: center; gap: 0.6rem; }
+.admin-head-acoes .acao { display: inline-flex; align-items: center; gap: 0.45rem; }
+
+button:focus-visible, a:focus-visible, input:focus-visible,
+select:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent-mac);
+    outline-offset: 3px;
+}
+
+/* ================= MODAL DE CADASTROS E AGENDA =================
+   Só apresentação: abre por cima, fecha sem mudar de aba. Nenhuma regra
+   de negócio mora aqui — quem faz o trabalho continua sendo cadastros.js,
+   inalterado. */
+.admin-modal {
+    position: fixed; inset: 0; z-index: 55;
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 4vh 1.5rem;
+    background: rgba(0, 0, 0, 0.65);
+    overflow-y: auto;
+}
+.admin-modal-caixa {
+    /* a tabela de cadastros tem 9 colunas (Pessoa, OAB, WhatsApp, Plano,
+       Renovação, Chamado grátis, Chamados, Último login, ação) — 64rem
+       forçava rolagem horizontal por dentro do modal. 96vw com teto maior
+       dá espaço para as colunas sem estourar a tela. */
+    width: 100%; max-width: min(96vw, 92rem);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+.admin-modal-topo {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; margin-bottom: 1.25rem;
+}
+.admin-modal-topo h2 { font-family: 'Outfit', sans-serif; font-size: 1.3rem; font-weight: 600; }
+
+/* Cadastros (premium e gratuito, na mesma tabela) e a agenda do gratuito são
+   dois assuntos diferentes empilhados na mesma caixa. Sem folga entre eles a
+   agenda parecia continuação da tabela de cima; o vão e o filete deixam claro
+   onde uma acaba e a outra começa. */
+#aba-cadastros-agenda {
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-color);
+}
+@media (max-width: 768px) {
+    .admin-modal { padding: 0; }
+    .admin-modal-caixa { max-width: none; min-height: 100vh; border-radius: 0; }
+    #aba-cadastros-agenda { margin-top: 1.75rem; padding-top: 1.5rem; }
+}
 
 /* ================= NÚMEROS DO TOPO ================= */
 .stats {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem; margin-bottom: 2rem;
+    /* Coluna menor: cabem mais cards por linha e cada um fica mais compacto.
+       O auto-fit continua reagindo à largura, então a responsividade é a
+       mesma — só muda o ponto em que a linha quebra. */
+    grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+    gap: 0.7rem; margin-bottom: 1.75rem;
 }
+/* Vidro chapado e nada mais: sem borda, sem sombra, sem degradê — nem no
+   fundo, nem no aro, nem no hover. A cor da marca fica só no ícone e no
+   número. O @property --border-angle e o @keyframes borderRun seguem
+   definidos porque o login-box ainda os usa. */
 .stat {
+    position: relative;
+    display: flex; flex-direction: row; align-items: center; gap: 0.65rem;
     background: rgba(22, 22, 24, 0.35);
-    border: 1px solid var(--border-color);
-    border-radius: 14px; padding: 1.25rem;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: none;
+    box-shadow: none;
+    border-radius: 12px; padding: 0.55rem 0.8rem;
+    overflow: hidden;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.stat:hover { transform: translateY(-3px); }
+.stat > * { position: relative; z-index: 1; }
+
+.stat.mac, .stat.win,
+.stat.mac:hover, .stat.win:hover {
+    background: rgba(22, 22, 24, 0.35);
+    border: none;
+    box-shadow: none;
+}
+
+.stat-icon {
+    flex-shrink: 0;
+    width: 32px; height: 32px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.95rem;
+}
+.stat.mac .stat-icon {
+    background: oklch(var(--acento-quente) / 0.12);
+    color: var(--accent-mac);
+    border: none;
+}
+.stat.win .stat-icon {
+    background: oklch(var(--acento-frio) / 0.1);
+    color: var(--accent-win);
+    border: none;
+}
+
+.stat-texto {
+    flex: 1; min-width: 0;
+    display: flex; align-items: baseline; gap: 0.4rem;
+    /* nunca empilha: o rótulo mais comprido ("Sem renovação", "Logins
+       (30d)") encolhe com reticências antes de quebrar linha e esticar o
+       card na vertical — largura sobra, altura não. */
+    flex-wrap: nowrap;
 }
 .stat-num {
+    flex-shrink: 0;
     font-family: 'Outfit', sans-serif;
-    font-size: 1.8rem; font-weight: 700; color: var(--accent-mac);
+    font-size: 1.1rem; font-weight: 700; line-height: 1.2;
+    white-space: nowrap;
 }
-.stat-lbl { color: var(--text-muted); font-size: 0.8rem; margin-top: 0.15rem; }
+.stat.mac .stat-num { color: var(--accent-mac); }
+.stat.win .stat-num { color: var(--accent-win); }
+.stat-lbl {
+    color: var(--text-secondary); font-size: 0.68rem;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    min-width: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+    .stat { transition: none; }
+}
 
 /* ================= ABAS ================= */
+/* Conteúdo largo (a tabela da verificação de OAB) tem que rolar dentro do
+   .tabela-wrap, nunca alargar o painel — se alargasse, o cartão deixava de
+   ficar centralizado naquela aba. */
+.aba-conteudo { min-width: 0; max-width: 100%; }
+
 .abas {
     display: flex; flex-wrap: wrap; gap: 0.5rem;
     border-bottom: 1px solid var(--border-color);
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem;
 }
 .aba {
     display: inline-flex; align-items: center; gap: 0.5rem;
@@ -214,7 +567,7 @@ select:focus, .filtros input:focus { outline: none; border-color: var(--accent-m
 .filtros {
     display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1rem;
 }
-.filtros .busca-chamados { flex: 1; min-width: 220px; }
+.filtros .busca-chamados { flex: 0 1 320px; min-width: 220px; }
 .busca { margin-bottom: 1rem; }
 .busca input {
     width: 100%; box-sizing: border-box;
@@ -256,11 +609,39 @@ tr.abandonado td { background: rgba(255, 176, 32, 0.05); }
     display: inline-block; padding: 0.25rem 0.6rem;
     border-radius: 100px; font-size: 0.72rem; font-weight: 700; white-space: nowrap;
 }
-.tag.ativa { background: rgba(110, 231, 200, 0.15); color: var(--accent-mac); }
+.tag.ativa { background: oklch(var(--acento-quente) / 0.15); color: var(--accent-mac); }
 .tag.sem { background: rgba(255, 255, 255, 0.06); color: var(--text-muted); }
 .tag.usado { background: rgba(255, 107, 94, 0.15); color: #ff6b5e; }
-.tag.livre { background: rgba(79, 163, 255, 0.15); color: var(--accent-win); }
+.tag.livre { background: oklch(var(--acento-frio) / 0.15); color: var(--accent-win); }
+.tag.feito { background: oklch(var(--verde-feito) / 0.18); color: oklch(var(--verde-feito)); }
 .tag.atrasada { background: rgba(255, 176, 32, 0.16); color: #ffb020; }
+
+/* Etiqueta de tipo na fila de Chamados: mais peso que a .tag genérica —
+   ícone, borda e brilho na cor da marca, porque é o dado que decide a
+   ordem da fila (Premium sempre acima do grátis). */
+.tag-tipo {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.32rem 0.8rem;
+    border-radius: 100px; border: 1px solid transparent;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.7rem; font-weight: 500; letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.tag-tipo i { font-size: 0.66rem; }
+.tag-tipo.premium {
+    background: linear-gradient(135deg, oklch(var(--acento-quente) / 0.22), oklch(var(--acento-quente) / 0.1));
+    border-color: oklch(var(--acento-quente) / 0.4);
+    color: var(--accent-mac);
+    box-shadow: 0 0 14px oklch(var(--acento-quente) / 0.18);
+    text-shadow: 0 0 12px oklch(var(--acento-quente) / 0.35);
+}
+.tag-tipo.gratis {
+    background: oklch(var(--acento-frio) / 0.12);
+    border-color: oklch(var(--acento-frio) / 0.3);
+    color: var(--accent-win);
+    text-shadow: 0 0 12px oklch(var(--acento-frio) / 0.25);
+}
 
 .acao {
     padding: 0.45rem 0.85rem; border-radius: 8px; cursor: pointer;
@@ -274,6 +655,14 @@ tr.abandonado td { background: rgba(255, 176, 32, 0.05); }
 .acao:disabled { opacity: 0.4; cursor: default; }
 .acao-ok:hover { border-color: var(--accent-mac); color: var(--accent-mac); }
 .acao-nao:hover { border-color: #ff6b5e; color: #ff6b5e; }
+.obs-input {
+    width: 160px; box-sizing: border-box;
+    padding: 0.4rem 0.6rem;
+    background: var(--bg-card); border: 1px solid var(--border-color);
+    border-radius: 8px; color: var(--text-primary);
+    font-family: inherit; font-size: 0.8rem;
+}
+.obs-input:focus { outline: none; border-color: var(--accent-mac); }
 .mini {
     margin-left: 0.5rem; padding: 0.15rem 0.5rem;
     border: 1px solid var(--border-color); border-radius: 6px;
@@ -388,6 +777,12 @@ tr.abandonado td { background: rgba(255, 176, 32, 0.05); }
 .triagem-card.marcado { border-left: 3px solid var(--accent-win); }
 .triagem-card.marcado.critico { border-left-color: #ff6b5e; }
 
+/* Etapa 2, esperando o horário: barra âmbar à esquerda, contra a azul de
+   quem já tem hora marcada. A cor diz de quem é a vez sem precisar ler. */
+.triagem-card.aguardando { border-left: 3px solid oklch(var(--acento-quente)); }
+.triagem-card.aguardando.critico { border-left-color: #ff6b5e; }
+.triagem-card.aguardando .triagem-quando { color: oklch(var(--acento-quente)); }
+
 /* o botão que fecha a triagem: é a ação principal do cartão e precisa
    parecer diferente de "remarcar" e "WhatsApp", que são apoio */
 .acao-promover {
@@ -396,15 +791,91 @@ tr.abandonado td { background: rgba(255, 176, 32, 0.05); }
     font-weight: 700;
 }
 .acao-promover:hover {
-    background: rgba(110, 231, 200, 0.12);
+    background: oklch(var(--acento-quente) / 0.12);
+}
+
+/* ---- Baixa do atendimento gratuito ----
+   O verde é o único da paleta e existe só para isto: "feito". Se ele
+   aparecesse em mais lugares, a linha verde deixaria de significar algo à
+   primeira vista. */
+.acao-atendido {
+    border-color: oklch(var(--verde-feito) / 0.55);
+    color: oklch(var(--verde-feito));
+    font-weight: 700;
+}
+.acao-atendido:hover {
+    background: oklch(var(--verde-feito) / 0.14);
+    border-color: oklch(var(--verde-feito));
+    color: oklch(var(--verde-feito));
+}
+/* Caminho de volta: existe, mas não disputa atenção com o botão de trabalho */
+.acao-desfazer-baixa {
+    font-size: 0.72rem;
+    opacity: 0.65;
+}
+.acao-desfazer-baixa:hover { opacity: 1; }
+
+/* Duas ações na mesma célula sem uma colar na outra */
+.celula-acoes {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem;
+}
+
+/* A linha verde. A barra na borda esquerda é o que se enxerga de relance ao
+   correr o olho pela coluna — o fundo sozinho, fraco o bastante para não
+   atrapalhar a leitura, não se destaca numa varredura rápida. */
+tr.linha-atendida > td {
+    background: oklch(var(--verde-feito) / 0.1);
+}
+tr.linha-atendida > td:first-child {
+    box-shadow: inset 3px 0 0 oklch(var(--verde-feito) / 0.75);
+}
+tr.linha-atendida:hover > td {
+    background: oklch(var(--verde-feito) / 0.16);
 }
 
 /* ================= AGENDA DENTRO DO CARTÃO ================= */
+/* A agenda abre como janela solta, ancorada no botão e subindo por cima do
+   cartão. Antes ela era um bloco no fim do cartão: empurrava tudo para
+   baixo, o cartão crescia e os cartões seguintes pulavam de lugar — e num
+   cartão perto do rodapé a lista de horas nascia fora da tela.
+
+   O ponto de ancoragem é o .triagem-acoes, que já é position: relative. */
 .agenda-inline {
-    width: 100%;
-    margin-top: 0.9rem;
-    padding-top: 0.9rem;
-    border-top: 1px solid var(--border-color);
+    position: absolute;
+    bottom: calc(100% + 0.55rem);   /* acima do botão, não abaixo */
+    left: 0;
+    z-index: 40;
+    width: min(30rem, 78vw);
+    padding: 0.9rem;
+    background: oklch(var(--vidro-cor) / 0.92);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid oklch(var(--acento-quente) / 0.22);
+    border-radius: 14px;
+    box-shadow: 0 18px 44px rgb(0 0 0 / 0.5);
+    /* a lista de horas pode ser longa: rola dentro da janela, sem esticá-la */
+    max-height: 60vh; overflow-y: auto;
+}
+/* bico apontando para o botão que a abriu */
+.agenda-inline::after {
+    content: '';
+    position: absolute; top: 100%; left: 1.4rem;
+    border: 7px solid transparent;
+    border-top-color: oklch(var(--vidro-cor) / 0.92);
+}
+/* Perto do rodapé não há espaço acima: aí ela desce. A classe é posta pelo
+   triagem.js, que mede o espaço livre na hora de abrir. */
+.agenda-inline.para-baixo {
+    bottom: auto;
+    top: calc(100% + 0.55rem);
+}
+.agenda-inline.para-baixo::after {
+    top: auto; bottom: 100%;
+    border-top-color: transparent;
+    border-bottom-color: oklch(var(--vidro-cor) / 0.92);
+}
+@media (max-width: 600px) {
+    .agenda-inline { width: min(30rem, 92vw); }
 }
 .agenda-dias {
     display: flex; gap: 0.4rem;
@@ -421,10 +892,10 @@ tr.abandonado td { background: rgba(255, 176, 32, 0.05); }
     color: var(--text-primary);
     font-family: inherit; cursor: pointer;
 }
-.agenda-dia:hover { border-color: rgba(110, 231, 200, 0.5); }
+.agenda-dia:hover { border-color: oklch(var(--acento-quente) / 0.5); }
 .agenda-dia.ativo {
     border-color: var(--accent-mac);
-    background: rgba(110, 231, 200, 0.1);
+    background: oklch(var(--acento-quente) / 0.1);
 }
 .agenda-dia-sem { font-size: 0.6rem; color: var(--text-muted); letter-spacing: 0.05em; }
 .agenda-dia-num {
@@ -509,32 +980,207 @@ tr.abandonado td { background: rgba(255, 176, 32, 0.05); }
 }
 .ind-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    /* largo o bastante pra pílula mais comprida ("Tempo até o 1º retorno")
+       caber ao lado do número sem forçar quebra nem estourar o card */
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 0.9rem;
+    /* cada card só com a altura do próprio conteúdo — sem isso o grid
+       estica toda a linha até o card mais alto dela */
+    align-items: start;
 }
 .ind-item {
-    background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    padding: 1rem 1.15rem;
+    padding: 0.6rem 1.15rem;
+    display: flex; align-items: center;
+    gap: 0.6rem;
 }
 .ind-rot {
-    font-size: 0.72rem; text-transform: uppercase;
-    letter-spacing: 0.06em; color: var(--text-muted);
-    margin-bottom: 0.35rem;
+    /* mesmo modelo chiclete dos ícones dos cards do topo: pílula fina e
+       larga, não um rótulo solto. Nunca quebra linha nem estoura o card —
+       encolhe com reticências se faltar espaço de verdade. */
+    flex: 1 1 auto; min-width: 0;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 100px;
+    padding: 0.28rem 0.75rem;
+    font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--text-muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .ind-val {
+    flex-shrink: 0;
     font-family: 'Outfit', sans-serif;
     font-size: 1.35rem; font-weight: 700;
 }
-.ind-val.bom { color: var(--accent-mac); }
-.ind-val.alerta { color: #ffb020; }
-.ind-dica { color: var(--text-muted); font-size: 0.75rem; margin-top: 0.3rem; }
+/* ================= SERVIDOR E BANCO =================
+   Um card por item: ícone + rótulo à esquerda, badge de status à direita,
+   valor real embaixo. */
+.diag-grid {
+    display: flex; flex-wrap: wrap;
+    gap: 0.9rem;
+    align-items: stretch;
+}
+/* Estes eram os últimos cards opacos do painel: o fundo vinha de --bg-card e
+   --bg-secondary, cores chapadas do site, e sobre o vidro do painel eles
+   viravam retângulos pretos. Agora são vidro também, banhados pelo amarelo
+   queimado vindo de baixo — mesma direção de luz do painel. */
+.diag-item {
+    flex: 1 1 220px;
+    background:
+        radial-gradient(120% 100% at 50% 115%,
+            oklch(var(--amarelo-queimado) / 0.22) 0%,
+            oklch(var(--amarelo-queimado) / 0.09) 40%,
+            oklch(var(--amarelo-queimado) / 0) 75%),
+        oklch(var(--vidro-cor) / var(--o-25));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid oklch(var(--amarelo-queimado) / 0.18);
+    border-radius: 16px;
+    padding: 1rem 1.15rem;
+    display: flex; flex-direction: column; gap: 0.7rem;
+    transition: transform 180ms ease, border-color 180ms ease;
+}
+.diag-item:hover {
+    transform: translateY(-2px);
+    border-color: oklch(var(--amarelo-queimado) / 0.4);
+}
+/* Agenda do grátis: mais larga, cabe a grade de horários.
+   Tabelas: ocupa a linha toda, cabe a lista de contagens. */
+.diag-item.largo { flex: 1.8 1 380px; }
+.diag-item.cheia { flex: 1 1 100%; }
+.diag-cabeca {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 0.75rem;
+}
+.diag-titulo { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
+.diag-icone {
+    flex-shrink: 0;
+    width: 32px; height: 32px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    background: oklch(var(--acento-quente) / 0.1);
+    border: 1px solid oklch(var(--acento-quente) / 0.22);
+    color: var(--accent-mac);
+}
+.diag-icone svg { width: 17px; height: 17px; }
+.diag-rot {
+    font-size: 0.85rem; font-weight: 600; color: var(--text-primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.diag-val {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem; color: var(--text-muted);
+    word-break: break-word;
+}
+.diag-val.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* pílula com bolinha, cor por status — só no badge, nunca mais no valor */
+.badge {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    flex-shrink: 0;
+    padding: 0.24rem 0.65rem;
+    border-radius: 100px; border: 1px solid transparent;
+    font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;
+}
+.badge .dot { width: 6px; height: 6px; border-radius: 50%; }
+.badge.bom { background: oklch(var(--acento-quente) / 0.15); border-color: oklch(var(--acento-quente) / 0.35); color: var(--accent-mac); }
+.badge.bom .dot { background: var(--accent-mac); }
+.badge.alerta { background: rgba(255, 176, 32, 0.15); border-color: rgba(255, 176, 32, 0.35); color: #ffb020; }
+.badge.alerta .dot { background: #ffb020; }
+.badge.ruim { background: rgba(255, 107, 129, 0.15); border-color: rgba(255, 107, 129, 0.35); color: #ff6b81; }
+.badge.ruim .dot { background: #ff6b81; }
+.badge.neutro { background: rgba(255, 255, 255, 0.06); border-color: var(--border-color); color: var(--text-muted); }
+.badge.neutro .dot { background: var(--text-muted); }
+
+/* grade de horários dentro do card da Agenda do grátis */
+.diag-slots {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+.diag-slot {
+    padding: 0.55rem 0.7rem;
+    border: 1px solid oklch(var(--amarelo-queimado) / 0.14);
+    background: oklch(var(--amarelo-queimado) / 0.07);
+    border-radius: 10px;
+}
+.diag-slot.cheio { grid-column: 1 / -1; }
+.diag-slot-k {
+    font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-muted); margin-bottom: 0.25rem;
+}
+.diag-slot-v { font-size: 0.85rem; font-weight: 600; }
+
+/* tabela formal dentro do card de Tabelas — ledger-style pronta para
+   impressão, com colunas # | Tabela | Descrição | Registros */
+.diag-tabela {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    margin-top: 0.2rem;
+}
+.diag-tabela th, .diag-tabela td {
+    padding: 0.55rem 0.7rem;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+    vertical-align: middle;
+}
+.diag-tabela thead th {
+    background: oklch(var(--amarelo-queimado) / 0.1);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    font-weight: 600;
+    border-bottom: 2px solid var(--border-color);
+}
+.diag-tabela tbody tr:hover td {
+    background: oklch(var(--amarelo-queimado) / 0.08);
+}
+.diag-tabela td.num, .diag-tabela th.num {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+.diag-tabela tfoot td {
+    font-weight: 700;
+    border-top: 2px solid var(--border-color);
+    border-bottom: none;
+    background: oklch(var(--amarelo-queimado) / 0.1);
+    padding: 0.65rem 0.7rem;
+}
+.diag-tabela tfoot td.num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--accent-mac);
+}
+/* ações embaixo da tabela */
+.diag-tabela-acoes {
+    margin-top: 0.75rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+.diag-btn-imprimir {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+.diag-btn-imprimir::before {
+    content: '\f02f';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
 
 .diag-ajuda {
     margin-top: 1.5rem;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
+    background: oklch(var(--vidro-cor) / var(--o-25));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid oklch(var(--amarelo-queimado) / 0.14);
     border-radius: 12px;
     padding: 1rem 1.25rem;
 }
@@ -577,7 +1223,16 @@ tr.abandonado td { background: rgba(255, 176, 32, 0.05); }
 
 /* ================= CELULAR: TABELA VIRA CARTÃO ================= */
 @media (max-width: 768px) {
-    .admin-page { padding: 2rem 1rem 5rem; }
+    /* No celular a folga lateral do clamp comeria a tela: aqui volta a ser
+       uma margem pequena e fixa, e o cartão pode ir até o fim do conteúdo. */
+    .admin-page {
+        width: calc(100% - 1rem);
+        min-height: 0;
+        margin-block: auto;
+        padding: 1.25rem 0.9rem 3rem;
+        border-radius: 14px;
+    }
+    body { padding-block: 0.5rem; }
 
     /* Sem isto seis colunas ficariam espremidas em 360px e nada se leria.
        Cada linha vira um bloco, e o rótulo da coluna aparece ao lado do
@@ -588,6 +1243,18 @@ tr.abandonado td { background: rgba(255, 176, 32, 0.05); }
     .tabela-wrap.responsiva tr,
     .tabela-wrap.responsiva td { display: block; width: 100%; }
     .tabela-wrap.responsiva thead { display: none; }
+
+    /* No celular a linha já é um bloco: o verde vai no bloco inteiro, e as
+       células voltam a ser transparentes para não pintarem por cima. */
+    .tabela-wrap.responsiva tr.linha-atendida {
+        background: oklch(var(--verde-feito) / 0.12);
+        box-shadow: inset 3px 0 0 oklch(var(--verde-feito) / 0.75);
+    }
+    .tabela-wrap.responsiva tr.linha-atendida > td,
+    .tabela-wrap.responsiva tr.linha-atendida > td:first-child {
+        background: none;
+        box-shadow: none;
+    }
 
     .tabela-wrap.responsiva tr {
         background: rgba(22, 22, 24, 0.35);

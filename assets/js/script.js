@@ -475,6 +475,10 @@ document.addEventListener('DOMContentLoaded', function() {
         document.head.appendChild(botGlowStyle);
 
         const btn = document.createElement('button');
+        // O id existe só para dar alça ao CSS: o estilo daqui é inline, e
+        // inline vence folha de estilo. O painel repinta este botão na sua
+        // paleta pelo #chat-bot-btn (com !important, pelo mesmo motivo).
+        btn.id = 'chat-bot-btn';
         btn.innerHTML = '<i class="fa-solid fa-robot"></i>';
         Object.assign(btn.style, {
             position:'fixed', bottom:'24px', right:'24px',
@@ -1452,6 +1456,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .free-msg { margin-top: 1rem; text-align: center; font-size: 0.86rem; min-height: 1.2em; }
                 .free-fechar {
                     position: absolute; top: 1rem; right: 1.2rem;
+                    width: auto;
                     background: none; border: none; color: #8a8a90;
                     font-size: 1.6rem; line-height: 1; cursor: pointer;
                     padding: 0 4px; z-index: 2;

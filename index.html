@@ -33,7 +33,7 @@
             /* os dois somam sempre 15.5rem: passar altura de um para o outro
                desce o texto sem mudar a altura da seção — o que vem depois
                (anúncio e cards) não se move */
-            padding: 12rem 1.5rem 3.5rem;
+            padding: 14.5rem 1.5rem 1rem;
             max-width: 820px;
             margin: 0 auto;
         }
@@ -101,6 +101,21 @@
             color: var(--text-secondary);
             font-size: 1.08rem;
             line-height: 1.7;
+        }
+        .hero-desc {
+            margin-top: 1.4rem;
+            font-size: 1.3rem;
+            line-height: 1.8;
+        }
+        .hero-desc-free {
+            color: var(--accent-win);
+            font-weight: 600;
+            text-shadow: 0 0 16px rgba(79, 163, 255, 0.6);
+        }
+        .hero-desc-paid {
+            color: var(--accent-mac);
+            font-weight: 600;
+            text-shadow: 0 0 16px rgba(110, 231, 200, 0.6);
         }
 
         /* === CARDS DE PLATAFORMA === */
@@ -646,13 +661,27 @@
             to { transform: translateX(-50%); }
         }
 
+        /* --- item da esteira: caixa da logo + nome do tribunal embaixo --- */
+        .belt-item {
+            flex: 0 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.4rem;
+            margin-right: 16px;
+        }
+        .belt-name {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.02em;
+        }
         /* --- item da esteira: mesma caixa para mídia de certificado e logo de tribunal --- */
         .belt-token,
         .belt-logo {
             flex: 0 0 auto;
             width: 141px;
             height: 72px;
-            margin-right: 16px;
             border-radius: 16px;
             border: 1px solid rgba(255, 255, 255, 0.09);
             /* degradê escuro + halo da marca no topo */
@@ -890,7 +919,11 @@
             font-size: 0.85rem;
             text-align: center;
         }
-        .courts-note i { color: var(--accent-mac); }
+        .courts-note i {
+            color: var(--accent-mac);
+            flex-shrink: 0;
+            line-height: 1;
+        }
 
         /* === PLANOS DE ASSINATURA === */
         .plans-section {
@@ -938,11 +971,24 @@
         }
         .plan-card:hover {
             transform: translateY(-4px);
-            border-color: rgba(110, 231, 200, 0.4);
+        }
+        .plan-card.free {
+            border-color: rgba(79, 163, 255, 0.3);
+            background-color: rgba(79, 163, 255, 0.06);
+            box-shadow: 0 0 45px rgba(79, 163, 255, 0.16);
+        }
+        .plan-card.free:hover {
+            border-color: rgba(79, 163, 255, 0.5);
+            box-shadow: 0 0 60px rgba(79, 163, 255, 0.3);
         }
         .plan-card.paid {
             border-color: rgba(110, 231, 200, 0.3);
-            background-color: rgba(110, 231, 200, 0.05);
+            background-color: rgba(110, 231, 200, 0.06);
+            box-shadow: 0 0 45px rgba(110, 231, 200, 0.16);
+        }
+        .plan-card.paid:hover {
+            border-color: rgba(110, 231, 200, 0.5);
+            box-shadow: 0 0 60px rgba(110, 231, 200, 0.3);
         }
         .plan-tag {
             display: inline-flex;
@@ -1217,9 +1263,96 @@
             <!-- as plataformas entram entre o título e o texto, dividindo os dois -->
             <img class="hero-logos" src="assets/img/mac-win.png"
                  alt="Suporte para Mac e Windows" loading="lazy">
-            <p>
-                Instalamos certificados digitais em computadores com Windows e em MacBook ou MacBook Air,
-                com suporte especializado do início ao fim. Selecione seu sistema abaixo para começar.
+
+            <!-- Esteira: sistemas dos tribunais -->
+            <div class="belt belt-reverse">
+                <div class="belt-track">
+                    <div class="belt-item">
+                        <div class="belt-logo clarear"><img src="assets/img/A_PJE.png" alt="PJe — Processo Judicial Eletrônico" loading="lazy"></div>
+                        <span class="belt-name">PJe</span>
+                    </div>
+                    <div class="belt-item">
+                        <div class="belt-logo clarear"><img src="assets/img/A_ESAJ.png" alt="e-SAJ — Portal de Serviços" loading="lazy"></div>
+                        <span class="belt-name">e-SAJ</span>
+                    </div>
+                    <div class="belt-item">
+                        <div class="belt-logo clarear"><img src="assets/img/A_EPROC.png" alt="eproc — Processo Eletrônico" loading="lazy"></div>
+                        <span class="belt-name">eproc</span>
+                    </div>
+                    <div class="belt-item">
+                        <div class="belt-logo clarear"><img src="assets/img/A_STJ.png" alt="STJ — Superior Tribunal de Justiça" loading="lazy"></div>
+                        <span class="belt-name">STJ</span>
+                    </div>
+                    <div class="belt-item">
+                        <div class="belt-logo clarear vertical"><img src="assets/img/A_STF.png" alt="STF — Supremo Tribunal Federal" loading="lazy"></div>
+                        <span class="belt-name">STF</span>
+                    </div>
+                    <div class="belt-item">
+                        <div class="belt-logo clarear vertical"><img src="assets/img/A_TJGO.png" alt="TJGO — Tribunal de Justiça do Estado de Goiás" loading="lazy"></div>
+                        <span class="belt-name">TJGO</span>
+                    </div>
+                    <div class="belt-item">
+                        <div class="belt-logo clarear vertical"><img src="assets/img/A_TRF.png" alt="TRF — Justiça Federal" loading="lazy"></div>
+                        <span class="belt-name">TRF</span>
+                    </div>
+                    <div class="belt-item">
+                        <div class="belt-logo clarear ampliada"><img src="assets/img/A_TRT.png" alt="Justiça do Trabalho — TRT" loading="lazy"></div>
+                        <span class="belt-name">TRT</span>
+                    </div>
+                    <!-- SEEU já é uma marca clara: sem a classe "clarear", que inverteria e a apagaria -->
+                    <div class="belt-item">
+                        <div class="belt-logo ampliada"><img src="assets/img/A_SEEU.png" alt="SEEU — Sistema Eletrônico de Execução Unificado" loading="lazy"></div>
+                        <span class="belt-name">SEEU</span>
+                    </div>
+
+                    <!-- cópia idêntica: fecha o loop sem emenda -->
+                    <div class="belt-item" aria-hidden="true">
+                        <div class="belt-logo clarear"><img src="assets/img/A_PJE.png" alt="" loading="lazy"></div>
+                        <span class="belt-name">PJe</span>
+                    </div>
+                    <div class="belt-item" aria-hidden="true">
+                        <div class="belt-logo clarear"><img src="assets/img/A_ESAJ.png" alt="" loading="lazy"></div>
+                        <span class="belt-name">e-SAJ</span>
+                    </div>
+                    <div class="belt-item" aria-hidden="true">
+                        <div class="belt-logo clarear"><img src="assets/img/A_EPROC.png" alt="" loading="lazy"></div>
+                        <span class="belt-name">eproc</span>
+                    </div>
+                    <div class="belt-item" aria-hidden="true">
+                        <div class="belt-logo clarear"><img src="assets/img/A_STJ.png" alt="" loading="lazy"></div>
+                        <span class="belt-name">STJ</span>
+                    </div>
+                    <div class="belt-item" aria-hidden="true">
+                        <div class="belt-logo clarear vertical"><img src="assets/img/A_STF.png" alt="" loading="lazy"></div>
+                        <span class="belt-name">STF</span>
+                    </div>
+                    <div class="belt-item" aria-hidden="true">
+                        <div class="belt-logo clarear vertical"><img src="assets/img/A_TJGO.png" alt="" loading="lazy"></div>
+                        <span class="belt-name">TJGO</span>
+                    </div>
+                    <div class="belt-item" aria-hidden="true">
+                        <div class="belt-logo clarear vertical"><img src="assets/img/A_TRF.png" alt="" loading="lazy"></div>
+                        <span class="belt-name">TRF</span>
+                    </div>
+                    <div class="belt-item" aria-hidden="true">
+                        <div class="belt-logo clarear ampliada"><img src="assets/img/A_TRT.png" alt="" loading="lazy"></div>
+                        <span class="belt-name">TRT</span>
+                    </div>
+                    <div class="belt-item" aria-hidden="true">
+                        <div class="belt-logo ampliada"><img src="assets/img/A_SEEU.png" alt="" loading="lazy"></div>
+                        <span class="belt-name">SEEU</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="courts-note">
+                <i class="fas fa-shield-halved"></i>
+                <span>Marcas e sistemas citados pertencem aos respectivos tribunais. A AdvogaCert presta apenas suporte técnico.</span>
+            </div>
+
+            <p class="hero-desc">
+                Instalamos certificados digitais em computadores com Windows e em MacBook,
+                com suporte especializado do início ao fim. Escolha no final do site o card de <span class="hero-desc-free">suporte grátis</span> ou de <span class="hero-desc-paid">suporte premium</span>.
             </p>
         </section>
     </div>
@@ -1304,38 +1437,6 @@
             </div>
         </div>
         -->
-
-        <!-- Esteira 2: sistemas dos tribunais (direita) -->
-        <div class="belt belt-reverse">
-            <div class="belt-track">
-                <div class="belt-logo clarear"><img src="assets/img/A_PJE.png" alt="PJe — Processo Judicial Eletrônico" loading="lazy"></div>
-                <div class="belt-logo clarear"><img src="assets/img/A_ESAJ.png" alt="e-SAJ — Portal de Serviços" loading="lazy"></div>
-                <div class="belt-logo clarear"><img src="assets/img/A_EPROC.png" alt="eproc — Processo Eletrônico" loading="lazy"></div>
-                <div class="belt-logo clarear"><img src="assets/img/A_STJ.png" alt="STJ — Superior Tribunal de Justiça" loading="lazy"></div>
-                <div class="belt-logo clarear vertical"><img src="assets/img/A_STF.png" alt="STF — Supremo Tribunal Federal" loading="lazy"></div>
-                <div class="belt-logo clarear vertical"><img src="assets/img/A_TJGO.png" alt="TJGO — Tribunal de Justiça do Estado de Goiás" loading="lazy"></div>
-                <div class="belt-logo clarear vertical"><img src="assets/img/A_TRF.png" alt="TRF — Justiça Federal" loading="lazy"></div>
-                <div class="belt-logo clarear ampliada"><img src="assets/img/A_TRT.png" alt="Justiça do Trabalho — TRT" loading="lazy"></div>
-                <!-- SEEU já é uma marca clara: sem a classe "clarear", que inverteria e a apagaria -->
-                <div class="belt-logo ampliada"><img src="assets/img/A_SEEU.png" alt="SEEU — Sistema Eletrônico de Execução Unificado" loading="lazy"></div>
-
-                <!-- cópia idêntica: fecha o loop sem emenda -->
-                <div class="belt-logo clarear" aria-hidden="true"><img src="assets/img/A_PJE.png" alt="" loading="lazy"></div>
-                <div class="belt-logo clarear" aria-hidden="true"><img src="assets/img/A_ESAJ.png" alt="" loading="lazy"></div>
-                <div class="belt-logo clarear" aria-hidden="true"><img src="assets/img/A_EPROC.png" alt="" loading="lazy"></div>
-                <div class="belt-logo clarear" aria-hidden="true"><img src="assets/img/A_STJ.png" alt="" loading="lazy"></div>
-                <div class="belt-logo clarear vertical" aria-hidden="true"><img src="assets/img/A_STF.png" alt="" loading="lazy"></div>
-                <div class="belt-logo clarear vertical" aria-hidden="true"><img src="assets/img/A_TJGO.png" alt="" loading="lazy"></div>
-                <div class="belt-logo clarear vertical" aria-hidden="true"><img src="assets/img/A_TRF.png" alt="" loading="lazy"></div>
-                <div class="belt-logo clarear ampliada" aria-hidden="true"><img src="assets/img/A_TRT.png" alt="" loading="lazy"></div>
-                <div class="belt-logo ampliada" aria-hidden="true"><img src="assets/img/A_SEEU.png" alt="" loading="lazy"></div>
-            </div>
-        </div>
-
-        <div class="courts-note">
-            <i class="fas fa-shield-halved"></i>
-            Marcas e sistemas citados pertencem aos respectivos tribunais. A AdvogaCert presta apenas suporte técnico ao advogado.
-        </div>
 
         <div class="remote-section">
             <div class="remote-visual">
