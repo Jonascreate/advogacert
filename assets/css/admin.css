@@ -266,7 +266,8 @@ body {
     max-width: 400px;
     /* Era --bg-secondary, cor chapada do site: sobre a foto da montanha a
        caixa virava um retângulo preto no meio do poente. Agora é o mesmo
-       vidro do cartão do painel, mas com mais tinta que ele (35% contra 20%):
+       vidro do cartão do painel, mas com bem mais tinta que ele (60% contra
+       20%):
        atrás do cartão grande há painel inteiro para segurar o texto, atrás
        desta caixa há só a montanha, e vidro fino demais deixava a senha
        disputar leitura com a foto. */
@@ -278,7 +279,7 @@ body {
             oklch(var(--luz-cor) / var(--vidro-poente)) 0%,
             oklch(var(--luz-cor) / calc(var(--vidro-poente) * 0.45)) 35%,
             oklch(var(--luz-cor) / 0) 72%),
-        oklch(var(--vidro-cor) / var(--o-35));
+        oklch(var(--vidro-cor) / var(--o-60));
     backdrop-filter: blur(var(--vidro-blur)) saturate(150%);
     -webkit-backdrop-filter: blur(var(--vidro-blur)) saturate(150%);
     border: 1px solid var(--border-color);
