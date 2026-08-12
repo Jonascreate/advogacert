@@ -1926,9 +1926,24 @@ const server = http.createServer((req, res) => {
             res.end(JSON.stringify({ recebido: true }));
 
             try {
-                const evento = JSON.parse(body || '{}');
-                const eventoId = String(evento.id || evento.data?.id || '');
-                if (!eventoId) return;
+                // O Mercado Pago tem dois formatos vivos, e o painel dele
+                // oferece um ou outro conforme a conta:
+                //   webhook novo — corpo { type:'payment', data:{ id } }
+                //   IPN legado   — nada no corpo; vem na URL: ?topic=payment&id=123
+                // Aceitar os dois evita depender de qual opção apareceu na
+                // tela de configuração.
+                let evento = {};
+                try { evento = JSON.parse(body || '{}'); } catch { evento = {}; }
+
+                const naUrl = new URL(url, `http://${req.headers.host}`).searchParams;
+                const tipo = evento.type || evento.topic || naUrl.get('topic') || 'payment';
+                const eventoId = String(
+                    evento.data?.id || evento.id || naUrl.get('id') || naUrl.get('data.id') || ''
+                );
+
+                // merchant_order e outros avisos não são pagamento: ignorar em
+                // vez de tratá-los como venda.
+                if (!eventoId || !/payment/i.test(tipo)) return;
 
                 const db = loadJsonDb();
 
@@ -1938,7 +1953,37 @@ const server = http.createServer((req, res) => {
                     return;
                 }
 
-                const pagador = evento.data?.payer_email || evento.payer?.email || null;
+                // O webhook novo do Mercado Pago é magro: manda só
+                // { type:'payment', data:{ id } } — sem valor e sem pagador.
+                // Quem quiser saber quanto foi pago e por quem precisa
+                // perguntar à API, e é para isso que existe o Access Token.
+                //
+                // Sem essa consulta, toda assinatura nasceria com o valor
+                // padrão e sem dono: quem pagasse R$199 viraria assinante de
+                // R$59, solto de qualquer conta.
+                let detalhe = null;
+                if (MP.accessToken) {
+                    try {
+                        const r = await fetch(`https://api.mercadopago.com/v1/payments/${eventoId}`, {
+                            headers: { Authorization: `Bearer ${MP.accessToken}` }
+                        });
+                        if (r.ok) detalhe = await r.json();
+                        else console.error(`❌ Mercado Pago recusou a consulta (${r.status}) do pagamento ${eventoId}`);
+                    } catch (e) {
+                        console.error('❌ Falha ao consultar o pagamento no Mercado Pago:', e.message);
+                    }
+                }
+
+                // Só um pagamento aprovado vira plano. 'pending', 'rejected' e
+                // 'in_process' não podem liberar atendimento.
+                const situacao = detalhe ? detalhe.status : null;
+                if (detalhe && situacao !== 'approved') {
+                    console.log(`↩️  Pagamento ${eventoId} ignorado: status "${situacao}"`);
+                    return;
+                }
+
+                const pagador = detalhe?.payer?.email
+                    || evento.data?.payer_email || evento.payer?.email || null;
                 const user = pagador
                     ? db.usuarios.find(u => (u.email || '').toLowerCase() === pagador.toLowerCase())
                     : null;
@@ -1946,8 +1991,20 @@ const server = http.createServer((req, res) => {
                 const validaAte = new Date();
                 validaAte.setMonth(validaAte.getMonth() + 1);
 
-                const valorPago = evento.data?.transaction_amount || PLANO_PREMIUM_VALOR;
+                // O valor vem da consulta à API; o corpo do evento só o traz
+                // no formato antigo. O padrão é último recurso, e agora fica
+                // registrado quando foi usado — assinatura com valor chutado
+                // é dinheiro contado errado no faturamento.
+                const valorPago = detalhe?.transaction_amount
+                    ?? evento.data?.transaction_amount
+                    ?? PLANO_PREMIUM_VALOR;
+                const valorConfirmado = detalhe?.transaction_amount != null;
                 const planoPago = planoPeloValor(valorPago);
+
+                if (!valorConfirmado) {
+                    console.warn(`⚠️  Pagamento ${eventoId} gravado sem confirmar valor na API ` +
+                                 `(assumindo R$${valorPago}). Configure MP_ACCESS_TOKEN.`);
+                }
 
                 db.assinaturas.push({
                     id: proximoId(db.assinaturas),
@@ -1955,8 +2012,11 @@ const server = http.createServer((req, res) => {
                     // o nome vem do valor: é o único sinal que o gateway manda
                     plano: planoPago.nome,
                     valor: valorPago,
-                    // sem a chave da API não dá para confirmar de verdade
-                    status: MP.accessToken ? 'ativa' : 'pendente_confirmacao',
+                    // Só é 'ativa' o que a própria API do Mercado Pago
+                    // confirmou como aprovado. Sem a chave, fica pendente e
+                    // espera você liberar na mão — melhor que dar plano a
+                    // quem mandou um POST qualquer nesta rota, que é pública.
+                    status: (detalhe && situacao === 'approved') ? 'ativa' : 'pendente_confirmacao',
                     gateway: 'mercadopago',
                     gateway_ref: eventoId,
                     email_pagador: pagador,
