@@ -269,14 +269,23 @@ body {
    mesmo efeito dos ícones de suporte para Mac e Windows no site
    (iconGlowMac / iconGlowWin). Só a sombra respira — a caixa fica parada,
    sem transform, para não haver movimento sob o texto do formulário. */
+/* O azul é o mesmo do blush-2 do site e do card de Windows: #4fa3ff, o
+   --accent-win. O frio da paleta do painel (--acento-frio) é lavado demais
+   para brilhar. Três camadas de sombra em vez de uma: aro fino, miolo e um
+   halo largo e raso por fora — é o degradê que dá o esfumaçado, já que
+   box-shadow não aceita blur de filtro. */
 @keyframes loginGlow {
     0%, 100% {
-        box-shadow: 0 0 0 1px oklch(var(--acento-frio) / 0.06),
-                    0 0 0 oklch(var(--acento-frio) / 0);
+        box-shadow:
+            0 0 0 1px rgba(79, 163, 255, 0.10),
+            0 0 34px -8px rgba(79, 163, 255, 0.28),
+            0 0 70px 10px rgba(79, 163, 255, 0.10);
     }
     50% {
-        box-shadow: 0 0 0 1px oklch(var(--acento-frio) / 0.20),
-                    0 10px 42px oklch(var(--acento-frio) / 0.32);
+        box-shadow:
+            0 0 0 1px rgba(79, 163, 255, 0.38),
+            0 0 62px 2px rgba(79, 163, 255, 0.60),
+            0 0 130px 34px rgba(79, 163, 255, 0.30);
     }
 }
 .login-box { animation: loginGlow 3.2s ease-in-out infinite; }
