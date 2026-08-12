@@ -24,9 +24,18 @@
         var r = estado.dados && estado.dados.resumo;
         if (!r || !alvoResumo) return;
 
+        /* "Planos ativos" somava Plus e Premium num número só, e os dois têm
+           preço e periodicidade diferentes (R$199/mês contra R$59/dia): a
+           mesma contagem valia dinheiros distintos. A quebra sai de `pessoas`,
+           que já traz o nome do plano de cada um. */
+        var ativos = (estado.dados.pessoas || []).filter(function (p) { return p.status === 'ativa'; });
+        var ativosPlus = ativos.filter(function (p) { return /plus/i.test(p.plano || ''); }).length;
+
         var itens = [
             [r.usuarios, 'Cadastros', 'fa-users'],
             [r.ativos, 'Planos ativos', 'fa-star'],
+            [ativosPlus, 'Plus (mensal)', 'fa-crown'],
+            [ativos.length - ativosPlus, 'Premium (diário)', 'fa-bolt'],
             [r.inadimplentes, 'Inadimplentes', 'fa-triangle-exclamation'],
             [r.sem_renovacao, 'Sem renovação', 'fa-rotate'],
             ['R$ ' + Number(r.receita_mes || 0).toLocaleString('pt-BR'), 'Receita/mês', 'fa-sack-dollar'],
@@ -220,14 +229,25 @@
     }
 
     // ---------------- agenda ----------------
-    function desenharAgenda() {
-        if (!alvoAgenda || !estado.dados) return;
-        var lista = estado.dados.agendamentos || [];
+    /* Qual plano paga por este atendimento. O agendamento não guarda isso: quem
+       responde é a assinatura da pessoa, que já vem em `pessoas`. Plus é o
+       mensal de R$199, Premium é o diário de R$59 — no painel eles precisam se
+       distinguir, senão "assinante" vira uma coisa só. */
+    function planoDoAgendamento(a) {
+        var p = (estado.dados.pessoas || []).find(function (x) { return x.id === a.usuario_id; });
+        var nome = p && p.plano ? String(p.plano) : '';
+        if (/plus/i.test(nome)) return ['Premium Plus', 'plus'];
+        if (nome) return ['Premium', 'ativa'];
+        return ['sem plano', 'sem'];
+    }
 
-        var linhas = lista.map(function (a) {
-            // "passou da hora" perde o sentido depois da baixa: atendido no
-            // horário certo continuaria vermelho para sempre.
-            var passou = new Date(a.inicio) < new Date() && !a.virou_chamado && !a.atendido;
+    /* A escada de status e os botões são os mesmos para grátis e Premium: a
+       baixa é sobre o encontro ter acontecido, não sobre o plano de quem foi
+       atendido. Só as colunas mudam de uma tabela para a outra. */
+    function linhaAgendamento(a, premium) {
+        // "passou da hora" perde o sentido depois da baixa: atendido no
+        // horário certo continuaria vermelho para sempre.
+        var passou = !a.sem_horario && new Date(a.inicio) < new Date() && !a.virou_chamado && !a.atendido;
 
             // A baixa vem primeiro na escada: uma vez atendido, é isso que
             // interessa saber, não em que ponto da papelada ele parou.
@@ -268,29 +288,66 @@
                 acoes.push(el('span.fraco', { texto: 'aguarda triagem' }));
             }
 
-            return el('tr' + (a.atendido ? '.linha-atendida' : ''), {}, [
-                el('td', { 'data-rotulo': 'Quando' },
+        var plano = premium ? planoDoAgendamento(a) : null;
+
+        return el('tr' + (a.atendido ? '.linha-atendida' : ''), {}, [
+            premium
+                ? el('td', { 'data-rotulo': 'Plano' }, D.tag(plano[0], plano[1]))
+                : el('td', { 'data-rotulo': 'Quando' },
                     el('span.mono' + (passou ? '.critico' : ''), { texto: D.fmtData(a.inicio) })),
-                el('td', { 'data-rotulo': 'Quem', texto: a.nome || '—' }),
-                el('td', { 'data-rotulo': 'Status' }, D.tag(mapa[0], mapa[1])),
-                el('td.celula-acoes', { 'data-rotulo': '' }, acoes)
-            ]);
-        });
+            el('td', { 'data-rotulo': 'Quem', texto: a.nome || '—' }),
+            premium ? el('td', { 'data-rotulo': 'Pedido em' },
+                el('span.mono', { texto: D.fmtData(a.criado_em || a.inicio) })) : null,
+            el('td', { 'data-rotulo': 'Status' }, D.tag(mapa[0], mapa[1])),
+            el('td.celula-acoes', { 'data-rotulo': '' }, acoes)
+        ]);
+    }
+
+    function tabelaAgenda(titulos, linhas, vazio) {
+        return el('div.tabela-wrap.responsiva', {}, [
+            el('table', {}, [
+                el('thead', {}, el('tr', {}, titulos.map(function (t) {
+                    return el('th', { texto: t });
+                }))),
+                el('tbody', {}, linhas)
+            ]),
+            linhas.length ? null : el('div.vazio', { texto: vazio })
+        ]);
+    }
+
+    function desenharAgenda() {
+        if (!alvoAgenda || !estado.dados) return;
+        var lista = estado.dados.agendamentos || [];
+
+        /* Premium entra com sem_horario: o pedido é registrado na hora e não
+           tem horário escolhido. Misturado na agenda do grátis, ele aparecia
+           como um compromisso marcado que nunca existiu. */
+        var gratis = lista.filter(function (a) { return !a.sem_horario; });
+        var premium = lista.filter(function (a) { return a.sem_horario; });
+
+        var plus = premium.filter(function (a) { return planoDoAgendamento(a)[1] === 'plus'; }).length;
+        var basico = premium.length - plus;
 
         D.trocar(alvoAgenda, [
             el('div.bloco-topo', {}, el('div', {}, [
                 el('h2', { texto: 'Agenda do suporte grátis' }),
                 el('p.bloco-nota', { texto: 'Tempo real. Em ordem de quem vem primeiro.' })
             ])),
-            el('div.tabela-wrap.responsiva', {}, [
-                el('table', {}, [
-                    el('thead', {}, el('tr', {}, ['Quando', 'Quem', 'Status', ''].map(function (t) {
-                        return el('th', { texto: t });
-                    }))),
-                    el('tbody', {}, linhas)
-                ]),
-                lista.length ? null : el('div.vazio', { texto: 'Nenhum atendimento marcado.' })
-            ])
+            tabelaAgenda(['Quando', 'Quem', 'Status', ''],
+                gratis.map(function (a) { return linhaAgendamento(a, false); }),
+                'Nenhum atendimento marcado.'),
+
+            el('div.bloco-topo.bloco-premium', {}, el('div', {}, [
+                el('h2', { texto: 'Atendimentos Premium' }),
+                el('p.bloco-nota', {
+                    texto: premium.length
+                        ? plus + ' em Premium Plus (mensal) · ' + basico + ' em Premium (diário)'
+                        : 'Pedido direto, sem hora marcada. A baixa é a mesma do grátis.'
+                })
+            ])),
+            tabelaAgenda(['Plano', 'Quem', 'Pedido em', 'Status', ''],
+                premium.map(function (a) { return linhaAgendamento(a, true); }),
+                'Nenhum atendimento Premium pedido.')
         ]);
     }
 

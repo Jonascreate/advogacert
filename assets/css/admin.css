@@ -430,10 +430,19 @@ select:focus-visible, summary:focus-visible {
     padding-top: 2rem;
     border-top: 1px solid var(--border-color);
 }
+/* Grátis e Premium são duas esteiras dentro da mesma caixa: o vão e o filete
+   marcam onde uma acaba, do mesmo jeito que a agenda se separa da tabela de
+   cadastros acima dela. */
+.bloco-premium {
+    margin-top: 2.5rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--border-color);
+}
 @media (max-width: 768px) {
     .admin-modal { padding: 0; }
     .admin-modal-caixa { max-width: none; min-height: 100vh; border-radius: 0; }
     #aba-cadastros-agenda { margin-top: 1.75rem; padding-top: 1.5rem; }
+    .bloco-premium { margin-top: 1.75rem; padding-top: 1.25rem; }
 }
 
 /* ================= NÚMEROS DO TOPO ================= */
