@@ -258,6 +258,17 @@
             ]) : null,
             cards(),
             funil(),
+            // Fecha o bloco de números e abre o dos rankings, encostado à
+            // direita: no fim da aba ficava solto, longe do que imprime.
+            // Some só quando a consulta falha — período sem movimento ainda
+            // dá relatório.
+            el('div.diag-tabela-acoes.tel-acoes', {},
+                el('button.acao.diag-btn-imprimir', {
+                    type: 'button',
+                    texto: 'Imprimir relatório',
+                    aoClicar: imprimir
+                })
+            ),
             el('div.tel-colunas', {}, [
                 bloco('Seções mais vistas', 'fa-list-ul', ranking(dados.secoes, function (i) {
                     return i.tempo_medio_segundos == null ? null : fmtTempo(i.tempo_medio_segundos) + ' em média';
@@ -265,19 +276,7 @@
                 bloco('Origens', 'fa-signs-post', ranking(dados.origens)),
                 bloco('Dispositivos', 'fa-mobile-screen', ranking(dados.dispositivos))
             ]),
-            dados.limitado ? el('p.bloco-nota', { texto: 'Período limitado aos 10.000 eventos mais recentes.' }) : null,
-            // Mesmo botão, mesmo canto das outras abas: imprime o período que
-            // está à vista, não um recorte diferente do que se está olhando.
-            // Some só quando a consulta falha — período sem movimento ainda dá
-            // relatório, e escondê-lo aí deixava o botão invisível justamente
-            // para quem está começando a medir.
-            el('div.diag-tabela-acoes', {},
-                el('button.acao.diag-btn-imprimir', {
-                    type: 'button',
-                    texto: 'Imprimir relatório',
-                    aoClicar: imprimir
-                })
-            )
+            dados.limitado ? el('p.bloco-nota', { texto: 'Período limitado aos 10.000 eventos mais recentes.' }) : null
         ]);
     }
 

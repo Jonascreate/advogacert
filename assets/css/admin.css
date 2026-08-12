@@ -1358,6 +1358,10 @@ tr.linha-atendida:hover > td {
 }
 .tel-aviso i { margin-top: 0.15rem; color: var(--accent-win); }
 
+/* O botão fica entre o funil e os rankings, encostado à direita: separa os
+   dois blocos e continua na altura do que ele imprime. */
+.tel-acoes { margin-top: 1.5rem; }
+
 .tel-bloco { margin-top: 2rem; min-width: 0; }
 .tel-titulo {
     display: flex; align-items: center; gap: 0.5rem;
