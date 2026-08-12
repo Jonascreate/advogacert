@@ -1362,16 +1362,22 @@ tr.linha-atendida:hover > td {
    dois blocos e continua na altura do que ele imprime. */
 .tel-acoes { margin-top: 1.5rem; }
 
-.tel-bloco { margin-top: 2rem; min-width: 0; }
+.tel-bloco { margin-top: 1.6rem; min-width: 0; }
 .tel-titulo {
     display: flex; align-items: center; gap: 0.5rem;
-    margin-bottom: 0.9rem;
+    margin-bottom: 0.75rem;
     font-family: 'Outfit', sans-serif;
     font-size: 0.95rem; font-weight: 600;
     color: var(--text-secondary);
 }
 .tel-titulo i { font-size: 0.8rem; color: var(--accent-mac); }
 .tel-vazio { color: var(--text-muted); font-size: 0.82rem; padding: 0.5rem 0; }
+
+/* Bloco sem registro: título e recado centralizados e colados um no outro.
+   O vão que separa barras não tem o que separar quando não há barra. */
+.tel-bloco-vazio { text-align: center; }
+.tel-bloco-vazio .tel-titulo { justify-content: center; margin-bottom: 0.2rem; }
+.tel-bloco-vazio .tel-vazio { padding: 0; }
 
 /* ---- funil ---- */
 .tel-funil { display: flex; flex-direction: column; gap: 0.45rem; }

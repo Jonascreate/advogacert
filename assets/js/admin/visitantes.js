@@ -112,8 +112,10 @@
         }));
     }
 
-    function bloco(titulo, icone, conteudo) {
-        return el('section.tel-bloco', {}, [
+    /* `vazio` centraliza o bloco: sem barras para alinhar à esquerda, título e
+       recado soltos na margem esquerda de uma coluna larga ficam à deriva. */
+    function bloco(titulo, icone, conteudo, vazio) {
+        return el('section.tel-bloco' + (vazio ? '.tel-bloco-vazio' : ''), {}, [
             el('h3.tel-titulo', {}, [
                 el('i.fas.' + icone, { 'aria-hidden': 'true' }),
                 document.createTextNode(titulo)
@@ -272,9 +274,9 @@
             el('div.tel-colunas', {}, [
                 bloco('Seções mais vistas', 'fa-list-ul', ranking(dados.secoes, function (i) {
                     return i.tempo_medio_segundos == null ? null : fmtTempo(i.tempo_medio_segundos) + ' em média';
-                })),
-                bloco('Origens', 'fa-signs-post', ranking(dados.origens)),
-                bloco('Dispositivos', 'fa-mobile-screen', ranking(dados.dispositivos))
+                }), !(dados.secoes || []).length),
+                bloco('Origens', 'fa-signs-post', ranking(dados.origens), !(dados.origens || []).length),
+                bloco('Dispositivos', 'fa-mobile-screen', ranking(dados.dispositivos), !(dados.dispositivos || []).length)
             ]),
             dados.limitado ? el('p.bloco-nota', { texto: 'Período limitado aos 10.000 eventos mais recentes.' }) : null
         ]);
