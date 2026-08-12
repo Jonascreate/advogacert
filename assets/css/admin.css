@@ -29,7 +29,7 @@ html { scrollbar-gutter: stable; overflow-y: scroll; }
 :root {
     --o-05: 0.05; --o-10: 0.10; --o-15: 0.15; --o-20: 0.20;
     --o-25: 0.25; --o-30: 0.30; --o-35: 0.35; --o-40: 0.40;
-    --o-50: 0.50; --o-60: 0.60; --o-70: 0.70; --o-85: 0.85;
+    --o-50: 0.50; --o-60: 0.60; --o-70: 0.70; --o-75: 0.75; --o-85: 0.85;
 
     /* Camadas, de trás para a frente */
     --foto-veu-topo:   var(--o-40);   /* escurecido sobre a montanha, topo  */
@@ -266,7 +266,7 @@ body {
     max-width: 400px;
     /* Era --bg-secondary, cor chapada do site: sobre a foto da montanha a
        caixa virava um retângulo preto no meio do poente. Agora é o mesmo
-       vidro do cartão do painel, mas com bem mais tinta que ele (60% contra
+       vidro do cartão do painel, mas com bem mais tinta que ele (75% contra
        20%):
        atrás do cartão grande há painel inteiro para segurar o texto, atrás
        desta caixa há só a montanha, e vidro fino demais deixava a senha
@@ -279,7 +279,7 @@ body {
             oklch(var(--luz-cor) / var(--vidro-poente)) 0%,
             oklch(var(--luz-cor) / calc(var(--vidro-poente) * 0.45)) 35%,
             oklch(var(--luz-cor) / 0) 72%),
-        oklch(var(--vidro-cor) / var(--o-60));
+        oklch(var(--vidro-cor) / var(--o-75));
     backdrop-filter: blur(var(--vidro-blur)) saturate(150%);
     -webkit-backdrop-filter: blur(var(--vidro-blur)) saturate(150%);
     border: 1px solid var(--border-color);
