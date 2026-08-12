@@ -1317,3 +1317,149 @@ tr.linha-atendida:hover > td {
 @media (prefers-reduced-motion: reduce) {
     .login-box::after { animation: none; }
 }
+
+/* ================= VISITANTES E CONVERSÕES =================
+   Os cards do topo são os mesmos .stat dos cadastros — a aba não inventa um
+   segundo idioma visual. O que é próprio daqui é a barra: no funil ela mostra
+   o estreitamento de etapa em etapa, nos rankings mostra a distância entre o
+   primeiro e o último. Comparar comprimento é imediato; comparar dígitos, não. */
+
+/* Período: três opções fixas, então botão lado a lado em vez de select — a
+   escolha atual fica visível sem abrir nada. */
+.tel-periodo {
+    display: inline-flex;
+    padding: 0.2rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 100px;
+}
+.tel-periodo button {
+    padding: 0.4rem 0.9rem;
+    background: none; border: none; border-radius: 100px;
+    color: var(--text-secondary);
+    font-family: inherit; font-size: 0.8rem; font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s ease, background 0.2s ease;
+}
+.tel-periodo button:hover { color: var(--text-primary); }
+.tel-periodo button.ativo {
+    background: oklch(var(--acento-quente) / 0.15);
+    color: var(--accent-mac);
+}
+
+.tel-aviso {
+    display: flex; align-items: flex-start; gap: 0.6rem;
+    margin-bottom: 1.5rem;
+    padding: 0.7rem 0.95rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    color: var(--text-secondary); font-size: 0.82rem; line-height: 1.5;
+}
+.tel-aviso i { margin-top: 0.15rem; color: var(--accent-win); }
+
+.tel-bloco { margin-top: 2rem; min-width: 0; }
+.tel-titulo {
+    display: flex; align-items: center; gap: 0.5rem;
+    margin-bottom: 0.9rem;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem; font-weight: 600;
+    color: var(--text-secondary);
+}
+.tel-titulo i { font-size: 0.8rem; color: var(--accent-mac); }
+.tel-vazio { color: var(--text-muted); font-size: 0.82rem; padding: 0.5rem 0; }
+
+/* ---- funil ---- */
+.tel-funil { display: flex; flex-direction: column; gap: 0.45rem; }
+.tel-passo {
+    position: relative;
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.6rem 0.95rem;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+}
+/* A barra é fundo, não conteúdo: fica atrás do texto e some para o leitor de
+   tela, que já recebe o número e a porcentagem escritos ao lado. */
+.tel-passo-barra {
+    position: absolute; top: 0; bottom: 0; left: 0;
+    background: linear-gradient(90deg,
+        oklch(var(--acento-quente) / 0.20) 0%,
+        oklch(var(--acento-quente) / 0.05) 100%);
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tel-passo > *:not(.tel-passo-barra) { position: relative; z-index: 1; }
+.tel-passo-nome {
+    flex: 1 1 auto; min-width: 0;
+    font-size: 0.85rem; color: var(--text-primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tel-passo-queda {
+    flex-shrink: 0;
+    padding: 0.1rem 0.45rem; border-radius: 100px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-muted); font-size: 0.68rem; font-weight: 600;
+}
+.tel-passo-num {
+    flex-shrink: 0;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.05rem; font-weight: 700;
+    color: var(--accent-mac);
+}
+.tel-passo-pct {
+    flex-shrink: 0; min-width: 3rem; text-align: right;
+    color: var(--text-muted); font-size: 0.72rem;
+}
+
+/* ---- rankings ---- */
+.tel-colunas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: 0.5rem 2rem;
+    align-items: start;
+}
+.tel-rank { display: flex; flex-direction: column; gap: 0.7rem; }
+.tel-linha { min-width: 0; }
+.tel-linha-topo {
+    display: flex; align-items: baseline; gap: 0.5rem;
+    margin-bottom: 0.3rem;
+}
+.tel-linha-nome {
+    flex: 0 1 auto; min-width: 0;
+    font-size: 0.82rem; color: var(--text-primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tel-linha-extra {
+    flex-shrink: 0;
+    color: var(--text-muted); font-size: 0.68rem;
+}
+.tel-linha-num {
+    margin-left: auto; flex-shrink: 0;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.9rem; font-weight: 700;
+}
+.tel-barra {
+    height: 5px; border-radius: 100px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+}
+.tel-barra span {
+    display: block; height: 100%; border-radius: 100px;
+    background: var(--accent-mac);
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (max-width: 768px) {
+    .tel-periodo { width: 100%; justify-content: space-between; }
+    .tel-periodo button { flex: 1; }
+    /* No celular o passo do funil não cabe em uma linha só: o nome fica em
+       cima e os números embaixo, sem espremer nada. */
+    .tel-passo { flex-wrap: wrap; row-gap: 0.35rem; }
+    .tel-passo-nome { flex: 1 0 100%; }
+    .tel-passo-pct { margin-left: auto; }
+    .tel-colunas { gap: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tel-passo-barra, .tel-barra span, .tel-periodo button { transition: none; }
+}
