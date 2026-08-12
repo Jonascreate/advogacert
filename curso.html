@@ -1020,23 +1020,49 @@
         'use strict';
 
         /* ------------------------------------------------------------------
-           LINK DE PAGAMENTO DO CURSO — R$ 65
+           PAGAMENTO DO CURSO — R$ 65
            ------------------------------------------------------------------
-           Cole aqui o link do Mercado Pago quando ele existir; os dois botões
-           de "Garantir minha vaga" passam a apontar para ele de uma vez.
+           Mesmo caminho do checkout dos planos: quem manda o cliente para o
+           Mercado Pago é o servidor, em GET /pagamento/link?plano=curso. O
+           endereço mora no Render (MP_LINK_CURSO), não aqui — trocar o link
+           não obriga a publicar o site de novo.
 
-           Enquanto estiver vazio, os botões continuam indo ao WhatsApp, que é
-           por onde a vaga é combinada hoje. O href do WhatsApp está no HTML,
-           não aqui, de propósito: se este script falhar, o botão ainda leva a
-           algum lugar em vez de ficar morto. */
-        var LINK_PAGAMENTO = '';
+           O href do WhatsApp continua escrito no HTML e só é substituído
+           depois que o servidor responde. Assim, se o servidor estiver
+           dormindo ou o link ainda não existir, o botão leva a alguém em vez
+           de não fazer nada. */
+        Array.prototype.forEach.call(document.querySelectorAll('.js-pagar'), function (botao) {
+            botao.addEventListener('click', function (e) {
+                if (!window.apiUrl) return;   // sem api.js, segue o href do HTML
+                e.preventDefault();
+                var voltarAoWhats = botao.getAttribute('href');
+                var rotulo = botao.innerHTML;
+                botao.innerHTML = 'Abrindo o pagamento...';
 
-        if (LINK_PAGAMENTO) {
-            Array.prototype.forEach.call(document.querySelectorAll('.js-pagar'), function (a) {
-                a.href = LINK_PAGAMENTO;
-                a.removeAttribute('target');   // checkout abre na mesma aba
+                fetch(window.apiUrl('/pagamento/link?plano=curso'))
+                    .then(function (r) { return r.json(); })
+                    .then(function (d) {
+                        if (d && d.success && d.url) {
+                            if (window.telemetriaEvento) {
+                                window.telemetriaEvento('checkout_iniciado', {
+                                    plano: 'curso',
+                                    dados: { valor: Number(d.valor) || 65 }
+                                });
+                            }
+                            location.href = d.url;
+                            return;
+                        }
+                        botao.innerHTML = rotulo;
+                        alert((d && d.error) ||
+                              'O pagamento do curso está sendo configurado. Vamos combinar pelo WhatsApp.');
+                        window.open(voltarAoWhats, '_blank', 'noopener');
+                    })
+                    .catch(function () {
+                        botao.innerHTML = rotulo;
+                        window.open(voltarAoWhats, '_blank', 'noopener');
+                    });
             });
-        }
+        });
 
         var menosMovimento = matchMedia('(prefers-reduced-motion: reduce)').matches;
 

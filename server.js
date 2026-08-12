@@ -526,6 +526,10 @@ function loadPagamentoConfig() {
                      'https://mpago.la/2LNAdyX',
             linkDia: process.env.MP_LINK_DIA || file.mercadopago?.link_dia ||
                      'https://mpago.la/1MQBvYi',
+            // O curso é outro produto, com outro preço: precisa do link dele.
+            // Sem padrão no código porque este link ainda não existe — e um
+            // link errado aqui cobraria o valor de outra coisa.
+            linkCurso: process.env.MP_LINK_CURSO || file.mercadopago?.link_curso || '',
             accessToken: process.env.MP_ACCESS_TOKEN || file.mercadopago?.access_token || '',
             emailAviso: process.env.MP_EMAIL_AVISO || file.mercadopago?.email_aviso || ''
         },
@@ -545,6 +549,10 @@ function loadPagamentoConfig() {
 // mudar de preço obrigava a caçar todos, e esquecer um grava assinatura com
 // valor errado, que depois aparece torto no faturamento dos indicadores.
 const PLANO_PREMIUM_VALOR = Number(process.env.PLANO_PREMIUM_VALOR || 59);
+
+// Preço do curso, no mesmo espírito do PLANO_PREMIUM_VALOR acima: um lugar
+// só, e trocável por variável de ambiente sem publicar de novo.
+const CURSO_VALOR = Number(process.env.CURSO_VALOR || 65);
 
 const PAGAMENTO = loadPagamentoConfig();
 const MP = PAGAMENTO.mp;
@@ -1906,6 +1914,21 @@ const server = http.createServer((req, res) => {
     // ninguém. Nada era cobrado e nada aparecia no painel.
     if (method === 'GET' && url.split('?')[0] === '/pagamento/link') {
         const q = new URL(url, `http://${req.headers.host}`).searchParams;
+
+        // O curso não é plano: não gera assinatura nem entra no cálculo de
+        // receita recorrente. Só empresta esta rota para dizer onde se paga.
+        if (q.get('plano') === 'curso') {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(MP.linkCurso
+                ? { success: true, plano: 'curso', url: MP.linkCurso, valor: CURSO_VALOR }
+                : {
+                    success: false,
+                    error: 'O pagamento do curso está sendo configurado. ' +
+                           'Fale com a gente pelo WhatsApp que garantimos sua vaga.'
+                }));
+            return;
+        }
+
         const plano = q.get('plano') === 'plus' ? 'plus' : 'premium';
         const escolhido = plano === 'plus'
             ? (MP.linkMes || MP.link)
