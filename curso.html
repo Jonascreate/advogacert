@@ -501,15 +501,21 @@
             flex-wrap: wrap;
             gap: 1.5rem;
         }
+        /* Os vídeos ficam fora da folha, no fundo escuro do site — então o
+           cartão é o mesmo vidro dos módulos. Dentro da folha ele viraria
+           branco pela regra logo abaixo, caso um dia volte para lá. */
         .video-card {
             flex: 1 1 300px;
             display: flex;
             flex-direction: column;
-            background: #fff;
-            border: 1px solid var(--folha-linha);
+            background: rgba(22, 22, 24, 0.35);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
             border-radius: 16px;
             overflow: hidden;
         }
+        .folha .video-card { background: #fff; border-color: var(--folha-linha); backdrop-filter: none; }
         /* aspect-ratio segura o 16:9 sem o truque do padding-bottom: o quadro
            não muda de altura quando o vídeo real entrar no lugar. */
         .video-quadro {
@@ -559,16 +565,18 @@
             margin-bottom: 0.35rem;
         }
         .video-texto p {
-            color: var(--folha-tinta-2);
+            color: var(--text-secondary);
             font-size: 0.87rem;
             line-height: 1.65;
         }
+        .folha .video-texto p { color: var(--folha-tinta-2); }
+        .folha .video-duracao { color: var(--folha-tinta-3); }
         .video-duracao {
             display: inline-flex;
             align-items: center;
             gap: 0.4rem;
             margin-top: 0.7rem;
-            color: var(--folha-tinta-3);
+            color: var(--text-muted);
             font-size: 0.78rem;
             font-family: 'JetBrains Mono', monospace;
         }
@@ -984,57 +992,60 @@
                 </p>
             </div>
 
-            <hr class="folha-divisa">
+        </div>
+    </section>
 
-            <h2 class="reveal" id="videos" data-telemetria-secao="videos">Veja <span>antes</span> de decidir</h2>
-            <p class="sub reveal">
-                Trechos curtos do que é dado em aula. Se o problema do vídeo é o mesmo que você
-                tem hoje, o curso é para você.
-            </p>
+    <!-- ================= VIDEOS =================
+         Fora da folha: a div branca acaba antes daqui e o fundo do site volta. -->
+    <section class="curso-secao">
+        <h2 class="reveal" id="videos" data-telemetria-secao="videos">Veja <span>antes</span> de decidir</h2>
+        <p class="sub reveal">
+            Trechos curtos do que é dado em aula. Se o problema do vídeo é o mesmo que você
+            tem hoje, o curso é para você.
+        </p>
 
-            <div class="videos">
-                <!-- Para publicar um vídeo, troque o bloco .video-quadro inteiro por:
-                     <div class="video-quadro">
-                       <iframe src="https://www.youtube.com/embed/ID_DO_VIDEO"
-                               title="..." allowfullscreen loading="lazy"></iframe>
-                     </div>
-                     O quadro já está em 16:9, então nada se desloca quando o vídeo entrar. -->
-                <article class="video-card reveal">
-                    <div class="video-quadro">
-                        <span class="video-emblema">Em breve</span>
-                        <div class="video-play"><i class="fa-solid fa-play"></i></div>
-                    </div>
-                    <div class="video-texto">
-                        <h4>O certificado que o navegador não reconhece</h4>
-                        <p>Do erro na tela ao protocolo aceito, sem pular o passo que ninguém explica.</p>
-                        <span class="video-duracao"><i class="fa-regular fa-clock"></i> a definir</span>
-                    </div>
-                </article>
+        <div class="videos">
+            <!-- Para publicar um vídeo, troque o bloco .video-quadro inteiro por:
+                 <div class="video-quadro">
+                   <iframe src="https://www.youtube.com/embed/ID_DO_VIDEO"
+                           title="..." allowfullscreen loading="lazy"></iframe>
+                              O quadro já está em 16:9, então nada se desloca quando o vídeo entrar. -->
+            <article class="video-card reveal">
+                <div class="video-quadro">
+                    <span class="video-emblema">Em breve</span>
+                    <div class="video-play"><i class="fa-solid fa-play"></i></div>
+                </div>
+                <div class="video-texto">
+                    <h4>O certificado que o navegador não reconhece</h4>
+                    <p>Do erro na tela ao protocolo aceito, sem pular o passo que ninguém explica.</p>
+                    <span class="video-duracao"><i class="fa-regular fa-clock"></i> a definir</span>
+                </div>
+            </article>
 
-                <article class="video-card reveal atraso-1">
-                    <div class="video-quadro">
-                        <span class="video-emblema">Em breve</span>
-                        <div class="video-play"><i class="fa-solid fa-play"></i></div>
-                    </div>
-                    <div class="video-texto">
-                        <h4>Ler um processo de 300 páginas com a IA</h4>
-                        <p>O que pedir, o que conferir e por que a resposta pronta nunca vai direto aos autos.</p>
-                        <span class="video-duracao"><i class="fa-regular fa-clock"></i> a definir</span>
-                    </div>
-                </article>
+            <article class="video-card reveal atraso-1">
+                <div class="video-quadro">
+                    <span class="video-emblema">Em breve</span>
+                    <div class="video-play"><i class="fa-solid fa-play"></i></div>
+                </div>
+                <div class="video-texto">
+                    <h4>Ler um processo de 300 páginas com a IA</h4>
+                    <p>O que pedir, o que conferir e por que a resposta pronta nunca vai direto aos autos.</p>
+                    <span class="video-duracao"><i class="fa-regular fa-clock"></i> a definir</span>
+                </div>
+            </article>
 
-                <article class="video-card reveal atraso-2">
-                    <div class="video-quadro">
-                        <span class="video-emblema">Em breve</span>
-                        <div class="video-play"><i class="fa-solid fa-play"></i></div>
-                    </div>
-                    <div class="video-texto">
-                        <h4>Sigilo: o que não pode ser colado na ferramenta</h4>
-                        <p>Como anonimizar um caso real antes de pedir ajuda à inteligência artificial.</p>
-                        <span class="video-duracao"><i class="fa-regular fa-clock"></i> a definir</span>
-                    </div>
-                </article>
-            </div>
+            <article class="video-card reveal atraso-2">
+                <div class="video-quadro">
+                    <span class="video-emblema">Em breve</span>
+                    <div class="video-play"><i class="fa-solid fa-play"></i></div>
+                </div>
+                <div class="video-texto">
+                    <h4>Sigilo: o que não pode ser colado na ferramenta</h4>
+                    <p>Como anonimizar um caso real antes de pedir ajuda à inteligência artificial.</p>
+                    <span class="video-duracao"><i class="fa-regular fa-clock"></i> a definir</span>
+                </div>
+            </article>
+        </div>
         </div>
     </section>
 
