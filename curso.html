@@ -611,19 +611,45 @@
             position: absolute; inset: 0; width: 100%; height: 100%;
             border: 0; object-fit: cover;
         }
-        /* As marcas ficam no lugar da prévia em vídeo até haver vídeo. Fundo
-           escuro porque os dois PNGs são feitos para fundo escuro — sobre
-           branco o "PJe" sumiria. */
+        /* A capa é uma linha flex: marcas de um lado, foto do outro. As duas
+           metades dividem a mesma caixa 16:9, então a altura é a mesma sem
+           precisar combinar número nenhum entre elas. */
+        .painel-capa { display: flex; align-items: stretch; }
+
+        /* Fundo escuro porque os dois PNGs são feitos para fundo escuro —
+           sobre branco o "PJe" sumiria. Empilhados: metade de um cartão de
+           340px é estreita demais para eles lado a lado. */
         .painel-marcas {
+            flex: 1 1 auto;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 0.7rem;
-            padding: 0 1rem;
+            gap: 0.35rem;
+            padding: 0.9rem 0.8rem;
+            min-width: 0;
         }
-        .painel-marcas img { position: static; width: 96px; height: auto; object-fit: contain; }
-        .painel-marcas img.claude { width: 104px; }
-        .painel-mais { color: var(--text-muted); font-size: 1.05rem; font-weight: 300; }
+        .painel-marcas img {
+            position: static;
+            width: 100%;
+            max-width: 108px;
+            height: auto;
+            object-fit: contain;
+        }
+        .painel-mais { color: var(--text-muted); font-size: 0.95rem; font-weight: 300; line-height: 1; }
+
+        /* A foto ocupa a outra metade inteira. cover recorta o que sobra em
+           vez de espremer o rosto, e o enquadramento sobe um pouco: em foto
+           de retrato o que importa está no terço de cima. */
+        .painel-foto { flex: 0 0 44%; position: relative; overflow: hidden; }
+        .painel-foto img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 22%;
+        }
 
         .painel-corpo { padding: 1.4rem 1.4rem 1.5rem; }
         .painel-valor {
@@ -793,6 +819,9 @@
                     <img src="assets/img/pje-claro.png" alt="PJe — Processo Judicial Eletrônico">
                     <span class="painel-mais">+</span>
                     <img class="claude" src="assets/img/claude-claro.png" alt="Claude">
+                </div>
+                <div class="painel-foto">
+                    <img src="img/IMG_6924.jpeg" alt="Instrutor do curso" loading="lazy">
                 </div>
             </div>
             <div class="painel-corpo">
