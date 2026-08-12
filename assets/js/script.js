@@ -331,61 +331,26 @@ document.addEventListener('DOMContentLoaded', function() {
     // O campo aceita e-mail também: quem normaliza o que foi digitado é o
     // servidor, em /otp/enviar, então aqui não se tenta adivinhar o formato.
     // ==========================================
-    // A entrada agora é por e-mail e senha (a rota action:'login' já existia
-    // no servidor; só nunca tinha tela — o front a usava apenas logo depois
-    // do cadastro, para retomar um checkout).
+    // Entrada por código enviado ao e-mail. O campo pedia "celular ou e-mail",
+    // mas o envio por SMS está desligado no servidor: quem digitava o telefone
+    // só descobria isso depois de tentar. Agora o campo é de e-mail.
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            const campoEmail = document.getElementById('login-email');
-            const campoSenha = document.getElementById('login-senha');
+            const campo = document.getElementById('login-telefone');
             const messageDiv = document.getElementById('login-message');
-            const botao = document.getElementById('login-btn-entrar');
+            if (!campo) return;
 
-            // Sem os campos na tela não há login por senha a fazer: é o caso
-            // de outra página que reaproveite este script.
-            if (!campoEmail || !campoSenha) return;
-
-            const email = campoEmail.value.trim().toLowerCase();
-            const senha = campoSenha.value;
-
-            if (!email || !senha) {
+            const destino = campo.value.trim();
+            if (!destino) {
                 messageDiv.style.color = '#ef4444';
-                messageDiv.textContent = '✗ Informe seu e-mail e sua senha';
+                messageDiv.textContent = '✗ Informe seu e-mail';
                 return;
             }
 
-            const textoBotao = botao ? botao.textContent : '';
-            if (botao) { botao.disabled = true; botao.textContent = 'Entrando...'; }
-            messageDiv.style.color = '#8a8a90';
-            messageDiv.textContent = 'Verificando...';
-
-            fetch(apiUrl('/login.php'), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'login', email: email, senha: senha })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data && data.success) {
-                    sessionStorage.setItem('user', JSON.stringify(data.user));
-                    messageDiv.style.color = '#10b981';
-                    messageDiv.textContent = '✓ Tudo certo. Entrando...';
-                    // destinoPosLogin() leva de volta ao checkout quando havia
-                    // um plano esperando, e à home quando não havia.
-                    setTimeout(() => { window.location.href = destinoPosLogin(); }, 800);
-                    return;
-                }
-                messageDiv.style.color = '#ef4444';
-                messageDiv.textContent = '✗ ' + ((data && data.error) || 'E-mail ou senha incorretos');
-                if (botao) { botao.disabled = false; botao.textContent = textoBotao; }
-            })
-            .catch(() => {
-                messageDiv.style.color = '#ef4444';
-                messageDiv.textContent = '✗ Sem conexão com o servidor. Tente de novo.';
-                if (botao) { botao.disabled = false; botao.textContent = textoBotao; }
-            });
+            messageDiv.textContent = '';
+            iniciarOtp(destino, document.getElementById('login-btn-codigo'));
         });
     }
 
@@ -430,15 +395,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            if (senha.length < 6) {
-                messageDiv.style.color = '#ef4444';
-                messageDiv.textContent = '✗ A senha deve ter no mínimo 6 caracteres';
-                return;
+            // A senha saiu da tela: a conta nasce sem ela e a entrada é por
+            // código no e-mail ou pelo Google. As validações abaixo só valem
+            // para quem ainda vê os campos (outra página que os use).
+            if (senha) {
+                if (senha.length < 6) {
+                    messageDiv.style.color = '#ef4444';
+                    messageDiv.textContent = '✗ A senha deve ter no mínimo 6 caracteres';
+                    return;
+                }
+                if (senha !== senhaConfirm) {
+                    messageDiv.style.color = '#ef4444';
+                    messageDiv.textContent = '✗ As senhas não coincidem';
+                    return;
+                }
             }
 
-            if (senha !== senhaConfirm) {
+            if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
                 messageDiv.style.color = '#ef4444';
-                messageDiv.textContent = '✗ As senhas não coincidem';
+                messageDiv.textContent = '✗ Informe um e-mail válido — é nele que chega seu código';
                 return;
             }
 
@@ -462,30 +437,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     messageDiv.style.color = '#10b981';
                     messageDiv.textContent = '✓ Conta criada com sucesso! Redirecionando...';
 
-                    const checkoutPendente = sessionStorage.getItem('checkoutPendente');
-                    if (checkoutPendente) {
-                        // Havia um pagamento pendente: loga automaticamente com as
-                        // credenciais recém-criadas para voltar direto ao checkout.
-                        fetch(apiUrl('/login.php'), {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ action: 'login', email: email, senha: senha })
-                        })
-                        .then(res => res.json())
-                        .then(loginData => {
-                            if (loginData.success) {
-                                sessionStorage.setItem('user', JSON.stringify(loginData.user));
-                            }
-                            setTimeout(() => { window.location.href = destinoPosLogin(); }, 1000);
-                        })
-                        .catch(() => {
-                            setTimeout(() => { window.location.href = 'login.html?checkout=1'; }, 1000);
-                        });
-                    } else {
-                        setTimeout(() => {
-                            window.location.href = 'agradecimento-free.html';
-                        }, 1500);
-                    }
+                    // A conta nasce sem senha, então não há como logar sozinho
+                    // com credenciais: em vez disso, manda-se o código para o
+                    // e-mail recém-cadastrado e a pessoa entra por ele. É o
+                    // mesmo passo que confirma que o endereço existe.
+                    messageDiv.style.color = '#10b981';
+                    messageDiv.textContent = '✓ Conta criada. Enviando seu código de acesso...';
+
+                    if (typeof showOtpForm === 'function') showOtpForm();
+                    const campoDestino = document.getElementById('otp-destino-input');
+                    if (campoDestino) campoDestino.value = email;
+                    iniciarOtp(email, document.getElementById('otp-btn-enviar'));
                 } else {
                     messageDiv.style.color = '#ef4444';
                     messageDiv.textContent = '✗ ' + data.error;

@@ -3663,7 +3663,11 @@ const server = http.createServer((req, res) => {
 
                 // ---- REGISTER ----
                 if (action === 'register') {
-                    if (!email || !senha || senha.length < 6) {
+                    // A senha deixou de ser obrigatória: a entrada é por código
+                    // no e-mail ou por Google, então pedir senha no cadastro
+                    // era criar uma que ninguém usaria depois. Quem já tem
+                    // senha continua entrando por ela.
+                    if (!email || (senha && senha.length < 6)) {
                         res.writeHead(400, { 'Content-Type': 'application/json' });
                         res.end(JSON.stringify({ success: false, error: 'Dados inválidos' }));
                         return;
@@ -3703,7 +3707,13 @@ const server = http.createServer((req, res) => {
                         return;
                     }
 
-                    const hash = crypto.createHash('sha256').update(senha).digest('hex');
+                    // Conta sem senha é conta que só entra por código ou
+                    // Google. Guardar null (e não o hash de uma string vazia)
+                    // importa: o login por senha compara hashes, e um hash de
+                    // vazio deixaria a conta aberta para quem mandasse "".
+                    const hash = senha
+                        ? crypto.createHash('sha256').update(senha).digest('hex')
+                        : null;
 
                     const novo = {
                         id: proximoId(db.usuarios),

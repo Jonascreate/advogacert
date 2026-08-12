@@ -508,18 +508,12 @@
             </div>
 
             <div class="login-container">
-                <h2>Cadastro</h2>
-                <p class="login-subtitle">Acesse sua conta para gerenciar pedidos e cursos</p>
+                <!-- O título dizia "Cadastro" com um formulário de entrada
+                     embaixo. Quem chega para entrar lia "cadastro" e ficava
+                     em dúvida se estava no lugar certo. -->
+                <h2>Entrar</h2>
+                <p class="login-subtitle">Acesse sua conta para acompanhar seus atendimentos</p>
 
-                <!-- Google primeiro, e de propósito: é o caminho que funciona
-                     em um clique e serve a qualquer e-mail. O código por
-                     e-mail fica como alternativa para quem não usa Google.
-
-                     O campo pedia "celular ou e-mail", mas o envio por SMS
-                     está desligado no servidor — quem digitava o telefone
-                     recebia "não está disponível" depois de tentar. Prometer
-                     e não cumprir na tela de entrada é onde o cliente
-                     desconfia do resto. Agora só se promete o que existe. -->
                 <!-- Duas entradas, e nenhuma promessa vazia: Google em um
                      clique, e e-mail com senha para quem não usa Google —
                      inclusive Hotmail e e-mail de escritório.
@@ -531,29 +525,14 @@
                     <div class="social-login social-login-destaque">
                         <a href="/auth/google" data-auth="google" class="social-login-btn google"><i class="fab fa-google"></i> Entrar com Google</a>
                     </div>
-                    <div class="login-divider">ou com e-mail e senha</div>
+                    <div class="login-divider">ou receba um código</div>
                     <div class="form-group">
-                        <label for="login-email">E-mail</label>
-                        <input type="email" id="login-email" placeholder="seu@email.com" autocomplete="email" required>
+                        <label for="login-telefone">Seu e-mail</label>
+                        <input type="email" id="login-telefone" placeholder="seu@email.com" autocomplete="email" required>
                     </div>
-                    <div class="form-group">
-                        <label for="login-senha">Senha</label>
-                        <input type="password" id="login-senha" placeholder="••••••••" autocomplete="current-password" required>
-                    </div>
-                    <button type="submit" class="login-btn" id="login-btn-entrar">Entrar</button>
+                    <p class="otp-hint">Você recebe um código de 6 dígitos. Sem senha para lembrar.</p>
+                    <button type="submit" class="login-btn" id="login-btn-codigo">Enviar código</button>
                     <div id="login-message" style="margin-top:15px;text-align:center;font-size:14px;"></div>
-                    <div class="login-links">
-                        <a href="#" onclick="showRegisterForm(); return false;">Criar conta</a>
-                    </div>
-
-                    <!-- Campos do código por e-mail: ficam no HTML porque o
-                         script.js os referencia ao carregar, e removê-los
-                         deixaria referências nulas que derrubam o JavaScript
-                         da tela inteira, botão do Google incluído. -->
-                    <div id="login-codigo-oculto" style="display:none;">
-                        <input type="email" id="login-telefone" autocomplete="email">
-                        <button type="button" id="login-btn-codigo">Enviar código</button>
-                    </div>
                 </form>
 
                 <form id="registerForm" style="display: none;">
@@ -573,17 +552,19 @@
                         <input type="text" id="register-oab" placeholder="123456/GO" autocomplete="off" required>
                     </div>
                     <p class="form-hint">Sua inscrição identifica o atendimento e controla o chamado gratuito.</p>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="register-password">Senha</label>
-                            <input type="password" id="register-password" placeholder="••••••••" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="register-password-confirm">Confirmar Senha</label>
-                            <input type="password" id="register-password-confirm" placeholder="••••••••" required>
-                        </div>
+
+                    <!-- Sem campos de senha: a entrada é por código no e-mail
+                         ou pelo Google. Pedir uma senha aqui seria criar algo
+                         que a pessoa nunca usaria e ainda teria de lembrar.
+                         Os inputs seguem no HTML, escondidos, porque o
+                         script.js os lê ao enviar o formulário. -->
+                    <div style="display:none;">
+                        <input type="password" id="register-password" autocomplete="new-password">
+                        <input type="password" id="register-password-confirm" autocomplete="new-password">
                     </div>
-                    <button type="submit" class="login-btn">Criar Conta</button>
+
+                    <p class="otp-hint">Ao criar a conta, você recebe um código de 6 dígitos no e-mail para entrar. Sem senha para lembrar.</p>
+                    <button type="submit" class="login-btn">Criar conta</button>
                     <div id="register-message" style="margin-top:15px;text-align:center;font-size:14px;"></div>
                     <div class="login-links">
                         <a href="#" onclick="showLoginForm(); return false;">Já tenho conta</a>
@@ -634,6 +615,6 @@
 
     <script src="assets/js/api.js?v=9"></script>
 
-    <script src="assets/js/script.js?v=10"></script>
+    <script src="assets/js/script.js?v=11"></script>
 </body>
 </html>
