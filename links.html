@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Links de pagamento | AdvogaCert</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* ==========================================================
+           Página de links para mandar ao cliente.
+           A logo é máscara, como no resto do sistema: o PNG recorta o
+           formato e a cor vem do fundo — aqui, o azul da marca. É por
+           isso que ela pode crescer sem perder nitidez.
+           ========================================================== */
+        :root {
+            --azul: #1f6fd1;
+            --azul-claro: #4fa3ff;
+            --fundo: #0a0a0b;
+            --card: rgba(255, 255, 255, 0.04);
+            --borda: rgba(255, 255, 255, 0.1);
+            --texto: #f5f5f5;
+            --texto-2: #c9cfd8;
+            --texto-3: #8b93a1;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            background:
+                radial-gradient(60rem 40rem at 50% -10%, rgba(31, 111, 209, 0.22), transparent 70%),
+                var(--fundo);
+            color: var(--texto);
+            font-family: 'Inter', sans-serif;
+            display: flex; align-items: center; justify-content: center;
+            padding: 3rem 1.25rem;
+        }
+        .folha { width: 100%; max-width: 46rem; }
+
+        .marca {
+            height: 74px;
+            aspect-ratio: 768 / 332;
+            margin: 0 auto 2.25rem;
+            background: linear-gradient(135deg, var(--azul), var(--azul-claro));
+            -webkit-mask-image: url('assets/img/logo.png');
+            mask-image: url('assets/img/logo.png');
+            -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+            -webkit-mask-position: center;  mask-position: center;
+            -webkit-mask-size: contain;     mask-size: contain;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.6rem; font-weight: 600;
+            text-align: center; margin-bottom: 0.4rem;
+        }
+        .sub {
+            text-align: center; color: var(--texto-3);
+            font-size: 0.92rem; margin-bottom: 2.5rem;
+        }
+
+        .item {
+            background: var(--card);
+            border: 1px solid var(--borda);
+            border-radius: 16px;
+            padding: 1.4rem 1.5rem;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            transition: border-color 0.25s ease, transform 0.25s ease;
+        }
+        .item:hover { border-color: rgba(79, 163, 255, 0.45); transform: translateY(-2px); }
+
+        .item-topo {
+            display: flex; align-items: baseline; justify-content: space-between;
+            gap: 1rem; margin-bottom: 0.9rem; flex-wrap: wrap;
+        }
+        .item-nome { font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 600; }
+        .item-preco {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700; color: var(--azul-claro); white-space: nowrap;
+        }
+        .item-nota { color: var(--texto-3); font-size: 0.82rem; margin-top: 0.15rem; }
+
+        /* O campo do link: clicar em qualquer lugar dele copia. O <input>
+           readonly existe para o texto poder ser selecionado com o mouse
+           também — quem preferir arrastar e copiar à mão consegue. */
+        .campo {
+            display: flex; align-items: stretch; gap: 0.5rem;
+        }
+        .campo input {
+            flex: 1; min-width: 0;
+            padding: 0.75rem 0.9rem;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--borda);
+            border-radius: 10px;
+            color: var(--texto-2);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            cursor: text;
+        }
+        .campo input:focus { outline: none; border-color: var(--azul-claro); }
+        .copiar {
+            flex-shrink: 0;
+            display: inline-flex; align-items: center; gap: 0.45rem;
+            padding: 0.75rem 1.05rem;
+            background: linear-gradient(135deg, var(--azul), var(--azul-claro));
+            color: #04121f;
+            border: none; border-radius: 10px;
+            font-family: inherit; font-size: 0.85rem; font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .copiar:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(31, 111, 209, 0.35); }
+        .copiar.feito { background: linear-gradient(135deg, #1f9d6b, #34d399); color: #04231a; }
+
+        .abrir {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            margin-top: 0.85rem;
+            color: var(--azul-claro); text-decoration: none;
+            font-size: 0.85rem; font-weight: 600;
+        }
+        .abrir:hover { text-decoration: underline; }
+
+        .rodape {
+            margin-top: 2.5rem; text-align: center;
+            color: var(--texto-3); font-size: 0.78rem; line-height: 1.7;
+        }
+
+        @media (max-width: 560px) {
+            .campo { flex-direction: column; }
+            .copiar { justify-content: center; }
+            .marca { height: 56px; }
+        }
+    </style>
+</head>
+<body>
+    <main class="folha">
+        <div class="marca" role="img" aria-label="AdvogaCert"></div>
+
+        <h1>Links de pagamento</h1>
+        <p class="sub">Clique em copiar e mande para o cliente pelo WhatsApp.</p>
+
+        <section class="item">
+            <div class="item-topo">
+                <div>
+                    <div class="item-nome">Premium — por dia</div>
+                    <div class="item-nota">Um atendimento, sem mensalidade</div>
+                </div>
+                <div class="item-preco">R$ 59,00</div>
+            </div>
+            <div class="campo">
+                <input type="text" readonly value="https://mpago.la/1MQBvYi" aria-label="Link de pagamento de R$59">
+                <button type="button" class="copiar"><i class="fas fa-copy"></i> Copiar</button>
+            </div>
+            <a class="abrir" href="https://mpago.la/1MQBvYi" target="_blank" rel="noopener">
+                <i class="fas fa-arrow-up-right-from-square"></i> Abrir para conferir
+            </a>
+        </section>
+
+        <section class="item">
+            <div class="item-topo">
+                <div>
+                    <div class="item-nome">Premium Plus — mensal</div>
+                    <div class="item-nota">Chamados ilimitados, sem fidelidade</div>
+                </div>
+                <div class="item-preco">R$ 199,00</div>
+            </div>
+            <div class="campo">
+                <input type="text" readonly value="https://mpago.la/2LNAdyX" aria-label="Link de pagamento de R$199">
+                <button type="button" class="copiar"><i class="fas fa-copy"></i> Copiar</button>
+            </div>
+            <a class="abrir" href="https://mpago.la/2LNAdyX" target="_blank" rel="noopener">
+                <i class="fas fa-arrow-up-right-from-square"></i> Abrir para conferir
+            </a>
+        </section>
+
+        <section class="item">
+            <div class="item-topo">
+                <div>
+                    <div class="item-nome">Site</div>
+                    <div class="item-nota">Onde o cliente escolhe o plano</div>
+                </div>
+            </div>
+            <div class="campo">
+                <input type="text" readonly value="https://www.agentej.us" aria-label="Endereço do site">
+                <button type="button" class="copiar"><i class="fas fa-copy"></i> Copiar</button>
+            </div>
+        </section>
+
+        <section class="item">
+            <div class="item-topo">
+                <div>
+                    <div class="item-nome">Painel de controle</div>
+                    <div class="item-nota">Uso interno — não mandar para cliente</div>
+                </div>
+            </div>
+            <div class="campo">
+                <input type="text" readonly value="https://advogacert.onrender.com/admin.html" aria-label="Endereço do painel">
+                <button type="button" class="copiar"><i class="fas fa-copy"></i> Copiar</button>
+            </div>
+        </section>
+
+        <p class="rodape">
+            Você não consegue pagar seus próprios links — o Mercado Pago bloqueia<br>
+            pagamento para a mesma conta que recebe. É esperado, e não é erro.
+        </p>
+    </main>
+
+    <script>
+        // Copiar sem depender de HTTPS: navigator.clipboard exige contexto
+        // seguro e falha se a página for aberta direto do disco (file://).
+        // O execCommand é o caminho antigo, feio e que funciona em todo lugar.
+        document.querySelectorAll('.copiar').forEach(function (botao) {
+            botao.addEventListener('click', function () {
+                var campo = botao.parentNode.querySelector('input');
+                var texto = campo.value;
+
+                function avisar() {
+                    var original = botao.innerHTML;
+                    botao.classList.add('feito');
+                    botao.innerHTML = '<i class="fas fa-check"></i> Copiado';
+                    setTimeout(function () {
+                        botao.classList.remove('feito');
+                        botao.innerHTML = original;
+                    }, 1800);
+                }
+
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(texto).then(avisar).catch(copiaAntiga);
+                } else {
+                    copiaAntiga();
+                }
+
+                function copiaAntiga() {
+                    campo.removeAttribute('readonly');
+                    campo.select();
+                    campo.setSelectionRange(0, 99999);   // iOS ignora o select() sozinho
+                    try { document.execCommand('copy'); avisar(); } catch (e) {}
+                    campo.setAttribute('readonly', '');
+                    window.getSelection().removeAllRanges();
+                }
+            });
+        });
+
+        // Clicar no campo seleciona tudo: menos mira para copiar com o mouse.
+        document.querySelectorAll('.campo input').forEach(function (campo) {
+            campo.addEventListener('focus', function () { campo.select(); });
+        });
+    </script>
+</body>
+</html>
