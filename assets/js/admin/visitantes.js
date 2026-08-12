@@ -122,6 +122,97 @@
         ]);
     }
 
+    // ---------------- relatório impresso ----------------
+    /* Mesma folha timbrada do relatório de cadastros e do de servidor — o
+       módulo dela vive em cadastros.js e é exposto como AdminRelatorio. */
+    function imprimir() {
+        var R = global.AdminRelatorio;
+        if (!R || !dados || !dados.success) return;
+        var esc = R.esc, c = R.carimbos('VT');
+
+        var passos = dados.funil || [];
+        var base = passos.length ? Number(passos[0].total) || 0 : 0;
+        var fim = passos.length ? Number(passos[passos.length - 1].total) || 0 : 0;
+
+        var linhasFunil = passos.map(function (p, i) {
+            var total = Number(p.total) || 0;
+            var anterior = i > 0 ? Number(passos[i - 1].total) || 0 : null;
+            var queda = (anterior && total < anterior) ? '−' + (100 - pct(total, anterior)) + '%' : '—';
+            return '<tr>' +
+                '<td>' + String(i + 1).padStart(2, '0') + '</td>' +
+                '<td>' + esc(NOMES_FUNIL[p.evento] || p.evento) + '</td>' +
+                '<td>' + (base ? pct(total, base) + '%' : '—') + '</td>' +
+                '<td>' + queda + '</td>' +
+                '<td class="num">' + total + '</td>' +
+                '</tr>';
+        }).join('');
+
+        /* Uma tabela por ranking, cada uma com a sua própria seção: no papel
+           não há coluna lateral, então empilhar é o único arranjo que cabe. */
+        function tabela(titulo, legenda, itens, colunaExtra) {
+            itens = itens || [];
+            if (!itens.length) {
+                return '<p style="margin:0;color:#787878;font-style:italic;">Sem registros no período.</p>';
+            }
+            var linhas = itens.map(function (i, n) {
+                return '<tr>' +
+                    '<td>' + String(n + 1).padStart(2, '0') + '</td>' +
+                    '<td>' + esc(i.nome) + '</td>' +
+                    (colunaExtra ? '<td>' + esc(colunaExtra(i)) + '</td>' : '') +
+                    '<td class="num">' + (Number(i.total) || 0) + '</td>' +
+                    '</tr>';
+            }).join('');
+            return '<table class="ledger"><caption>' + legenda + '</caption><thead><tr>' +
+                '<th style="width:40px;">#</th><th>' + titulo + '</th>' +
+                (colunaExtra ? '<th style="width:150px;">Tempo médio</th>' : '') +
+                '<th style="width:110px;" class="num">Eventos</th>' +
+                '</tr></thead><tbody>' + linhas + '</tbody></table>';
+        }
+
+        var corpo =
+            '<section><div class="section-head"><h3>I. Panorama do período</h3><span class="roman">&sect; 1</span></div><dl class="specs">' +
+            '<div class="item"><dt>Visitantes</dt><dd class="answer"><span class="mono">' + fmtNum(dados.visitantes) + '</span></dd><dd><span class="pill neutral">sessões</span></dd></div>' +
+            '<div class="item"><dt>Páginas vistas</dt><dd class="answer"><span class="mono">' + fmtNum(dados.visualizacoes) + '</span></dd><dd><span class="pill neutral">aberturas</span></dd></div>' +
+            '<div class="item"><dt>Tempo ativo</dt><dd class="answer"><span class="mono">' + fmtTempo(dados.tempo_medio_segundos) + '</span></dd><dd><span class="pill neutral">média</span></dd></div>' +
+            '<div class="item"><dt>Rolagem</dt><dd class="answer"><span class="mono">' + (dados.rolagem_media == null ? '—' : dados.rolagem_media + '%') + '</span></dd><dd><span class="pill neutral">média</span></dd></div>' +
+            '<div class="item"><dt>Downloads</dt><dd class="answer"><span class="mono">' + fmtNum(dados.downloads) + '</span></dd><dd><span class="pill neutral">AnyDesk e drivers</span></dd></div>' +
+            '<div class="item"><dt>WhatsApp</dt><dd class="answer"><span class="mono">' + fmtNum(dados.whatsapp) + '</span></dd><dd><span class="pill neutral">cliques</span></dd></div>' +
+            '</dl></section>\n' +
+            '<section><div class="section-head"><h3>II. Funil comercial</h3><span class="roman">&sect; 2</span></div>' +
+            '<table class="ledger"><caption>Do primeiro acesso ao pagamento &middot; percentual sobre o topo do funil</caption>' +
+            '<thead><tr><th style="width:40px;">#</th><th>Etapa</th><th style="width:90px;">% do topo</th><th style="width:110px;">Queda</th><th style="width:100px;" class="num">Pessoas</th></tr></thead>' +
+            '<tbody>' + linhasFunil + '</tbody>' +
+            '<tfoot><tr><td colspan="4">Conversão do topo ao pagamento</td><td class="num">' + (base ? pct(fim, base) + '%' : '—') + '</td></tr></tfoot>' +
+            '</table></section>\n' +
+            '<section><div class="section-head"><h3>III. Seções mais vistas</h3><span class="roman">&sect; 3</span></div>' +
+            tabela('Seção', 'Trechos da página abertos pelos visitantes', dados.secoes, function (i) {
+                return i.tempo_medio_segundos == null ? '—' : fmtTempo(i.tempo_medio_segundos);
+            }) + '</section>\n' +
+            '<section><div class="section-head"><h3>IV. Origem do tráfego</h3><span class="roman">&sect; 4</span></div>' +
+            tabela('Origem', 'De onde vieram os acessos', dados.origens) + '</section>\n' +
+            '<section><div class="section-head"><h3>V. Dispositivos</h3><span class="roman">&sect; 5</span></div>' +
+            tabela('Dispositivo', 'Aparelho usado no acesso', dados.dispositivos) + '</section>\n';
+
+        R.abrirImpressao(R.montarFolha({
+            c: c,
+            titulo: 'Relatório de Visitantes · Comportamento e Conversão',
+            cabecalho: 'Visitantes e Conversões',
+            ref: dias + ' dias',
+            subhead: 'Relatório de audiência &middot; emitido automaticamente',
+            nota: 'dados anônimos &middot; uso interno',
+            tag: 'Audiência e funil &middot; v1.0',
+            manchete: 'Comportamento dos visitantes e funil comercial',
+            lede: 'Documento consolida a audiência do site no período, o caminho percorrido até o pagamento e a origem dos acessos. Nenhum dado pessoal é coletado: as sessões são anônimas e dependem do aceite do banner de métricas.',
+            pin: 'Período de ' + dias + ' dias',
+            corpo: corpo,
+            assinaturas: [
+                ['Marketing', 'leitura de audiência'],
+                ['Produto', 'revisão do funil'],
+                ['Direção', 'acompanhamento comercial']
+            ]
+        }));
+    }
+
     function seletorPeriodo() {
         return el('div.tel-periodo', { role: 'group', 'aria-label': 'Período' },
             PERIODOS.map(function (n) {
@@ -174,7 +265,16 @@
                 bloco('Origens', 'fa-signs-post', ranking(dados.origens)),
                 bloco('Dispositivos', 'fa-mobile-screen', ranking(dados.dispositivos))
             ]),
-            dados.limitado ? el('p.bloco-nota', { texto: 'Período limitado aos 10.000 eventos mais recentes.' }) : null
+            dados.limitado ? el('p.bloco-nota', { texto: 'Período limitado aos 10.000 eventos mais recentes.' }) : null,
+            // Mesmo botão, mesmo canto das outras abas: imprime o período que
+            // está à vista, não um recorte diferente do que se está olhando.
+            semDados ? null : el('div.diag-tabela-acoes', {},
+                el('button.acao.diag-btn-imprimir', {
+                    type: 'button',
+                    texto: 'Imprimir relatório',
+                    aoClicar: imprimir
+                })
+            )
         ]);
     }
 

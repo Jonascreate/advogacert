@@ -743,6 +743,17 @@
         }).catch(function () {});
     }
 
+    /* A folha timbrada nasceu aqui, mas não é só dos cadastros: a aba de
+       visitantes imprime no mesmo papel. Exposta para que não exista um
+       segundo ESTILO_FOLHA copiado em outro arquivo — dois papéis timbrados
+       divergindo com o tempo é o que se quer evitar. */
+    global.AdminRelatorio = {
+        esc: esc,
+        carimbos: carimbos,
+        montarFolha: montarFolha,
+        abrirImpressao: abrirImpressao
+    };
+
     global.AdminCadastros = {
         montar: function (nos) {
             alvoResumo = nos.resumo;
