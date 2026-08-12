@@ -42,8 +42,14 @@ html { scrollbar-gutter: stable; overflow-y: scroll; }
 
     /* Cor da luz, em oklch: L = claridade, C = saturação, H = matiz.
        Eixos separados, como no seletor do Illustrator — dá para clarear sem
-       mudar a cor, ou saturar sem clarear. 85° é o amarelo-âmbar. */
-    --luz-cor: 92% 0.11 85;
+       mudar a cor, ou saturar sem clarear.
+
+       Era 92% 0.11 85 — amarelo-âmbar de claridade tão alta que chegava
+       lavado: o sol que o mouse arrasta tinha brilho e quase nenhuma cor.
+       Baixa a claridade, sobe a saturação e o matiz desce de 85° (amarelo)
+       para 62°, o laranja de sol baixo. Vale para a luz do ponteiro e para o
+       clarão do poente sob o cartão, que bebem do mesmo token. */
+    --luz-cor: 87% 0.16 62;
 
     /* Vidro e desfoques */
     --vidro-blur: 44px;
@@ -258,7 +264,22 @@ body {
     position: relative;
     width: 100%;
     max-width: 400px;
-    background: var(--bg-secondary);
+    /* Era --bg-secondary, cor chapada do site: sobre a foto da montanha a
+       caixa virava um retângulo preto no meio do poente. Agora é o mesmo
+       vidro do cartão do painel, um degrau mais fino de tinta (15% contra
+       20%) — a caixa é pequena e fica bem no centro da imagem, então precisa
+       deixar mais paisagem passar do que o cartão grande deixa. */
+    background:
+        linear-gradient(180deg,
+            oklch(var(--acento-frio) / var(--vidro-ceu)),
+            oklch(var(--acento-frio) / 0) 40%),
+        radial-gradient(140% 90% at 50% 118%,
+            oklch(var(--luz-cor) / var(--vidro-poente)) 0%,
+            oklch(var(--luz-cor) / calc(var(--vidro-poente) * 0.45)) 35%,
+            oklch(var(--luz-cor) / 0) 72%),
+        oklch(var(--vidro-cor) / var(--o-15));
+    backdrop-filter: blur(var(--vidro-blur)) saturate(150%);
+    -webkit-backdrop-filter: blur(var(--vidro-blur)) saturate(150%);
     border: 1px solid var(--border-color);
     border-radius: 20px;
     padding: 3rem 2.75rem 2.5rem;
@@ -275,7 +296,7 @@ body {
    ter o que brilhar. Três camadas: aro fino, miolo e um halo largo e raso —
    é o degradê que dá o esfumaçado, já que box-shadow não aceita blur de
    filtro. */
-:root { --luz-poente-login: 78% 0.14 55; }
+:root { --luz-poente-login: 78% 0.15 40; }
 @keyframes loginGlow {
     0%, 100% {
         box-shadow:
