@@ -611,6 +611,20 @@
             position: absolute; inset: 0; width: 100%; height: 100%;
             border: 0; object-fit: cover;
         }
+        /* As marcas ficam no lugar da prévia em vídeo até haver vídeo. Fundo
+           escuro porque os dois PNGs são feitos para fundo escuro — sobre
+           branco o "PJe" sumiria. */
+        .painel-marcas {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.7rem;
+            padding: 0 1rem;
+        }
+        .painel-marcas img { position: static; width: 96px; height: auto; object-fit: contain; }
+        .painel-marcas img.claude { width: 104px; }
+        .painel-mais { color: var(--text-muted); font-size: 1.05rem; font-weight: 300; }
+
         .painel-corpo { padding: 1.4rem 1.4rem 1.5rem; }
         .painel-valor {
             font-family: 'Outfit', sans-serif;
@@ -771,21 +785,24 @@
              ficam de fora — em turma nova saem zerados. -->
         <aside class="painel-compra">
             <div class="painel-capa">
-                <!-- Prévia em vídeo: troque este bloco por
+                <!-- As duas marcas do curso, mesmo par do anúncio no index.
+                     Para pôr uma prévia em vídeo no lugar delas:
                      <iframe src="https://www.youtube.com/embed/ID" title="Prévia do curso"
                              allowfullscreen loading="lazy"></iframe> -->
-                <div class="video-play"><i class="fa-solid fa-play"></i></div>
+                <div class="painel-marcas">
+                    <img src="assets/img/pje-claro.png" alt="PJe — Processo Judicial Eletrônico">
+                    <span class="painel-mais">+</span>
+                    <img class="claude" src="assets/img/claude-claro.png" alt="Claude">
+                </div>
             </div>
             <div class="painel-corpo">
-                <!-- Quando houver preço:
-                     <div class="painel-valor">R$ 000<small><s>R$ 000</s> à vista ou em Nx</small></div> -->
                 <div class="painel-valor">
-                    Vagas abertas
-                    <small>Valor e forma de pagamento pelo WhatsApp</small>
+                    R$ 65
+                    <small>por pessoa · Pix, cartão ou boleto</small>
                 </div>
 
-                <a class="btn-matricula"
-                   href="https://wa.me/5561986241570?text=Quero%20garantir%20minha%20vaga%20no%20curso%20de%20PJe%20e%20IA"
+                <a class="btn-matricula js-pagar"
+                   href="https://wa.me/5561986241570?text=Quero%20garantir%20minha%20vaga%20no%20curso%20de%20PJe%20e%20IA%20(R%24%2065)"
                    target="_blank" rel="noopener">
                     <i class="fa-brands fa-whatsapp"></i> Garantir minha vaga
                 </a>
@@ -914,8 +931,8 @@
                     <div class="acesso-acoes">
                         <!-- Quando houver link de checkout do curso no Mercado Pago, ele entra
                              aqui no lugar do WhatsApp. -->
-                        <a class="btn-acesso principal"
-                           href="https://wa.me/5561986241570?text=Quero%20garantir%20minha%20vaga%20no%20curso%20de%20PJe%20e%20IA"
+                        <a class="btn-acesso principal js-pagar"
+                           href="https://wa.me/5561986241570?text=Quero%20garantir%20minha%20vaga%20no%20curso%20de%20PJe%20e%20IA%20(R%24%2065)"
                            target="_blank" rel="noopener">
                             <i class="fa-brands fa-whatsapp"></i> Garantir minha vaga
                         </a>
@@ -1001,6 +1018,26 @@
     <script>
     (function () {
         'use strict';
+
+        /* ------------------------------------------------------------------
+           LINK DE PAGAMENTO DO CURSO — R$ 65
+           ------------------------------------------------------------------
+           Cole aqui o link do Mercado Pago quando ele existir; os dois botões
+           de "Garantir minha vaga" passam a apontar para ele de uma vez.
+
+           Enquanto estiver vazio, os botões continuam indo ao WhatsApp, que é
+           por onde a vaga é combinada hoje. O href do WhatsApp está no HTML,
+           não aqui, de propósito: se este script falhar, o botão ainda leva a
+           algum lugar em vez de ficar morto. */
+        var LINK_PAGAMENTO = '';
+
+        if (LINK_PAGAMENTO) {
+            Array.prototype.forEach.call(document.querySelectorAll('.js-pagar'), function (a) {
+                a.href = LINK_PAGAMENTO;
+                a.removeAttribute('target');   // checkout abre na mesma aba
+            });
+        }
+
         var menosMovimento = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         // ---- barra de progresso ----
