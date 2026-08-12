@@ -265,31 +265,21 @@ body {
     text-align: center;
     overflow: hidden;
 }
-@property --border-angle {
-    syntax: '<angle>';
-    inherits: false;
-    initial-value: 0deg;
+/* Luz acendendo e apagando, no lugar da faixa que corria pela borda: é o
+   mesmo efeito dos ícones de suporte para Mac e Windows no site
+   (iconGlowMac / iconGlowWin). Só a sombra respira — a caixa fica parada,
+   sem transform, para não haver movimento sob o texto do formulário. */
+@keyframes loginGlow {
+    0%, 100% {
+        box-shadow: 0 0 0 1px oklch(var(--acento-frio) / 0.06),
+                    0 0 0 oklch(var(--acento-frio) / 0);
+    }
+    50% {
+        box-shadow: 0 0 0 1px oklch(var(--acento-frio) / 0.20),
+                    0 10px 42px oklch(var(--acento-frio) / 0.32);
+    }
 }
-@keyframes borderRun { to { --border-angle: 360deg; } }
-.login-box::after {
-    content: '';
-    position: absolute; inset: 0;
-    border-radius: inherit; padding: 1px;
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask-composite: exclude;
-    pointer-events: none;
-    animation: borderRun 4s linear infinite;
-    background: conic-gradient(from var(--border-angle),
-        transparent 0deg, transparent 190deg,
-        oklch(var(--acento-frio) / 0) 210deg,
-        oklch(var(--acento-frio)) 250deg, oklch(var(--acento-quente)) 300deg,
-        #fff 330deg, oklch(var(--acento-frio)) 350deg,
-        oklch(var(--acento-quente) / 0) 360deg);
-    opacity: 0.6;
-    filter: drop-shadow(0 0 2px oklch(var(--acento-frio) / 0.5));
-}
+.login-box { animation: loginGlow 3.2s ease-in-out infinite; }
 .login-box > * { position: relative; z-index: 1; }
 
 .login-logo {
@@ -448,8 +438,7 @@ select:focus-visible, summary:focus-visible {
 }
 /* Vidro chapado e nada mais: sem borda, sem sombra, sem degradê — nem no
    fundo, nem no aro, nem no hover. A cor da marca fica só no ícone e no
-   número. O @property --border-angle e o @keyframes borderRun seguem
-   definidos porque o login-box ainda os usa. */
+   número. */
 .stat {
     position: relative;
     display: flex; flex-direction: row; align-items: center; gap: 0.65rem;
@@ -1315,7 +1304,7 @@ tr.linha-atendida:hover > td {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .login-box::after { animation: none; }
+    .login-box { animation: none; }
 }
 
 /* ================= VISITANTES E CONVERSÕES =================
