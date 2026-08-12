@@ -329,7 +329,7 @@
             --folha-linha: #e2e6ec;
             max-width: 1180px;
             margin: 1rem auto 3rem;
-            padding: 3rem 2.25rem;
+            padding: 2.5rem 2rem;
             border-radius: 24px;
             background: var(--folha-fundo);
             color: var(--folha-tinta);
@@ -378,13 +378,13 @@
            empilham sozinhos quando não couberem lado a lado, sem media query
            para isso. */
         .acesso-card {
-            flex: 1 1 320px;
+            flex: 1 1 250px;
             display: flex;
             flex-direction: column;
             background: #fff;
             border: 1px solid var(--folha-linha);
-            border-radius: 18px;
-            padding: 2rem 1.85rem;
+            border-radius: 16px;
+            padding: 1.4rem 1.3rem;
             box-shadow: 0 1px 2px rgba(20, 22, 26, 0.04), 0 12px 28px -18px rgba(20, 22, 26, 0.35);
             transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), box-shadow 0.35s ease;
         }
@@ -393,11 +393,11 @@
             box-shadow: 0 1px 2px rgba(20, 22, 26, 0.05), 0 22px 40px -20px rgba(20, 22, 26, 0.45);
         }
         .acesso-icone {
-            width: 54px; height: 54px;
+            width: 42px; height: 42px;
             display: flex; align-items: center; justify-content: center;
-            border-radius: 15px;
-            font-size: 1.45rem;
-            margin-bottom: 1.1rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            margin-bottom: 0.85rem;
         }
         .acesso-card.teams .acesso-icone {
             background: rgba(79, 163, 255, 0.12);
@@ -413,7 +413,7 @@
             display: inline-block;
             align-self: flex-start;
             padding: 0.25rem 0.7rem;
-            margin-bottom: 0.8rem;
+            margin-bottom: 0.6rem;
             border-radius: 100px;
             background: #eef1f5;
             color: var(--folha-tinta-3);
@@ -424,43 +424,25 @@
         }
         .acesso-card h3 {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.22rem;
+            font-size: 1.05rem;
             font-weight: 600;
             margin-bottom: 0.5rem;
         }
         .acesso-card > p {
             color: var(--folha-tinta-2);
-            font-size: 0.94rem;
-            line-height: 1.7;
-        }
-        .acesso-passos {
-            list-style: none;
-            margin: 1.15rem 0 1.5rem;
-            /* margin-top: auto no bloco seguinte empurra o botão para a base:
-               os dois cartões terminam na mesma altura mesmo com textos de
-               tamanhos diferentes. */
-        }
-        .acesso-passos li {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.65rem;
-            padding: 0.4rem 0;
-            color: var(--folha-tinta-2);
-            font-size: 0.9rem;
+            font-size: 0.875rem;
             line-height: 1.6;
+            margin-bottom: 1.1rem;
         }
-        .acesso-passos li i { flex-shrink: 0; margin-top: 0.28rem; font-size: 0.75rem; }
-        .acesso-card.teams .acesso-passos li i { color: var(--accent-win-dark); }
-        .acesso-card.remoto .acesso-passos li i { color: var(--accent-mac-dark); }
 
-        .acesso-acoes { margin-top: auto; display: flex; flex-wrap: wrap; gap: 0.7rem; }
+        .acesso-acoes { margin-top: auto; display: flex; flex-wrap: wrap; gap: 0.5rem; }
         .btn-acesso {
             display: inline-flex;
             align-items: center;
-            gap: 0.55rem;
-            padding: 0.85rem 1.4rem;
-            border-radius: 11px;
-            font-size: 0.92rem;
+            gap: 0.45rem;
+            padding: 0.65rem 1rem;
+            border-radius: 10px;
+            font-size: 0.85rem;
             font-weight: 700;
             text-decoration: none;
             transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
@@ -480,20 +462,6 @@
         }
         .btn-acesso.secundario:hover { background: #f2f4f7; transform: translateY(-2px); }
 
-        .acesso-nota {
-            margin-top: 2rem;
-            display: flex;
-            gap: 0.8rem;
-            align-items: flex-start;
-            padding: 1.1rem 1.3rem;
-            border-radius: 14px;
-            background: #fff;
-            border: 1px solid var(--folha-linha);
-            color: var(--folha-tinta-2);
-            font-size: 0.88rem;
-            line-height: 1.7;
-        }
-        .acesso-nota i { color: var(--accent-win-dark); margin-top: 0.2rem; }
 
         /* === VÍDEOS === */
         .videos {
@@ -898,8 +866,7 @@
         <div class="folha-inner">
             <h2 class="reveal">Como você <span>assiste</span></h2>
             <p class="sub reveal">
-                A aula é online e ao vivo. Você entra pelo navegador, sem instalar nada — e se o
-                seu computador travar no meio, a gente entra nele para resolver junto com você.
+                Aula ao vivo pelo navegador. Se travar, a gente entra na sua máquina.
             </p>
 
             <div class="acesso">
@@ -907,14 +874,7 @@
                     <div class="acesso-icone"><i class="fa-solid fa-video"></i></div>
                     <span class="acesso-tag">A aula</span>
                     <h3>Microsoft Teams</h3>
-                    <p>
-                        O link da sala chega no seu WhatsApp e no e-mail no dia anterior. Abre no
-                        navegador, sem conta da Microsoft e sem instalar programa.
-                    </p>
-                    <ul class="acesso-passos">
-                        <li><i class="fa-solid fa-check"></i> Continuar neste navegador — sem conta da Microsoft</li>
-                        <li><i class="fa-solid fa-check"></i> Câmera opcional, microfone só para perguntar</li>
-                    </ul>
+                    <p>O link chega no seu WhatsApp. Abre no navegador, sem conta e sem instalar.</p>
                     <div class="acesso-acoes">
                         <!-- Quando a sala do Teams existir, troque este href pelo link da
                              reunião. Até lá o botão leva ao WhatsApp, que é onde o link é
@@ -922,12 +882,7 @@
                         <a class="btn-acesso principal"
                            href="https://wa.me/5561986241570?text=Quero%20o%20link%20da%20aula%20no%20Teams"
                            target="_blank" rel="noopener">
-                            <i class="fa-solid fa-arrow-right-to-bracket"></i> Receber o link da sala
-                        </a>
-                        <a class="btn-acesso secundario"
-                           href="https://www.microsoft.com/pt-br/microsoft-teams/download-app"
-                           target="_blank" rel="noopener">
-                            <i class="fa-solid fa-download"></i> Baixar o Teams
+                            <i class="fa-solid fa-arrow-right-to-bracket"></i> Receber o link
                         </a>
                     </div>
                 </article>
@@ -936,25 +891,17 @@
                     <div class="acesso-icone"><i class="fa-solid fa-headset"></i></div>
                     <span class="acesso-tag">Se travar</span>
                     <h3>TeamViewer ou AnyDesk</h3>
-                    <p>
-                        Certificado que o navegador não reconhece, token que some, driver que não
-                        instala: nesses casos a explicação por voz não resolve. Você libera o
-                        acesso e a gente arruma na sua máquina, com você vendo a tela.
-                    </p>
-                    <ul class="acesso-passos">
-                        <li><i class="fa-solid fa-check"></i> Você passa o número e acompanha a tela</li>
-                        <li><i class="fa-solid fa-check"></i> O acesso acaba quando você fecha o programa</li>
-                    </ul>
+                    <p>Certificado, token ou driver que não vai: a gente resolve na sua tela, com você vendo.</p>
                     <div class="acesso-acoes">
                         <a class="btn-acesso principal"
                            href="https://www.teamviewer.com/pt-br/download/"
                            target="_blank" rel="noopener">
-                            <i class="fa-solid fa-download"></i> Baixar o TeamViewer
+                            <i class="fa-solid fa-download"></i> TeamViewer
                         </a>
                         <a class="btn-acesso secundario"
                            href="https://anydesk.com/pt/downloads"
                            target="_blank" rel="noopener">
-                            <i class="fa-solid fa-download"></i> Baixar o AnyDesk
+                            <i class="fa-solid fa-download"></i> AnyDesk
                         </a>
                     </div>
                 </article>
@@ -962,15 +909,8 @@
                 <article class="acesso-card pagamento reveal atraso-2">
                     <div class="acesso-icone"><i class="fa-solid fa-credit-card"></i></div>
                     <span class="acesso-tag">A vaga</span>
-                    <h3>Pagamento e inscrição</h3>
-                    <p>
-                        A vaga é confirmada com o pagamento. Combinamos tudo pelo WhatsApp antes:
-                        você recebe o link, paga e a inscrição volta confirmada por escrito.
-                    </p>
-                    <ul class="acesso-passos">
-                        <li><i class="fa-solid fa-check"></i> Pix, cartão ou boleto pelo Mercado Pago</li>
-                        <li><i class="fa-solid fa-check"></i> Link individual, nunca cartão por mensagem</li>
-                    </ul>
+                    <h3>Pagamento</h3>
+                    <p>Pix, cartão ou boleto por link individual. A vaga vale com o pagamento.</p>
                     <div class="acesso-acoes">
                         <!-- Quando houver link de checkout do curso no Mercado Pago, ele entra
                              aqui no lugar do WhatsApp. -->
@@ -981,15 +921,6 @@
                         </a>
                     </div>
                 </article>
-            </div>
-
-            <div class="acesso-nota reveal">
-                <i class="fa-solid fa-circle-info"></i>
-                <p>
-                    <strong>Não precisa saber mexer em computador.</strong> O módulo de PJe começa do
-                    zero, incluindo a instalação do certificado. Se você travar no meio da aula, a
-                    turma para e a gente resolve — é para isso que o acesso remoto existe.
-                </p>
             </div>
 
         </div>
