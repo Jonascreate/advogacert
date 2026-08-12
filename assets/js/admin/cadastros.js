@@ -241,13 +241,27 @@
         return ['sem plano', 'sem'];
     }
 
+    /* Premium ou grátis. `sem_horario` é a marca que o servidor põe no pedido
+       Premium, mas ela não sobrevive a um reinício: a coluna não existe na
+       tabela do Supabase (ver migracao_agendamentos_premium.sql). Por isso a
+       leitura não depende só dela — o tipo do chamado ligado a este
+       agendamento é a resposta mais confiável, e o plano da pessoa resolve
+       quando ainda não há chamado. */
+    function ehPremium(a) {
+        if (a.sem_horario) return true;
+        var c = (estado.dados.chamados || []).find(function (x) { return x.id === a.chamado_id; });
+        if (c) return c.tipo === 'premium';
+        var p = (estado.dados.pessoas || []).find(function (x) { return x.id === a.usuario_id; });
+        return !!(p && p.status === 'ativa');
+    }
+
     /* A escada de status e os botões são os mesmos para grátis e Premium: a
        baixa é sobre o encontro ter acontecido, não sobre o plano de quem foi
        atendido. Só as colunas mudam de uma tabela para a outra. */
     function linhaAgendamento(a, premium) {
         // "passou da hora" perde o sentido depois da baixa: atendido no
         // horário certo continuaria vermelho para sempre.
-        var passou = !a.sem_horario && new Date(a.inicio) < new Date() && !a.virou_chamado && !a.atendido;
+        var passou = !premium && new Date(a.inicio) < new Date() && !a.virou_chamado && !a.atendido;
 
             // A baixa vem primeiro na escada: uma vez atendido, é isso que
             // interessa saber, não em que ponto da papelada ele parou.
@@ -322,8 +336,8 @@
         /* Premium entra com sem_horario: o pedido é registrado na hora e não
            tem horário escolhido. Misturado na agenda do grátis, ele aparecia
            como um compromisso marcado que nunca existiu. */
-        var gratis = lista.filter(function (a) { return !a.sem_horario; });
-        var premium = lista.filter(function (a) { return a.sem_horario; });
+        var gratis = lista.filter(function (a) { return !ehPremium(a); });
+        var premium = lista.filter(ehPremium);
 
         var plus = premium.filter(function (a) { return planoDoAgendamento(a)[1] === 'plus'; }).length;
         var basico = premium.length - plus;
