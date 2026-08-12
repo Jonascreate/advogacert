@@ -572,34 +572,39 @@
             gap: 2.5rem;
             align-items: start;
         }
+        /* O layout traz o herói centralizado na largura toda, com o painel
+           começando só na altura dos módulos — não colado no título. Por isso
+           o herói atravessa as duas colunas e o painel entra na linha de
+           baixo. */
         .curso-topo .curso-hero {
-            grid-column: 1;
-            max-width: none;
-            margin: 0;
+            grid-column: 1 / -1;
+            max-width: 860px;
+            margin: 0 auto;
             padding: 0;
-            text-align: left;
+            text-align: center;
         }
         .curso-topo .curso-secao {
             grid-column: 1;
+            grid-row: 2;
             max-width: none;
             margin: 0;
             padding: 2.75rem 0 0;
         }
-        .curso-topo .curso-secao > h2,
-        .curso-topo .curso-secao > .sub { text-align: left; margin-left: 0; }
+        .curso-topo .curso-secao > .sub { margin-left: auto; margin-right: auto; }
 
         .painel-compra {
             grid-column: 2;
-            grid-row: 1 / span 2;
+            grid-row: 2;
             /* sticky preso ao topo, com folga para o cabeçalho fixo do site */
             position: sticky;
             top: 6rem;
-            background: rgba(22, 22, 24, 0.55);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
+            /* Capa escura em cima, papel branco embaixo — é assim no layout,
+               e é o contraste que faz o preço saltar no meio da página preta. */
+            background: #fff;
             border: 1px solid var(--border-color);
             border-radius: 20px;
             overflow: hidden;
+            color: #14161a;
         }
         .painel-capa {
             position: relative;
@@ -636,7 +641,7 @@
             height: auto;
             object-fit: contain;
         }
-        .painel-mais { color: var(--text-muted); font-size: 0.95rem; font-weight: 300; line-height: 1; }
+        .painel-mais { color: #6b6b70; font-size: 0.95rem; font-weight: 300; line-height: 1; }
 
         /* A foto ocupa a outra metade inteira. cover recorta o que sobra em
            vez de espremer o rosto, e o enquadramento sobe um pouco: em foto
@@ -651,7 +656,7 @@
             object-position: center 22%;
         }
 
-        .painel-corpo { padding: 1.4rem 1.4rem 1.5rem; }
+        .painel-corpo { padding: 1.4rem 1.4rem 1.5rem; text-align: center; }
         .painel-valor {
             font-family: 'Outfit', sans-serif;
             font-size: 1.55rem;
@@ -664,7 +669,7 @@
             font-family: 'Inter', sans-serif;
             font-size: 0.8rem;
             font-weight: 400;
-            color: var(--text-muted);
+            color: #767d87;
         }
         .btn-matricula {
             display: flex;
@@ -692,17 +697,18 @@
             list-style: none;
             margin-top: 1.2rem;
             padding-top: 1.1rem;
-            border-top: 1px solid var(--border-color);
+            border-top: 1px solid #e2e6ec;
         }
         .painel-fatos li {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 0.6rem;
             padding: 0.35rem 0;
-            color: var(--text-secondary);
+            color: #4a5058;
             font-size: 0.88rem;
         }
-        .painel-fatos i { color: var(--accent-mac); font-size: 0.8rem; width: 1rem; }
+        .painel-fatos i { color: var(--accent-mac-dark); font-size: 0.8rem; }
 
         /* === CRONÔMETRO DA TURMA === */
         /* Dentro do painel ele vira uma linha só; a versão em quadros grandes
@@ -720,11 +726,12 @@
             font-size: 0.82rem;
             color: var(--text-secondary);
         }
+        .painel-prazo { color: #4a5058; justify-content: center; }
         .painel-prazo .relogio {
             font-family: 'JetBrains Mono', monospace;
             font-variant-numeric: tabular-nums;
             font-weight: 700;
-            color: var(--accent-win);
+            color: var(--accent-win-dark);
         }
         .painel-prazo.encerrada { opacity: 0.6; }
 
@@ -762,6 +769,26 @@
             .reveal { opacity: 1; transform: none; transition: none; }
             .barra-rolagem { transition: none; }
             .acesso-card, .btn-acesso, .modulo { transition: none; }
+        }
+
+        /* Abaixo de 980px não há coluna lateral: o painel desce e vira um
+           bloco normal, logo depois da chamada e antes dos módulos. */
+        @media (max-width: 980px) {
+            .curso-topo {
+                grid-template-columns: 1fr;
+                padding: 8.5rem 1.25rem 2rem;
+                gap: 2rem;
+            }
+            .curso-topo .curso-hero { grid-column: 1; }
+            .painel-compra {
+                grid-column: 1;
+                grid-row: auto;
+                position: static;
+                max-width: 420px;
+                width: 100%;
+                margin: 0 auto;
+            }
+            .curso-topo .curso-secao { grid-row: auto; padding-top: 1rem; }
         }
 
         @media (max-width: 860px) {
