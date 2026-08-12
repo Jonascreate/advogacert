@@ -228,6 +228,14 @@
             color: var(--text-muted);
         }
 
+        /* A dica embaixo do campo, desbotada: diz o que acontece ao enviar
+           sem competir com o campo nem com o botão. */
+        .form-group .otp-hint {
+            margin: 0.5rem 0 0;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
         .login-links {
             display: flex;
             flex-wrap: wrap;
@@ -560,19 +568,17 @@
                             <i class="fab fa-google"></i>
                             <span>Entrar com Google</span>
                         </a>
-                        <button type="button" class="entrada-btn codigo" id="btn-mostrar-codigo">
-                            <i class="fas fa-envelope"></i>
-                            <span>Receber código por e-mail</span>
-                        </button>
                     </div>
 
-                    <div id="bloco-codigo" style="display:none; margin-top:1.5rem;">
-                        <div class="form-group">
-                            <label for="login-telefone">Seu e-mail</label>
-                            <input type="email" id="login-telefone" placeholder="seu@email.com" autocomplete="email">
-                        </div>
-                        <button type="submit" class="login-btn" id="login-btn-codigo">Enviar código</button>
+                    <div class="login-divider">ou</div>
+
+                    <!-- Campo à vista, sem clique intermediário: o código vai
+                         para o e-mail que a pessoa digitar aqui. -->
+                    <div class="form-group">
+                        <input type="email" id="login-telefone" placeholder="seu@email.com" autocomplete="email" required>
+                        <p class="otp-hint">Receba o código por e-mail</p>
                     </div>
+                    <button type="submit" class="login-btn" id="login-btn-codigo">Enviar código</button>
 
                     <div id="login-message" style="margin-top:15px;text-align:center;font-size:14px;"></div>
                 </form>
@@ -657,6 +663,6 @@
 
     <script src="assets/js/api.js?v=9"></script>
 
-    <script src="assets/js/script.js?v=12"></script>
+    <script src="assets/js/script.js?v=13"></script>
 </body>
 </html>
