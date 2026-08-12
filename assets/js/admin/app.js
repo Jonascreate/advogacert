@@ -91,6 +91,7 @@
         { id: 'triagem',      rotulo: 'Triagem' },
         { id: 'chamados',     rotulo: 'Chamados' },
         { id: 'indicadores',  rotulo: 'Indicadores' },
+        { id: 'visitantes',   rotulo: 'Visitantes e conversões' },
         { id: 'sistema',      rotulo: 'Servidor e banco' },
         { id: 'cadastros-tab', rotulo: 'Cadastros e agenda' }
     ];
@@ -204,6 +205,7 @@
         global.AdminTriagem.montar(document.getElementById('aba-triagem'));
         global.AdminFilaChamados.montar(document.getElementById('aba-chamados'));
         global.AdminIndicadores.montar(document.getElementById('aba-indicadores'));
+        global.AdminVisitantes.montar(document.getElementById('aba-visitantes'));
         global.AdminCadastros.montar({
             resumo: document.getElementById('resumo'),
             pessoas: document.getElementById('aba-cadastros-pessoas'),
@@ -258,7 +260,8 @@
                 Promise.all([
                     atualizarTempoReal(),
                     global.AdminCadastros.recarregar(),
-                    global.AdminIndicadores.recarregar()
+                    global.AdminIndicadores.recarregar(),
+                    global.AdminVisitantes.recarregar()
                 ]).then(function () {
                     marcarHora();
                 }).catch(function () {

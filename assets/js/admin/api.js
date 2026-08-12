@@ -144,6 +144,10 @@
             return pedir('/admin/indicadores' + query({ janela: janela }));
         },
 
+        telemetria: function (dias) {
+            return pedir('/admin/telemetria' + query({ dias: dias }));
+        },
+
         assinatura: function (usuario_id, acao) {
             return pedir('/admin/assinatura', {
                 metodo: 'POST',

@@ -1273,6 +1273,8 @@ function situacaoDoUsuario(db, u) {
 // ============================================================
 // SERVIDOR HTTP
 // ============================================================
+const limiteTelemetria = new Map();
+
 const server = http.createServer((req, res) => {
     const { method, url } = req;
 
@@ -1286,6 +1288,74 @@ const server = http.createServer((req, res) => {
     if (method === 'OPTIONS') {
         res.writeHead(200);
         res.end();
+        return;
+    }
+
+    // Telemetria anônima: inserção unitária, fora do espelho em memória.
+    // Eventos de navegação têm volume alto e nunca devem entrar em COLECOES,
+    // que são recarregadas integralmente no boot e reenviadas em cada save.
+    if (method === 'POST' && url === '/telemetria/evento') {
+        let body = '';
+        req.on('data', chunk => {
+            if (body.length < 16 * 1024) body += chunk;
+        });
+        req.on('end', async () => {
+            try {
+                const ip = ipDoPedido(req);
+                const minuto = Math.floor(Date.now() / 60000);
+                const chaveLimite = `${ip}:${minuto}`;
+                const quantidade = (limiteTelemetria.get(chaveLimite) || 0) + 1;
+                limiteTelemetria.set(chaveLimite, quantidade);
+                if (limiteTelemetria.size > 5000) limiteTelemetria.clear();
+                if (quantidade > 120) { res.writeHead(204); res.end(); return; }
+
+                const e = JSON.parse(body || '{}');
+                const curto = (v, n) => v == null ? null : String(v).slice(0, n);
+                if (!/^[0-9a-f-]{36}$/i.test(String(e.sessao_id || '')) ||
+                    !/^[a-z][a-z0-9_]{1,79}$/.test(String(e.evento || ''))) {
+                    res.writeHead(204); res.end(); return;
+                }
+
+                const linha = {
+                    sessao_id: e.sessao_id,
+                    evento: e.evento,
+                    pagina: curto(e.pagina, 160),
+                    secao: curto(e.secao, 100),
+                    servico: curto(e.servico, 120),
+                    plano: curto(e.plano, 80),
+                    origem: curto(e.origem, 120),
+                    referencia: curto(e.referencia, 200),
+                    utm_source: curto(e.utm_source, 120),
+                    utm_medium: curto(e.utm_medium, 120),
+                    utm_campaign: curto(e.utm_campaign, 160),
+                    utm_content: curto(e.utm_content, 160),
+                    utm_term: curto(e.utm_term, 160),
+                    tempo_ativo_segundos: Number.isFinite(Number(e.tempo_ativo_segundos))
+                        ? Math.max(0, Math.min(86400, Math.round(Number(e.tempo_ativo_segundos)))) : null,
+                    profundidade_rolagem: Number.isFinite(Number(e.profundidade_rolagem))
+                        ? Math.max(0, Math.min(100, Math.round(Number(e.profundidade_rolagem)))) : null,
+                    dispositivo: curto(e.dispositivo, 30),
+                    largura_tela: Number.isFinite(Number(e.largura_tela))
+                        ? Math.max(0, Math.min(10000, Math.round(Number(e.largura_tela)))) : null,
+                    dados: e.dados && typeof e.dados === 'object' && !Array.isArray(e.dados) ? e.dados : {}
+                };
+
+                // O navegador nunca recebe a service_role. O Render faz a
+                // única escrita permitida, sem guardar IP ou conteúdo digitado.
+                if (SUPABASE_ATIVO) {
+                    const r = await fetch(`${SUPABASE_URL}/rest/v1/eventos_site`, {
+                        method: 'POST',
+                        headers: supabaseHeaders({ Prefer: 'return=minimal' }),
+                        body: JSON.stringify(linha)
+                    });
+                    if (!r.ok) console.error('Telemetria recusada pelo Supabase:', r.status, (await r.text()).slice(0, 200));
+                }
+            } catch (err) {
+                console.error('Evento de telemetria ignorado:', err.message);
+            }
+            res.writeHead(204);
+            res.end();
+        });
         return;
     }
 
@@ -2346,6 +2416,80 @@ const server = http.createServer((req, res) => {
                 responder(400, { success: false, error: 'Erro interno' });
             }
         });
+        return;
+    }
+
+    // ============ PAINEL: GET /admin/telemetria ============
+    if (method === 'GET' && url.split('?')[0] === '/admin/telemetria') {
+        if (!sessaoAdmin(req)) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'Sessão expirada' }));
+            return;
+        }
+
+        (async () => {
+            try {
+                if (!SUPABASE_ATIVO) throw new Error('Supabase não configurado');
+                const q = new URL(url, `http://${req.headers.host}`).searchParams;
+                const dias = Math.max(1, Math.min(90, Number(q.get('dias')) || 30));
+                const desde = new Date(Date.now() - dias * 86400000).toISOString();
+                const endpoint = `${SUPABASE_URL}/rest/v1/eventos_site` +
+                    `?select=sessao_id,evento,pagina,secao,servico,plano,origem,utm_source,utm_campaign,tempo_ativo_segundos,profundidade_rolagem,dispositivo,criado_em` +
+                    `&criado_em=gte.${encodeURIComponent(desde)}&order=criado_em.desc&limit=10000`;
+                const r = await fetch(endpoint, { headers: supabaseHeaders() });
+                if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 200)}`);
+                const eventos = await r.json();
+                const contar = campo => eventos.reduce((m, e) => {
+                    const k = e[campo] || 'não informado'; m[k] = (m[k] || 0) + 1; return m;
+                }, {});
+                const top = campo => Object.entries(contar(campo))
+                    .filter(([nome]) => nome !== 'não informado')
+                    .sort((a, b) => b[1] - a[1]).slice(0, 8)
+                    .map(([nome, total]) => ({ nome, total }));
+                const porEvento = contar('evento');
+                const tempos = eventos.filter(e => e.evento === 'pagina_encerrada' && e.tempo_ativo_segundos != null);
+                const rolagens = eventos.filter(e => e.evento === 'pagina_encerrada' && e.profundidade_rolagem != null);
+                const secoesVistas = eventos.filter(e => e.evento === 'secao_visualizada' && e.secao);
+                const temposSecao = eventos.filter(e => e.evento === 'secao_tempo' && e.secao && e.tempo_ativo_segundos != null);
+                const secoes = Object.entries(secoesVistas.reduce((m, e) => {
+                    m[e.secao] = (m[e.secao] || 0) + 1; return m;
+                }, {})).map(([nome, total]) => {
+                    const amostras = temposSecao.filter(e => e.secao === nome);
+                    return {
+                        nome, total,
+                        tempo_medio_segundos: amostras.length
+                            ? Math.round(amostras.reduce((s, e) => s + Number(e.tempo_ativo_segundos), 0) / amostras.length) : null
+                    };
+                }).sort((a, b) => b.total - a.total).slice(0, 8);
+                const db = loadJsonDb();
+                const pagamentosConfirmados = (db.assinaturas || []).filter(a =>
+                    a.status === 'ativa' && new Date(a.criado_em || a.inicio).getTime() >= new Date(desde).getTime()).length;
+                porEvento.pagamento_confirmado = pagamentosConfirmados;
+                const funilNomes = [
+                    'pagina_visualizada', 'secao_visualizada', 'plano_clicado',
+                    'formulario_iniciado', 'formulario_enviado', 'checkout_iniciado', 'pagamento_confirmado'
+                ];
+                const funil = funilNomes.map(nome => ({ evento: nome, total: porEvento[nome] || 0 }));
+
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    success: true, dias, limitado: eventos.length === 10000,
+                    visitantes: new Set(eventos.map(e => e.sessao_id)).size,
+                    visualizacoes: porEvento.pagina_visualizada || 0,
+                    tempo_medio_segundos: tempos.length
+                        ? Math.round(tempos.reduce((s, e) => s + Number(e.tempo_ativo_segundos), 0) / tempos.length) : null,
+                    rolagem_media: rolagens.length
+                        ? Math.round(rolagens.reduce((s, e) => s + Number(e.profundidade_rolagem), 0) / rolagens.length) : null,
+                    downloads: (porEvento.download_anydesk || 0) + (porEvento.download_driver || 0),
+                    whatsapp: porEvento.whatsapp_clicado || 0,
+                    funil,
+                    secoes, origens: top('origem'), dispositivos: top('dispositivo')
+                }));
+            } catch (err) {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, error: 'Telemetria indisponível: ' + err.message }));
+            }
+        })();
         return;
     }
 

@@ -1271,6 +1271,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(function (r) { return r.json(); })
                 .then(function (d) {
                     if (d && d.success && d.url) {
+                        if (window.telemetriaEvento) {
+                            window.telemetriaEvento('checkout_iniciado', {
+                                plano: checkoutAtual.plano,
+                                dados: { valor: Number(checkoutAtual.valor) }
+                            });
+                        }
                         window.location.href = d.url;
                         return;
                     }
