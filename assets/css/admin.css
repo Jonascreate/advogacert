@@ -292,13 +292,16 @@ body {
    mesmo efeito dos ícones de suporte para Mac e Windows no site
    (iconGlowMac / iconGlowWin). Só a sombra respira — a caixa fica parada,
    sem transform, para não haver movimento sob o texto do formulário. */
-/* Poente, não azul: a foga atrás do painel é uma montanha no fim da tarde, e
-   um halo azul brigava com ela. 55° em oklch é o âmbar-alaranjado do sol
-   baixo, no mesmo eixo do --acento-quente da paleta, só mais saturado para
-   ter o que brilhar. Três camadas: aro fino, miolo e um halo largo e raso —
-   é o degradê que dá o esfumaçado, já que box-shadow não aceita blur de
-   filtro. */
-:root { --luz-poente-login: 78% 0.15 40; }
+/* A cor sai da própria foto, não de uma ideia de "pôr do sol". A imagem é um
+   crepúsculo frio: céu azul-violeta, montanhas em azul de bruma, e uma única
+   nota morna — a faixa rosa-poeira que se acende no horizonte, logo acima da
+   serra. É de lá que a luz vem na foto, então é ela que o halo imita.
+   20° em oklch é esse rosa acinzentado; a saturação fica baixa (0.07) porque
+   na imagem ela é baixa — âmbar ou dourado viravam um holofote amarelo que
+   não existe em lugar nenhum do quadro.
+   Três camadas: aro fino, miolo e um halo largo e raso — é o degradê que dá
+   o esfumaçado, já que box-shadow não aceita blur de filtro. */
+:root { --luz-poente-login: 80% 0.07 20; }
 @keyframes loginGlow {
     0%, 100% {
         box-shadow:
@@ -306,11 +309,13 @@ body {
             0 0 26px -10px oklch(var(--luz-poente-login) / 0.18),
             0 0 54px 8px oklch(var(--luz-poente-login) / 0.07);
     }
+    /* Alfas um pouco acima dos que o âmbar usava: cor menos saturada rende
+       menos halo com a mesma opacidade, e sem esse ajuste o brilho sumia. */
     50% {
         box-shadow:
-            0 0 0 1px oklch(var(--luz-poente-login) / 0.26),
-            0 0 46px 0 oklch(var(--luz-poente-login) / 0.38),
-            0 0 98px 22px oklch(var(--luz-poente-login) / 0.17);
+            0 0 0 1px oklch(var(--luz-poente-login) / 0.30),
+            0 0 46px 0 oklch(var(--luz-poente-login) / 0.46),
+            0 0 98px 22px oklch(var(--luz-poente-login) / 0.20);
     }
 }
 .login-box { animation: loginGlow 3.2s ease-in-out infinite; }
