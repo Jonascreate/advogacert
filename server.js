@@ -1242,6 +1242,8 @@ function situacaoDoUsuario(db, u) {
     const referencia = assinatura || assinaturaMaisRecente(db, u.id);
     const chamados = db.chamados.filter(c => c.usuario_id === u.id);
     const cobranca = situacaoDeCobranca(db, u.id);
+    const checkoutIniciado = (db.auditoria || []).slice().reverse().find(a =>
+        a.acao === 'checkout_iniciado' && String(a.alvo) === String(u.id));
 
     return {
         id: u.id,
@@ -1262,7 +1264,9 @@ function situacaoDoUsuario(db, u) {
         chamados_premium: chamados.filter(c => c.tipo === 'premium').length,
         // contabilizado pela OAB: vale para todos os cadastros da mesma inscrição
         free_usado: freeUsadoPelaOab(db, u.oab) || chamados.some(c => c.tipo === 'free'),
-        observacao: u.observacao || ''
+        observacao: u.observacao || '',
+        checkout_iniciado: checkoutIniciado ? checkoutIniciado.criado_em : null,
+        checkout_plano: checkoutIniciado ? checkoutIniciado.detalhe : null
     };
 }
 
@@ -1712,6 +1716,113 @@ const server = http.createServer((req, res) => {
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, dias }));
+        return;
+    }
+
+    // ============ PAGAMENTO: POST /pagamento/iniciar ============
+    // Registra quem efetivamente saiu do site para pagar. O login por código
+    // ou Google já criou a pessoa em `usuarios`; este evento liga a pessoa ao
+    // plano escolhido antes do redirecionamento ao Mercado Pago. Assim, mesmo
+    // que ela abandone o checkout, o painel não perde o solicitante.
+    if (method === 'POST' && url === '/pagamento/iniciar') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            const responder = (status, payload) => {
+                res.writeHead(status, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(payload));
+            };
+
+            try {
+                const entrada = JSON.parse(body || '{}');
+                const plano = entrada.plano === 'plus' ? 'plus' : 'premium';
+                const email = String(entrada.email || '').trim().toLowerCase();
+                const usuarioId = Number(entrada.usuario_id);
+                const db = loadJsonDb();
+                const user = db.usuarios.find(u =>
+                    (usuarioId && u.id === usuarioId) ||
+                    (email && String(u.email || '').toLowerCase() === email));
+
+                if (!user) {
+                    responder(400, { success: false, error: 'Confirme seu e-mail antes de continuar.' });
+                    return;
+                }
+
+                const escolhido = plano === 'plus'
+                    ? (MP.linkMes || MP.link)
+                    : (MP.linkDia || MP.link);
+                if (!escolhido) {
+                    responder(503, { success: false, error: 'O pagamento online está sendo configurado.' });
+                    return;
+                }
+
+                if (!user.oab || !user.telefone) {
+                    responder(400, { success: false, error: 'Complete OAB e WhatsApp antes de continuar.' });
+                    return;
+                }
+
+                const vaga = horarioValido(db, entrada.inicio);
+                if (!vaga.ok) {
+                    responder(200, { success: false, error: vaga.erro, recarregar_agenda: true });
+                    return;
+                }
+
+                const [inscricao, uf] = String(user.oab).split('/');
+                const agora = new Date().toISOString();
+                db.verificacoes_oab = db.verificacoes_oab || [];
+                db.agendamentos = db.agendamentos || [];
+
+                const verificacaoId = proximoId(db.verificacoes_oab);
+                db.verificacoes_oab.push({
+                    id: verificacaoId,
+                    inscricao,
+                    uf,
+                    nome_declarado: user.nome || user.email || '',
+                    contato: String(user.telefone).replace(/\D/g, ''),
+                    email: user.email || email,
+                    status: 'confere',
+                    observacao: `Plano ${PLANOS[plano].nome} escolhido; aguardando pagamento e conferência do horário.`,
+                    decidido_por: 'fluxo premium',
+                    decidido_em: agora,
+                    ip: ipDoPedido(req),
+                    criado_em: agora
+                });
+
+                const fim = new Date(vaga.quando.getTime() + AGENDA.duracaoMin * 60000);
+                db.agendamentos.push({
+                    id: proximoId(db.agendamentos),
+                    chamado_id: null,
+                    usuario_id: user.id,
+                    oab: user.oab,
+                    nome: user.nome || user.email || '',
+                    inicio: vaga.quando.toISOString(),
+                    fim: fim.toISOString(),
+                    status: 'marcado',
+                    verificacao_id: verificacaoId,
+                    criado_em: agora
+                });
+
+                auditar(db, {
+                    ator: 'cliente',
+                    acao: 'checkout_iniciado',
+                    alvo: user.id,
+                    detalhe: `${PLANOS[plano].nome} — R$ ${PLANOS[plano].valor} — ${vaga.quando.toISOString()}`,
+                    ip: ipDoPedido(req)
+                });
+                saveJsonDb(db);
+                console.log(`💳 Checkout iniciado: ${user.email || user.telefone} — ${PLANOS[plano].nome}`);
+
+                responder(200, {
+                    success: true,
+                    plano,
+                    url: escolhido,
+                    valor: PLANOS[plano].valor
+                });
+            } catch (err) {
+                console.error('Erro ao iniciar checkout:', err.message);
+                responder(400, { success: false, error: 'Não foi possível registrar o pagamento.' });
+            }
+        });
         return;
     }
 
@@ -2266,7 +2377,9 @@ const server = http.createServer((req, res) => {
                 sms: OTP.canalSms === 'off' ? 'desligado' : OTP.canalSms,
                 email: (process.env.BREVO_API_KEY || SECRETS.brevo?.api_key) ? 'configurado' : 'sem chave',
                 google: (OAUTH.google && OAUTH.google.clientId) ? 'configurado' : 'sem credenciais',
-                pagamento: MP.link ? 'link configurado' : 'NÃO ligado (checkout não cobra)',
+                pagamento: (MP.linkMes || MP.linkDia || MP.link)
+                    ? 'links configurados'
+                    : 'NÃO ligado (checkout não cobra)',
                 agenda: `${AGENDA.horaInicio}h às ${AGENDA.horaFim}h, blocos de ${AGENDA.duracaoMin}min, até ${AGENDA.janelaDias} dias`
             },
             resumo: {
@@ -2506,7 +2619,9 @@ const server = http.createServer((req, res) => {
             const dono = (db.usuarios || []).find(u =>
                 (v.email && String(u.email || '').toLowerCase() === String(v.email).toLowerCase()) ||
                 (v.contato && soDigitos(u.telefone) === soDigitos(v.contato)));
-            return dono && assinaturaAtiva(db, dono.id) ? 'premium' : 'free';
+            const iniciouPlano = dono && (db.auditoria || []).some(a =>
+                a.acao === 'checkout_iniciado' && String(a.alvo) === String(dono.id));
+            return dono && (assinaturaAtiva(db, dono.id) || iniciouPlano) ? 'premium' : 'free';
         }
 
         const resumir = v => ({
@@ -3651,7 +3766,8 @@ const server = http.createServer((req, res) => {
         req.on('end', async () => {
             try {
                 const input = JSON.parse(body);
-                const { action, email, senha } = input;
+                const { action, senha } = input;
+                const email = String(input.email || '').trim().toLowerCase();
 
                 if (!action) {
                     res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -3663,11 +3779,12 @@ const server = http.createServer((req, res) => {
 
                 // ---- REGISTER ----
                 if (action === 'register') {
+                    const cadastroCheckout = input.origem === 'checkout';
                     // A senha deixou de ser obrigatória: a entrada é por código
                     // no e-mail ou por Google, então pedir senha no cadastro
                     // era criar uma que ninguém usaria depois. Quem já tem
                     // senha continua entrando por ela.
-                    if (!email || (senha && senha.length < 6)) {
+                    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || (senha && senha.length < 6)) {
                         res.writeHead(400, { 'Content-Type': 'application/json' });
                         res.end(JSON.stringify({ success: false, error: 'Dados inválidos' }));
                         return;
@@ -3694,6 +3811,30 @@ const server = http.createServer((req, res) => {
 
                     const exists = db.usuarios.find(u => u.email === email);
                     if (exists) {
+                        if (cadastroCheckout) {
+                            const telefoneDeOutro = db.usuarios.find(u =>
+                                u.id !== exists.id && u.telefone === whatsapp);
+                            if (telefoneDeOutro) {
+                                res.writeHead(200, { 'Content-Type': 'application/json' });
+                                res.end(JSON.stringify({ success: false, error: 'Este WhatsApp já está cadastrado em outra conta' }));
+                                return;
+                            }
+                            // A confirmação por OTP vem logo depois. Atualizar
+                            // aqui permite que um cliente antigo complete os
+                            // dados que faltavam sem criar conta duplicada.
+                            exists.telefone = whatsapp;
+                            exists.oab = oab;
+                            if (input.nome) exists.nome = String(input.nome).trim().slice(0, 120);
+                            saveJsonDb(db);
+                            res.writeHead(200, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({
+                                success: true,
+                                msg: 'Dados atualizados. Confirme seu e-mail para continuar.',
+                                oab,
+                                free_disponivel: !freeUsadoPelaOab(db, oab)
+                            }));
+                            return;
+                        }
                         res.writeHead(200, { 'Content-Type': 'application/json' });
                         res.end(JSON.stringify({ success: false, error: 'Este e-mail já está cadastrado' }));
                         return;
@@ -3728,11 +3869,11 @@ const server = http.createServer((req, res) => {
                     saveJsonDb(db);
 
                     // avisa o front se a OAB já gastou o chamado grátis em outro cadastro
-                    const freeDisponivel = !freeUsadoPelaOab(db, oab);
+                    const freeDisponivel = oab ? !freeUsadoPelaOab(db, oab) : true;
 
                     // ================== ENVIO REAL DE E-MAIL DE BOAS-VINDAS ==================
                     const templatePath = path.join(__dirname, 'email-boasvindas.html');
-                    if (fs.existsSync(templatePath)) {
+                    if (!cadastroCheckout && fs.existsSync(templatePath)) {
                         let htmlTemplate = fs.readFileSync(templatePath, 'utf-8');
                         htmlTemplate = htmlTemplate.replace('{{EMAIL}}', email);
                         

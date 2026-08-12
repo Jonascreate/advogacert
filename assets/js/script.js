@@ -85,15 +85,33 @@ document.addEventListener('DOMContentLoaded', function() {
     // sozinho do outro lado. Sem isso, a tela de pagamento pulava na cara de
     // quem só queria navegar.
     window.destinoPosLogin = function () {
-        return sessionStorage.getItem('checkoutPendente')
+        // Com plano escolhido, volta e abre o pagamento. Sem plano, cai na
+        // seção de planos — quem acabou de entrar veio fazer alguma coisa, e
+        // largar a pessoa no topo da home a obriga a procurar sozinha.
+        return (sessionStorage.getItem('checkoutPendente') || localStorage.getItem('checkoutPendente'))
             ? 'index.html?retomar=1'
-            : 'index.html';
+            : 'index.html#planos';
     };
 
     // ==========================================
     // AVISO DE CHECKOUT PENDENTE (veio do botão "Assinar agora")
     // ==========================================
-    if (new URLSearchParams(location.search).get('checkout') === '1') {
+    const checkoutSolicitado = new URLSearchParams(location.search).get('checkout') === '1';
+    if (checkoutSolicitado) {
+        // Quem veio de um plano pago e ainda não tem conta precisa passar
+        // primeiro pelo cadastro completo que já existia no projeto. Ele grava
+        // e-mail, WhatsApp e OAB no servidor antes de enviar o código de acesso.
+        window.showRegisterForm();
+        const tituloCadastro = document.querySelector('.login-container h2');
+        const botaoCadastro = document.querySelector('#registerForm .login-btn');
+        if (tituloCadastro) tituloCadastro.textContent = 'Dados para contato';
+        if (botaoCadastro) botaoCadastro.textContent = 'Salvar e confirmar e-mail';
+        const grupoOab = document.getElementById('register-oab-grupo');
+        const dicaOab = document.getElementById('register-oab-dica');
+        const campoOab = document.getElementById('register-oab');
+        if (grupoOab) grupoOab.style.display = '';
+        if (dicaOab) dicaOab.style.display = '';
+        if (campoOab) campoOab.required = true;
         const container = document.querySelector('.login-container');
         if (container) {
             const aviso = document.createElement('div');
@@ -107,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 text-align: center;
                 margin-bottom: 1.5rem;
             `;
-            aviso.textContent = 'Faça login ou crie sua conta para concluir a assinatura do plano.';
+            aviso.textContent = 'Informe seu e-mail e WhatsApp. Salvamos o contato, confirmamos o e-mail e abrimos o pagamento.';
             container.insertBefore(aviso, container.firstChild);
         }
     }
@@ -442,7 +460,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     email: email,
                     whatsapp: whatsapp,
                     oab: oab,
-                    senha: senha
+                    senha: senha,
+                    origem: checkoutSolicitado ? 'checkout' : 'cadastro'
                 })
             })
             .then(res => res.json())
@@ -1075,6 +1094,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     </ul>
                 </div>
 
+                <div id="checkout-agenda">
+                    <div class="pay-resumo-rotulo">Escolha o horário do atendimento</div>
+                    <div id="checkout-horarios" style="margin-top:.8rem;color:#8a8a90">Carregando horários disponíveis…</div>
+                    <button type="button" class="pay-btn" id="checkout-continuar" disabled style="margin-top:1rem">Continuar para o pagamento</button>
+                    <div class="pay-msg" id="checkout-status"></div>
+                </div>
+
                 <form id="checkout-form" novalidate>
                     <div class="pay-campo">
                         <label for="checkout-nome">Nome no cartão</label>
@@ -1132,7 +1158,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const iconeBandeira = modal.querySelector('#checkout-bandeira');
         const btnEnviar = modal.querySelector('#checkout-submit');
         const btnTexto = modal.querySelector('#checkout-submit-texto');
-        const msg = modal.querySelector('#checkout-msg');
+        const msg = modal.querySelector('#checkout-status');
+        const horariosCheckout = modal.querySelector('#checkout-horarios');
+        const continuarCheckout = modal.querySelector('#checkout-continuar');
+        let checkoutAtual = null;
+        let horarioEscolhido = null;
 
         // --- máscaras: o cliente digita só números, a formatação é nossa ---
         campoNumero.addEventListener('input', function () {
@@ -1178,16 +1208,66 @@ document.addEventListener('DOMContentLoaded', function() {
          */
         function abrirCheckout(plano, valor) {
             var ehPlus = /plus/i.test(plano || '');
+            checkoutAtual = { plano, valor, ehPlus };
+            horarioEscolhido = null;
             modal.querySelector('#checkout-plano').textContent = plano;
             modal.querySelector('#checkout-valor').innerHTML =
                 'R$ ' + Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) +
                 ' <small>/ ' + (ehPlus ? 'mês' : 'dia') + '</small>';
             msg.style.color = '#8a8a90';
-            msg.textContent = 'Levando você ao Mercado Pago…';
+            msg.textContent = '';
             overlay.classList.add('aberto');
             document.body.style.overflow = 'hidden';   // trava o fundo enquanto o modal está aberto
 
-            fetch(window.apiUrl('/pagamento/link?plano=' + (ehPlus ? 'plus' : 'premium')))
+            continuarCheckout.disabled = true;
+            horariosCheckout.textContent = 'Carregando horários disponíveis…';
+            fetch(window.apiUrl('/agenda/horarios'))
+                .then(r => r.json())
+                .then(d => {
+                    const dias = (d && d.dias) || [];
+                    horariosCheckout.textContent = '';
+                    dias.forEach(dia => {
+                        const bloco = document.createElement('div');
+                        bloco.style.marginBottom = '.75rem';
+                        const titulo = document.createElement('div');
+                        titulo.textContent = dia.rotulo || dia.dia;
+                        titulo.style.cssText = 'font-size:.82rem;margin-bottom:.35rem;color:#d4d4d8';
+                        bloco.appendChild(titulo);
+                        (dia.horarios || []).forEach(h => {
+                            const b = document.createElement('button');
+                            b.type = 'button';
+                            b.textContent = h.rotulo;
+                            b.style.cssText = 'margin:0 .35rem .35rem 0;padding:.5rem .7rem;border:1px solid rgba(110,231,200,.35);border-radius:8px;background:transparent;color:#d4d4d8;cursor:pointer';
+                            b.onclick = function () {
+                                horariosCheckout.querySelectorAll('button').forEach(x => x.style.background = 'transparent');
+                                b.style.background = 'rgba(110,231,200,.22)';
+                                horarioEscolhido = h.inicio;
+                                continuarCheckout.disabled = false;
+                            };
+                            bloco.appendChild(b);
+                        });
+                        horariosCheckout.appendChild(bloco);
+                    });
+                    if (!dias.length) horariosCheckout.textContent = 'Não há horários disponíveis agora.';
+                })
+                .catch(() => { horariosCheckout.textContent = 'Não foi possível carregar os horários.'; });
+        }
+
+        continuarCheckout.onclick = function () {
+            if (!checkoutAtual || !horarioEscolhido) return;
+            continuarCheckout.disabled = true;
+            msg.textContent = 'Salvando plano e horário…';
+            const usuario = getUsuarioLogado();
+            fetch(window.apiUrl('/pagamento/iniciar'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    plano: checkoutAtual.ehPlus ? 'plus' : 'premium',
+                    usuario_id: usuario && usuario.id,
+                    email: usuario && usuario.email,
+                    inicio: horarioEscolhido
+                })
+            })
                 .then(function (r) { return r.json(); })
                 .then(function (d) {
                     if (d && d.success && d.url) {
@@ -1199,10 +1279,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         'Não foi possível abrir o pagamento agora.';
                 })
                 .catch(function () {
+                    continuarCheckout.disabled = false;
                     msg.style.color = '#ff6b5e';
                     msg.textContent = 'Sem conexão com o servidor. Tente de novo.';
                 });
-        }
+        };
 
         function fecharCheckout() {
             overlay.classList.remove('aberto');
@@ -1233,11 +1314,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!usuario) {
                     // Guarda o plano escolhido para retomar o checkout
                     // automaticamente assim que a pessoa logar ou se cadastrar.
-                    sessionStorage.setItem('checkoutPendente', JSON.stringify({
+                    const checkoutPendente = JSON.stringify({
                         plano: btn.dataset.plano,
                         valor: btn.dataset.valor,
                         em: Date.now()
-                    }));
+                    });
+                    // Alguns navegadores móveis descartam sessionStorage ao
+                    // passar pelo login social. O fallback só guarda o plano,
+                    // o valor e o horário — nenhum dado pessoal ou de cartão.
+                    sessionStorage.setItem('checkoutPendente', checkoutPendente);
+                    localStorage.setItem('checkoutPendente', checkoutPendente);
                     window.location.href = 'login.html?checkout=1';
                     return;
                 }
@@ -1829,10 +1915,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // tinha desistido no meio do caminho.
         //   1) exige a marca ?retomar=1, posta só pelo redirecionamento do login
         //   2) o pedido vale por 10 minutos
-        //   3) o pendente é apagado sempre, dando certo ou não
+        //   3) o pendente só é apagado ao abrir ou quando expira
         const RETOMADA_TTL = 10 * 60 * 1000;
         const querRetomar = new URLSearchParams(location.search).get('retomar') === '1';
-        const pendenteBruto = sessionStorage.getItem('checkoutPendente');
+        const pendenteBruto = sessionStorage.getItem('checkoutPendente') ||
+            localStorage.getItem('checkoutPendente');
 
         if (querRetomar) {
             // tira a marca da barra de endereço para um F5 não reabrir o modal
@@ -1843,15 +1930,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (pendenteBruto) {
-            sessionStorage.removeItem('checkoutPendente');
             try {
                 const { plano, valor, em } = JSON.parse(pendenteBruto);
                 const recente = em && (Date.now() - em) < RETOMADA_TTL;
                 if (querRetomar && recente && getUsuarioLogado()) {
+                    // Consome a intenção somente quando o checkout realmente
+                    // vai abrir. Uma visita intermediária à home não pode mais
+                    // apagar a compra iniciada antes do cadastro/login.
+                    sessionStorage.removeItem('checkoutPendente');
+                    localStorage.removeItem('checkoutPendente');
                     abrirCheckout(plano, valor);
+                } else if (!recente) {
+                    sessionStorage.removeItem('checkoutPendente');
+                    localStorage.removeItem('checkoutPendente');
                 }
             } catch {
-                /* pendente corrompido: já foi apagado acima */
+                sessionStorage.removeItem('checkoutPendente');
+                localStorage.removeItem('checkoutPendente');
             }
         }
     })();

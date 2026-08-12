@@ -61,6 +61,12 @@
                 el('div.fraco', { texto: 'venceu há ' + p.dias_atraso + ' dia(s)' })
             ]);
         }
+        if (p.checkout_iniciado) {
+            return el('div', {}, [
+                D.tag('Pagamento iniciado', 'atrasada'),
+                el('div.fraco', { texto: p.checkout_plano || 'Aguardando conclusão' })
+            ]);
+        }
         return D.tag(p.status === 'cancelada' ? 'Cancelada' : 'Sem plano', 'sem');
     }
 

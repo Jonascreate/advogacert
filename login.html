@@ -558,10 +558,9 @@
                 <h2>Entrar</h2>
                 <p class="login-subtitle">Duas formas, as duas sem senha para lembrar</p>
 
-                <!-- Duas opções, e só duas: Google, ou código enviado ao
-                     e-mail. Nada de senha e nada de formulário de cadastro:
-                     os dados do atendimento (OAB e WhatsApp) são pedidos
-                     depois, quando a pessoa escolhe o plano. -->
+                <!-- A entrada comum oferece Google ou código por e-mail. Quem
+                     chega pelos planos pagos abre o registerForm abaixo para
+                     gravar e-mail, WhatsApp e OAB antes do checkout. -->
                 <form id="loginForm" style="display: block;">
                     <div class="entrada-opcoes">
                         <a href="/auth/google" data-auth="google" class="entrada-btn google">
@@ -595,11 +594,11 @@
                         </div>
                     </div>
                     <p class="form-hint">É por ele que fazemos o atendimento — informe o número com DDD.</p>
-                    <div class="form-group">
+                    <div class="form-group" id="register-oab-grupo">
                         <label for="register-oab">Inscrição na OAB</label>
                         <input type="text" id="register-oab" placeholder="123456/GO" autocomplete="off" required>
                     </div>
-                    <p class="form-hint">Sua inscrição identifica o atendimento e controla o chamado gratuito.</p>
+                    <p class="form-hint" id="register-oab-dica">Sua inscrição identifica o atendimento e controla o chamado gratuito.</p>
 
                     <!-- Sem campos de senha: a entrada é por código no e-mail
                          ou pelo Google. Pedir uma senha aqui seria criar algo
@@ -663,6 +662,6 @@
 
     <script src="assets/js/api.js?v=9"></script>
 
-    <script src="assets/js/script.js?v=13"></script>
+    <script src="assets/js/script.js?v=18"></script>
 </body>
 </html>
