@@ -268,6 +268,45 @@
             flex-wrap: wrap;
             gap: 0.75rem;
         }
+        /* As duas únicas entradas, com o mesmo peso visual: nenhuma é
+           "principal", porque quem tem Google usa Google e quem não tem usa
+           o código — não há por que empurrar uma das duas. */
+        .entrada-opcoes {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+        .entrada-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.7rem;
+            width: 100%;
+            padding: 1.05rem 1.25rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+        .entrada-btn i { font-size: 1.1rem; }
+        .entrada-btn.google i { color: #ea4335; }
+        .entrada-btn.codigo i { color: var(--accent-mac, #6ee7c8); }
+        .entrada-btn:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-mac, #6ee7c8);
+            box-shadow: 0 12px 26px rgba(0, 0, 0, 0.3);
+        }
+        .entrada-btn.ativo {
+            border-color: var(--accent-mac, #6ee7c8);
+            background: rgba(110, 231, 200, 0.08);
+        }
+
         .social-login-btn {
             display: flex;
             align-items: center;
@@ -508,30 +547,33 @@
             </div>
 
             <div class="login-container">
-                <!-- O título dizia "Cadastro" com um formulário de entrada
-                     embaixo. Quem chega para entrar lia "cadastro" e ficava
-                     em dúvida se estava no lugar certo. -->
                 <h2>Entrar</h2>
-                <p class="login-subtitle">Acesse sua conta para acompanhar seus atendimentos</p>
+                <p class="login-subtitle">Duas formas, as duas sem senha para lembrar</p>
 
-                <!-- Duas entradas, e nenhuma promessa vazia: Google em um
-                     clique, e e-mail com senha para quem não usa Google —
-                     inclusive Hotmail e e-mail de escritório.
-
-                     O código por SMS saiu da tela: o canal está desligado no
-                     servidor, e o campo prometia um envio que respondia "não
-                     está disponível" depois de a pessoa tentar. -->
+                <!-- Duas opções, e só duas: Google, ou código enviado ao
+                     e-mail. Nada de senha e nada de formulário de cadastro:
+                     os dados do atendimento (OAB e WhatsApp) são pedidos
+                     depois, quando a pessoa escolhe o plano. -->
                 <form id="loginForm" style="display: block;">
-                    <div class="social-login social-login-destaque">
-                        <a href="/auth/google" data-auth="google" class="social-login-btn google"><i class="fab fa-google"></i> Entrar com Google</a>
+                    <div class="entrada-opcoes">
+                        <a href="/auth/google" data-auth="google" class="entrada-btn google">
+                            <i class="fab fa-google"></i>
+                            <span>Entrar com Google</span>
+                        </a>
+                        <button type="button" class="entrada-btn codigo" id="btn-mostrar-codigo">
+                            <i class="fas fa-envelope"></i>
+                            <span>Receber código por e-mail</span>
+                        </button>
                     </div>
-                    <div class="login-divider">ou receba um código</div>
-                    <div class="form-group">
-                        <label for="login-telefone">Seu e-mail</label>
-                        <input type="email" id="login-telefone" placeholder="seu@email.com" autocomplete="email" required>
+
+                    <div id="bloco-codigo" style="display:none; margin-top:1.5rem;">
+                        <div class="form-group">
+                            <label for="login-telefone">Seu e-mail</label>
+                            <input type="email" id="login-telefone" placeholder="seu@email.com" autocomplete="email">
+                        </div>
+                        <button type="submit" class="login-btn" id="login-btn-codigo">Enviar código</button>
                     </div>
-                    <p class="otp-hint">Você recebe um código de 6 dígitos. Sem senha para lembrar.</p>
-                    <button type="submit" class="login-btn" id="login-btn-codigo">Enviar código</button>
+
                     <div id="login-message" style="margin-top:15px;text-align:center;font-size:14px;"></div>
                 </form>
 
@@ -615,6 +657,6 @@
 
     <script src="assets/js/api.js?v=9"></script>
 
-    <script src="assets/js/script.js?v=11"></script>
+    <script src="assets/js/script.js?v=12"></script>
 </body>
 </html>

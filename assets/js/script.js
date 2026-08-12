@@ -334,6 +334,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Entrada por código enviado ao e-mail. O campo pedia "celular ou e-mail",
     // mas o envio por SMS está desligado no servidor: quem digitava o telefone
     // só descobria isso depois de tentar. Agora o campo é de e-mail.
+    // "Receber código por e-mail" abre o campo ali mesmo, sem trocar de tela:
+    // duas opções à vista, e a segunda se desdobra quando escolhida.
+    const btnMostrarCodigo = document.getElementById('btn-mostrar-codigo');
+    if (btnMostrarCodigo) {
+        btnMostrarCodigo.addEventListener('click', function () {
+            const bloco = document.getElementById('bloco-codigo');
+            const campo = document.getElementById('login-telefone');
+            if (!bloco) return;
+            bloco.style.display = 'block';
+            btnMostrarCodigo.classList.add('ativo');
+            if (campo) campo.focus();
+        });
+    }
+
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', function(e) {
