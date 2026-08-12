@@ -6,1194 +6,569 @@
     <title>Curso de PJe e IA Claude para advogados | AdvogaCert</title>
     <meta name="description" content="Curso online ao vivo para advogados: PJe do login ao protocolo e IA Claude aplicada à rotina do escritório, com segurança e sigilo.">
 
-    <!-- Fontes Google -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome (ícones) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
-    <!-- CSS Principal -->
-    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- Fontes do site. A pilha de sistema fica como reserva: se o Google
+         Fonts não responder, a página não troca de cara nem desalinha. -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
     <style>
+        /* ==========================================================
+           TOKENS
+           ========================================================== */
         :root {
-            --accent-mac: #6ee7c8;
-            --accent-mac-dark: #21b98f;
-            --accent-win: #4fa3ff;
-            --accent-win-dark: #1f6fd1;
+            --bg: #000000;
+            --surface: #2b2b2b;
+            --panel: #ffffff;
+            --accent: #22c5f2;
+            --text-on-dark: #ffffff;
+            --muted-on-dark: #b8b8b8;
+            --text-on-light: #111111;
+
+            --raio-card: 12px;
+            --raio-painel: 24px;
+            --largura: 1200px;
+
+            --fonte-titulo: 'Outfit', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            --fonte-texto: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
         }
 
-        /* === TOPO === */
-        .curso-hero {
-            position: relative;
-            z-index: 1;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text-on-dark);
+            font-family: var(--fonte-texto);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Títulos leves, não bold: é traço do layout, não descuido. */
+        h1, h2, h3 { font-family: var(--fonte-titulo); font-weight: 400; line-height: 1.25; }
+
+        .accent { color: var(--accent); }
+
+        .container {
+            max-width: var(--largura);
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ==========================================================
+           1. BARRA DO TOPO
+           ========================================================== */
+        .topo {
+            background: var(--surface);
+            min-height: 130px;
+            display: flex;
+            align-items: center;
+            padding: 0 60px;
+        }
+        .topo img, .rodape img { height: 70px; width: auto; display: block; }
+
+        /* ==========================================================
+           2. HERO
+           ========================================================== */
+        .hero {
             text-align: center;
+            padding: 72px 24px 56px;
+        }
+        .hero h1 {
+            font-size: clamp(30px, 4.2vw, 44px);
             max-width: 860px;
             margin: 0 auto;
-            padding: 9.5rem 1.5rem 3rem;
         }
-        .curso-eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.45rem;
-            padding: 0.4rem 1rem;
-            margin-bottom: 1.25rem;
-            border-radius: 100px;
-            background: rgba(110, 231, 200, 0.12);
-            border: 1px solid rgba(110, 231, 200, 0.35);
-            color: var(--accent-mac);
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
+        .hero p {
+            max-width: 620px;
+            margin: 28px auto 0;
+            font-size: 15px;
+            color: var(--muted-on-dark);
         }
-        .curso-hero h1 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 2.6rem;
-            font-weight: 600;
-            line-height: 1.2;
-            margin-bottom: 1.1rem;
-        }
-        .curso-hero h1 span {
-            background: linear-gradient(135deg, var(--accent-mac), var(--accent-win));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .curso-hero p {
-            color: var(--text-secondary);
-            font-size: 1.05rem;
-            line-height: 1.75;
+        /* Título de seção que ainda pertence ao preto: o branco começa
+           logo abaixo dele. */
+        .titulo-aprender {
+            font-size: 30px;
+            text-align: center;
+            padding: 64px 24px 40px;
         }
 
-
-        /* === BLOCOS DE SEÇÃO === */
-        .curso-secao {
-            position: relative;
-            z-index: 1;
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 3rem 1.5rem;
+        /* ==========================================================
+           3. BLOCO BRANCO DE DUAS COLUNAS
+           ========================================================== */
+        .bloco-claro {
+            background: var(--panel);
+            color: var(--text-on-light);
+            padding: 48px 0 64px;
         }
-        .curso-secao > h2 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.7rem;
-            font-weight: 600;
+        .duas-colunas {
+            display: grid;
+            grid-template-columns: 62% 34%;
+            gap: 40px;
+            align-items: start;
+        }
+        .coluna-esq > p {
             text-align: center;
-            margin-bottom: 0.6rem;
-        }
-        .curso-secao > h2 span {
-            background: linear-gradient(135deg, var(--accent-mac), var(--accent-win));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .curso-secao > .sub {
-            text-align: center;
-            color: var(--text-secondary);
+            font-size: 16px;
             max-width: 640px;
-            margin: 0 auto 2.25rem;
-            line-height: 1.7;
+            margin: 0 auto 36px;
         }
 
-        /* === OS DOIS MÓDULOS === */
+        /* --- os dois módulos --- */
         .modulos {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            align-items: stretch;
+            gap: 24px;
         }
+        /* A proporção 1:1.8 é o mínimo, não a camisa de força: com min-height
+           em vez de aspect-ratio, o card cresce se o texto do módulo passar
+           dessa altura, em vez de cortar a lista. */
         .modulo {
-            position: relative;
-            background: rgba(22, 22, 24, 0.35);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 2.25rem 2rem;
-            overflow: hidden;
-            transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), border-color 0.35s ease;
-        }
-        .modulo:hover { transform: translateY(-4px); }
-        .modulo.pje:hover { border-color: rgba(79, 163, 255, 0.5); }
-        .modulo.ia:hover { border-color: rgba(110, 231, 200, 0.5); }
-        .modulo-num {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.72rem;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            color: var(--text-muted);
-        }
-        .modulo-icone {
-            width: 52px;
-            height: 52px;
-            margin: 0.9rem 0 1rem;
+            background: var(--panel);
+            border: 1px solid #111;
+            border-radius: var(--raio-painel);
+            padding: 20px;
             display: flex;
+            flex-direction: column;
+        }
+        .modulo-rotulo { font-size: 13px; color: #555; }
+        /* Quadrado reservado para o ícone — fica vazio de propósito. */
+        .modulo-icone {
+            width: 60px; height: 60px;
+            margin: 10px 0 16px;
+            border: 1px solid #111;
+            border-radius: var(--raio-card);
+        }
+        .modulo h3 { font-size: 18px; margin-bottom: 8px; }
+        .modulo > p { font-size: 14px; color: #444; margin-bottom: 12px; }
+        .modulo ul { list-style: none; font-size: 13.5px; color: #333; }
+        .modulo li { padding: 3px 0 3px 14px; position: relative; }
+        .modulo li::before {
+            content: '';
+            position: absolute; left: 0; top: 12px;
+            width: 5px; height: 5px; border-radius: 50%;
+            background: var(--accent);
+        }
+
+        /* --- card de preço --- */
+        /* sticky: acompanha a rolagem até o fim do bloco branco, que é o
+           limite natural do pai. */
+        .card-preco {
+            position: sticky;
+            top: 24px;
+            background: var(--panel);
+            border: 1px solid #111;
+            border-radius: var(--raio-painel);
+            overflow: hidden;
+        }
+        .card-capa {
+            aspect-ratio: 16 / 10;
+            background: #a8a8a8;
+            display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            border-radius: 14px;
-            font-size: 1.4rem;
+            color: #111;
         }
-        .modulo.pje .modulo-icone {
-            background: rgba(79, 163, 255, 0.12);
-            border: 1px solid rgba(79, 163, 255, 0.32);
-            color: var(--accent-win);
-        }
-        .modulo.ia .modulo-icone {
-            background: rgba(110, 231, 200, 0.12);
-            border: 1px solid rgba(110, 231, 200, 0.32);
-            color: var(--accent-mac);
-        }
-        .modulo h3 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.3rem;
+        .card-capa .marca { font-family: Georgia, 'Times New Roman', serif; font-size: 34px; }
+        .card-capa .por { font-size: 9px; letter-spacing: 3px; margin-top: 4px; }
+        .card-corpo { padding: 28px; text-align: center; }
+        .card-valor { font-family: var(--fonte-titulo); font-size: 34px; }
+        .card-valor + p { font-size: 17px; color: #444; margin-bottom: 20px; }
+        .btn-vaga {
+            display: block;
+            width: 100%;
+            padding: 14px 16px;
+            border: 0;
+            border-radius: 10px;
+            background: var(--accent);
+            color: #062028;
+            font-family: inherit;
+            font-size: 16px;
             font-weight: 600;
-            margin-bottom: 0.5rem;
+            cursor: pointer;
         }
-        .modulo > p {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            line-height: 1.7;
-            margin-bottom: 1.25rem;
+        .btn-vaga:hover { filter: brightness(1.06); }
+        .btn-vaga:disabled { background: #c9ccd1; color: #6b6b70; cursor: not-allowed; }
+        .prazo-rotulo { font-size: 15px; color: #555; margin-top: 20px; }
+        .prazo-relogio {
+            font-size: 22px;
+            font-variant-numeric: tabular-nums;
+            margin-bottom: 18px;
         }
-        .modulo ul { list-style: none; }
-        .modulo li {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.7rem;
-            padding: 0.5rem 0;
-            color: var(--text-secondary);
-            font-size: 0.92rem;
-            line-height: 1.6;
-        }
-        .modulo li i {
-            flex-shrink: 0;
-            margin-top: 0.3rem;
-            font-size: 0.78rem;
-        }
-        .modulo.pje li i { color: var(--accent-win); }
-        .modulo.ia li i { color: var(--accent-mac); }
+        .card-beneficios { list-style: none; font-size: 17px; color: #222; }
+        .card-beneficios li { padding: 3px 0; }
 
-        /* === PARA QUEM É === */
-        .publico {
+        /* ==========================================================
+           4. COMO VOCÊ ASSISTE
+           ========================================================== */
+        .secao-escura { padding: 72px 0; }
+        .painel-claro {
+            background: var(--panel);
+            color: var(--text-on-light);
+            border-radius: var(--raio-painel);
+            padding: 60px;
+            text-align: center;
+        }
+        .painel-claro h2 { font-size: 30px; }
+        .painel-claro > p { font-size: 20px; margin-top: 10px; }
+        .tres-quadrados {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 1.25rem;
+            gap: 28px;
+            margin-top: 40px;
         }
-        .publico-item {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 1.6rem 1.5rem;
-        }
-        .publico-item i {
-            color: var(--accent-mac);
-            font-size: 1.2rem;
-            margin-bottom: 0.8rem;
-            display: block;
-        }
-        .publico-item h4 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 0.4rem;
-        }
-        .publico-item p {
-            color: var(--text-muted);
-            font-size: 0.88rem;
-            line-height: 1.65;
-        }
-
-        /* === AVISO DE SIGILO === */
-        .curso-aviso {
-            display: flex;
-            gap: 1rem;
-            align-items: flex-start;
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 1.4rem 1.6rem;
-            border-radius: 16px;
-            border: 1px solid rgba(79, 163, 255, 0.3);
-            background: linear-gradient(135deg, rgba(79, 163, 255, 0.08), rgba(110, 231, 200, 0.05));
-        }
-        .curso-aviso i { color: var(--accent-win); font-size: 1.1rem; margin-top: 0.2rem; }
-        .curso-aviso p { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.7; }
-        .curso-aviso strong { color: var(--text-primary); }
-
-        /* === INSCRIÇÃO === */
-        .inscricao {
-            max-width: 720px;
-            margin: 0 auto;
-            text-align: center;
-            background: rgba(22, 22, 24, 0.5);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--border-color);
+        .quadrado {
+            aspect-ratio: 1 / 1;
+            border: 1px solid #111;
             border-radius: 20px;
-            padding: 2.5rem 2rem;
-        }
-        .inscricao h2 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.6rem;
-            font-weight: 600;
-            margin-bottom: 0.6rem;
-        }
-        .inscricao > p {
-            color: var(--text-secondary);
-            line-height: 1.7;
-            margin-bottom: 1.5rem;
-        }
-        .inscricao-linhas {
+            padding: 22px;
             display: flex;
-            flex-wrap: wrap;
+            flex-direction: column;
             justify-content: center;
-            gap: 0.6rem 2rem;
-            margin-bottom: 1.75rem;
-            padding: 1.1rem 1rem;
-            border-top: 1px solid var(--border-color);
-            border-bottom: 1px solid var(--border-color);
+            gap: 8px;
         }
-        .inscricao-linha {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-        .inscricao-linha i { color: var(--accent-mac); font-size: 0.85rem; }
-        .inscricao-linha strong { color: var(--text-primary); }
-        .btn-inscrever {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.6rem;
-            padding: 1rem 2rem;
-            border-radius: 12px;
-            background: linear-gradient(135deg, var(--accent-mac-dark), var(--accent-mac));
-            color: #062018;
-            font-weight: 700;
-            font-size: 0.98rem;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        .btn-inscrever:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 30px rgba(110, 231, 200, 0.3);
-        }
-        .inscricao-nota {
-            margin-top: 1rem;
-            color: var(--text-muted);
-            font-size: 0.82rem;
-        }
-
-        /* === PERGUNTAS === */
-        .faq-curso {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.25rem;
-        }
-        .faq-item {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 14px;
-            padding: 1.4rem 1.5rem;
-        }
-        .faq-item h4 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 0.98rem;
-            font-weight: 600;
-            margin-bottom: 0.45rem;
-        }
-        .faq-item p {
-            color: var(--text-muted);
-            font-size: 0.88rem;
-            line-height: 1.7;
-        }
+        .quadrado h3 { font-size: 17px; }
+        .quadrado p { font-size: 14px; color: #444; }
 
         /* ==========================================================
-           FOLHA BRANCA
-           ==========================================================
-           Uma div clara dentro da página escura, como na referência — não uma
-           faixa atravessando a tela. É o cartão de conteúdo: cabe nele o que
-           a pessoa lê antes de decidir, e o resto da página continua escuro.
-
-           Não é branco puro: #f7f8fa tem um resto de azul que evita o estouro
-           de contraste com o preto em volta. As cores de texto vivem aqui
-           dentro, em variáveis próprias, porque as do site são feitas para
-           fundo escuro e sumiriam no claro. */
-        .folha {
-            position: relative;
-            z-index: 1;
-            --folha-fundo: #f7f8fa;
-            --folha-tinta: #14161a;
-            --folha-tinta-2: #4a5058;
-            --folha-tinta-3: #767d87;
-            --folha-linha: #e2e6ec;
-            max-width: 1180px;
-            margin: 1rem auto 3rem;
-            padding: 2.5rem 2rem;
-            border-radius: 24px;
-            background: var(--folha-fundo);
-            color: var(--folha-tinta);
-            box-shadow: 0 30px 70px -40px rgba(0, 0, 0, 0.9);
+           5. VEJA ANTES DE DECIDIR
+           ========================================================== */
+        .secao-videos { text-align: center; padding: 8px 0 72px; }
+        .secao-videos h2 { font-size: 30px; }
+        .secao-videos > .container > p {
+            font-size: 19px;
+            color: var(--muted-on-dark);
+            max-width: 720px;
+            margin: 12px auto 40px;
         }
-        /* Divisória entre os dois assuntos dentro da mesma folha. */
-        .folha-divisa {
-            margin: 3rem 0 2.5rem;
-            border: 0;
-            border-top: 1px solid var(--folha-linha);
-        }
-
-        .folha-inner { max-width: 1100px; margin: 0 auto; }
-        .folha h2 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.7rem;
-            font-weight: 600;
-            text-align: center;
-            margin-bottom: 0.6rem;
-            color: var(--folha-tinta);
-        }
-        /* O degradê da marca não se lê sobre branco: no claro o destaque vem
-           da versão escura das mesmas duas cores. */
-        .folha h2 span {
-            background: linear-gradient(135deg, var(--accent-mac-dark), var(--accent-win-dark));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .folha .sub {
-            text-align: center;
-            color: var(--folha-tinta-2);
-            max-width: 640px;
-            margin: 0 auto 2.5rem;
-            line-height: 1.7;
-        }
-
-        /* === COMO VOCÊ ASSISTE: flex de dois cartões === */
-        .acesso {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1.5rem;
-            align-items: stretch;
-        }
-        /* flex: 1 1 320px — os dois dividem a linha em telas largas e
-           empilham sozinhos quando não couberem lado a lado, sem media query
-           para isso. */
-        .acesso-card {
-            flex: 1 1 250px;
-            display: flex;
-            flex-direction: column;
-            background: #fff;
-            border: 1px solid var(--folha-linha);
-            border-radius: 16px;
-            padding: 1.4rem 1.3rem;
-            box-shadow: 0 1px 2px rgba(20, 22, 26, 0.04), 0 12px 28px -18px rgba(20, 22, 26, 0.35);
-            transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), box-shadow 0.35s ease;
-        }
-        .acesso-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 1px 2px rgba(20, 22, 26, 0.05), 0 22px 40px -20px rgba(20, 22, 26, 0.45);
-        }
-        .acesso-icone {
-            width: 42px; height: 42px;
-            display: flex; align-items: center; justify-content: center;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            margin-bottom: 0.85rem;
-        }
-        .acesso-card.teams .acesso-icone {
-            background: rgba(79, 163, 255, 0.12);
-            border: 1px solid rgba(79, 163, 255, 0.3);
-            color: var(--accent-win-dark);
-        }
-        .acesso-card.remoto .acesso-icone {
-            background: rgba(33, 185, 143, 0.12);
-            border: 1px solid rgba(33, 185, 143, 0.3);
-            color: var(--accent-mac-dark);
-        }
-        .acesso-tag {
-            display: inline-block;
-            align-self: flex-start;
-            padding: 0.25rem 0.7rem;
-            margin-bottom: 0.6rem;
-            border-radius: 100px;
-            background: #eef1f5;
-            color: var(--folha-tinta-3);
-            font-size: 0.68rem;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-        }
-        .acesso-card h3 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.05rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-        .acesso-card > p {
-            color: var(--folha-tinta-2);
-            font-size: 0.875rem;
-            line-height: 1.6;
-            margin-bottom: 1.1rem;
-        }
-
-        .acesso-acoes { margin-top: auto; display: flex; flex-wrap: wrap; gap: 0.5rem; }
-        .btn-acesso {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.45rem;
-            padding: 0.65rem 1rem;
-            border-radius: 10px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            text-decoration: none;
-            transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
-        }
-        .btn-acesso.principal {
-            background: linear-gradient(135deg, var(--accent-win-dark), var(--accent-win));
-            color: #fff;
-        }
-        .btn-acesso.principal:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 24px -10px rgba(31, 111, 209, 0.7);
-        }
-        .btn-acesso.secundario {
-            background: #fff;
-            border: 1px solid var(--folha-linha);
-            color: var(--folha-tinta);
-        }
-        .btn-acesso.secundario:hover { background: #f2f4f7; transform: translateY(-2px); }
-
-
-        /* === VÍDEOS === */
         .videos {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 28px;
         }
-        /* Os vídeos ficam fora da folha, no fundo escuro do site — então o
-           cartão é o mesmo vidro dos módulos. Dentro da folha ele viraria
-           branco pela regra logo abaixo, caso um dia volte para lá. */
-        .video-card {
-            flex: 1 1 300px;
-            display: flex;
-            flex-direction: column;
-            background: rgba(22, 22, 24, 0.35);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            overflow: hidden;
-        }
-        .folha .video-card { background: #fff; border-color: var(--folha-linha); backdrop-filter: none; }
-        /* aspect-ratio segura o 16:9 sem o truque do padding-bottom: o quadro
-           não muda de altura quando o vídeo real entrar no lugar. */
-        .video-quadro {
-            position: relative;
+        .video-card { border-radius: var(--raio-card); overflow: hidden; }
+        .video-capa {
             aspect-ratio: 16 / 9;
-            background: linear-gradient(135deg, #1b1d22, #2a2f38);
+            background: #3a3a3a;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        .video-quadro iframe,
-        .video-quadro video {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            border: 0;
-        }
-        .video-play {
-            width: 58px; height: 58px;
+        .play {
+            width: 70px; height: 70px;
+            border: 2px solid #ffffff66;
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            background: rgba(255, 255, 255, 0.14);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: #fff;
-            font-size: 1.1rem;
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
         }
-        .video-emblema {
-            position: absolute;
-            top: 0.7rem; right: 0.7rem;
-            padding: 0.22rem 0.6rem;
-            border-radius: 100px;
-            background: rgba(0, 0, 0, 0.45);
-            color: #fff;
-            font-size: 0.66rem;
-            font-weight: 700;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
+        .video-texto {
+            min-height: 160px;
+            background: #0d0d0d;
+            padding: 20px;
+            text-align: left;
         }
-        .video-texto { padding: 1.15rem 1.3rem 1.4rem; }
-        .video-texto h4 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 0.35rem;
-        }
-        .video-texto p {
-            color: var(--text-secondary);
-            font-size: 0.87rem;
-            line-height: 1.65;
-        }
-        .folha .video-texto p { color: var(--folha-tinta-2); }
-        .folha .video-duracao { color: var(--folha-tinta-3); }
-        .video-duracao {
-            display: inline-flex;
+        .video-texto h3 { font-size: 16px; }
+        .video-texto p { font-size: 13.5px; color: var(--muted-on-dark); margin-top: 6px; }
+
+        /* ==========================================================
+           6. RODAPÉ
+           ========================================================== */
+        .rodape {
+            border-top: 1px solid #333;
+            background: var(--surface);
+            min-height: 140px;
+            display: flex;
             align-items: center;
-            gap: 0.4rem;
-            margin-top: 0.7rem;
-            color: var(--text-muted);
-            font-size: 0.78rem;
-            font-family: 'JetBrains Mono', monospace;
+            padding: 0 60px;
         }
 
         /* ==========================================================
-           TOPO EM DUAS COLUNAS + PAINEL DE COMPRA
-           ==========================================================
-           O arranjo da referência: texto à esquerda, cartão de matrícula à
-           direita acompanhando a rolagem. Grid e não flex porque o painel
-           precisa ocupar duas linhas da coluna da direita (herói e módulos)
-           enquanto a esquerda empilha — com flex isso viraria aninhamento.
-
-           O painel é curto de propósito. A página da referência empilha nota,
-           avaliações, duração, nível, alunos, idioma e "este curso inclui":
-           ninguém lê essa coluna, e boa parte dela sai zerada em turma nova,
-           o que tira credibilidade em vez de dar. */
-        .curso-topo {
-            position: relative;
-            z-index: 1;
-            max-width: 1180px;
-            margin: 0 auto;
-            padding: 9.5rem 1.5rem 3rem;
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) 340px;
-            gap: 2.5rem;
-            align-items: start;
+           RESPONSIVO
+           ========================================================== */
+        @media (max-width: 960px) {
+            /* Sem coluna lateral, o card perde o sticky e vai para o fim da
+               seção, em largura inteira. */
+            .duas-colunas { grid-template-columns: 1fr; }
+            .card-preco { position: static; width: 100%; }
+            .topo, .rodape { padding: 0 24px; }
         }
-        /* O layout traz o herói centralizado na largura toda, com o painel
-           começando só na altura dos módulos — não colado no título. Por isso
-           o herói atravessa as duas colunas e o painel entra na linha de
-           baixo. */
-        .curso-topo .curso-hero {
-            grid-column: 1 / -1;
-            max-width: 860px;
-            margin: 0 auto;
-            padding: 0;
-            text-align: center;
+        @media (max-width: 900px) {
+            .videos { grid-template-columns: 1fr; }
         }
-        .curso-topo .curso-secao {
-            grid-column: 1;
-            grid-row: 2;
-            max-width: none;
-            margin: 0;
-            padding: 2.75rem 0 0;
-        }
-        .curso-topo .curso-secao > .sub { margin-left: auto; margin-right: auto; }
-
-        .painel-compra {
-            grid-column: 2;
-            grid-row: 2;
-            /* sticky preso ao topo, com folga para o cabeçalho fixo do site */
-            position: sticky;
-            top: 6rem;
-            /* Capa escura em cima, papel branco embaixo — é assim no layout,
-               e é o contraste que faz o preço saltar no meio da página preta. */
-            background: #fff;
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            overflow: hidden;
-            color: #14161a;
-        }
-        .painel-capa {
-            position: relative;
-            aspect-ratio: 16 / 9;
-            background: linear-gradient(135deg, #1b1d22, #2a2f38);
-            display: flex; align-items: center; justify-content: center;
-        }
-        .painel-capa iframe, .painel-capa video, .painel-capa img {
-            position: absolute; inset: 0; width: 100%; height: 100%;
-            border: 0; object-fit: cover;
-        }
-        /* A capa é uma linha flex: marcas de um lado, foto do outro. As duas
-           metades dividem a mesma caixa 16:9, então a altura é a mesma sem
-           precisar combinar número nenhum entre elas. */
-        .painel-capa { display: flex; align-items: stretch; }
-
-        /* Fundo escuro porque os dois PNGs são feitos para fundo escuro —
-           sobre branco o "PJe" sumiria. Empilhados: metade de um cartão de
-           340px é estreita demais para eles lado a lado. */
-        .painel-marcas {
-            flex: 1 1 auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 0.35rem;
-            padding: 0.9rem 0.8rem;
-            min-width: 0;
-        }
-        .painel-marcas img {
-            position: static;
-            width: 100%;
-            max-width: 108px;
-            height: auto;
-            object-fit: contain;
-        }
-        .painel-mais { color: #6b6b70; font-size: 0.95rem; font-weight: 300; line-height: 1; }
-
-        /* A foto ocupa a outra metade inteira. cover recorta o que sobra em
-           vez de espremer o rosto, e o enquadramento sobe um pouco: em foto
-           de retrato o que importa está no terço de cima. */
-        .painel-foto { flex: 0 0 44%; position: relative; overflow: hidden; }
-        .painel-foto img {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center 22%;
-        }
-
-        .painel-corpo { padding: 1.4rem 1.4rem 1.5rem; text-align: center; }
-        .painel-valor {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.55rem;
-            font-weight: 700;
-            line-height: 1.2;
-        }
-        .painel-valor small {
-            display: block;
-            margin-top: 0.25rem;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.8rem;
-            font-weight: 400;
-            color: #767d87;
-        }
-        .btn-matricula {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.55rem;
-            width: 100%;
-            margin-top: 1.1rem;
-            padding: 1rem 1.2rem;
-            border-radius: 12px;
-            background: linear-gradient(135deg, var(--accent-mac-dark), var(--accent-mac));
-            color: #062018;
-            font-weight: 700;
-            font-size: 0.98rem;
-            text-decoration: none;
-            transition: transform 0.25s ease, box-shadow 0.25s ease;
-        }
-        .btn-matricula:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 30px -12px rgba(110, 231, 200, 0.6);
-        }
-        /* Três fatos, um por linha, sem ícone de enfeite: é o mínimo que
-           responde "como é a aula" antes do clique. */
-        .painel-fatos {
-            list-style: none;
-            margin-top: 1.2rem;
-            padding-top: 1.1rem;
-            border-top: 1px solid #e2e6ec;
-        }
-        .painel-fatos li {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.6rem;
-            padding: 0.35rem 0;
-            color: #4a5058;
-            font-size: 0.88rem;
-        }
-        .painel-fatos i { color: var(--accent-mac-dark); font-size: 0.8rem; }
-
-        /* === CRONÔMETRO DA TURMA === */
-        /* Dentro do painel ele vira uma linha só; a versão em quadros grandes
-           saía cara demais em espaço para o que informa. */
-        .painel-prazo {
-            display: flex;
-            align-items: baseline;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-            margin-top: 1.1rem;
-            padding: 0.7rem 0.85rem;
-            border-radius: 11px;
-            background: rgba(79, 163, 255, 0.1);
-            border: 1px solid rgba(79, 163, 255, 0.28);
-            font-size: 0.82rem;
-            color: var(--text-secondary);
-        }
-        .painel-prazo { color: #4a5058; justify-content: center; }
-        .painel-prazo .relogio {
-            font-family: 'JetBrains Mono', monospace;
-            font-variant-numeric: tabular-nums;
-            font-weight: 700;
-            color: var(--accent-win-dark);
-        }
-        .painel-prazo.encerrada { opacity: 0.6; }
-
-
-        /* ==========================================================
-           ROLAGEM
-           ==========================================================
-           Barra fina no topo mostrando quanto falta, e cada bloco entrando
-           quando chega à vista. O JS no fim da página só troca uma classe —
-           a animação toda é daqui. */
-        .barra-rolagem {
-            position: fixed;
-            top: 0; left: 0;
-            height: 3px;
-            width: 0;
-            z-index: 9999;
-            background: linear-gradient(90deg, var(--accent-mac), var(--accent-win));
-            transition: width 0.1s linear;
-        }
-        .reveal {
-            opacity: 0;
-            transform: translateY(26px);
-            transition: opacity 0.7s cubic-bezier(0.4,0,0.2,1), transform 0.7s cubic-bezier(0.4,0,0.2,1);
-        }
-        .reveal.visivel { opacity: 1; transform: none; }
-        /* Escalonado: os cartões de uma mesma linha não sobem todos juntos,
-           entram um atrás do outro. */
-        .reveal.atraso-1 { transition-delay: 0.08s; }
-        .reveal.atraso-2 { transition-delay: 0.16s; }
-        .reveal.atraso-3 { transition-delay: 0.24s; }
-
-        /* Quem pediu menos movimento no sistema recebe a página pronta, sem
-           nada deslizando — e sem depender do JS para isso. */
-        @media (prefers-reduced-motion: reduce) {
-            .reveal { opacity: 1; transform: none; transition: none; }
-            .barra-rolagem { transition: none; }
-            .acesso-card, .btn-acesso, .modulo { transition: none; }
-        }
-
-        /* Abaixo de 980px não há coluna lateral: o painel desce e vira um
-           bloco normal, logo depois da chamada e antes dos módulos. */
-        @media (max-width: 980px) {
-            .curso-topo {
-                grid-template-columns: 1fr;
-                padding: 8.5rem 1.25rem 2rem;
-                gap: 2rem;
-            }
-            .curso-topo .curso-hero { grid-column: 1; }
-            .painel-compra {
-                grid-column: 1;
-                grid-row: auto;
-                position: static;
-                max-width: 420px;
-                width: 100%;
-                margin: 0 auto;
-            }
-            .curso-topo .curso-secao { grid-row: auto; padding-top: 1rem; }
-        }
-
-        @media (max-width: 860px) {
-            .curso-hero { padding: 8rem 1.25rem 2rem; }
-            .curso-hero h1 { font-size: 2rem; }
-            .modulos,
-            .publico,
-            .faq-curso { grid-template-columns: 1fr; }
-            .folha { padding: 3rem 1.25rem; }
-            .acesso-card { padding: 1.6rem 1.4rem; }
-            .btn-acesso { width: 100%; justify-content: center; }
+        @media (max-width: 720px) {
+            .tres-quadrados { grid-template-columns: 1fr; }
+            .modulos { grid-template-columns: 1fr; }
+            .painel-claro { padding: 32px 20px; }
+            .hero { padding: 48px 24px 40px; }
         }
     </style>
 </head>
 <body>
-    <div class="blush-container">
-        <div class="blush blush-1" id="blush1"></div>
-        <div class="blush blush-2" id="blush2"></div>
-        <div class="blush blush-3" id="blush3"></div>
-    </div>
 
-    <header>
-        <a href="index.html" class="logo">
-            <div class="logo-icon">
-                <div class="logo-mask" role="img" aria-label="AdvogaCert"></div>
+<!-- ================= 1. BARRA DO TOPO ================= -->
+<header class="topo">
+    <a href="index.html"><img src="assets/img/logo.png" alt="Advcert — suporte de certificados digitais"></a>
+</header>
+
+<main>
+    <!-- ================= 2. HERO ================= -->
+    <section class="hero">
+        <h1>Domine o <span class="accent">PJe</span> e coloque a <span class="accent">IA Claude</span> para trabalhar no seu escritório</h1>
+        <p>
+            Duas frentes numa turma só: peticionar no PJe sem travar em erro de certificado
+            e usar a inteligência artificial da Anthropic para ler, resumir e redigir — com o
+            cuidado que o sigilo profissional exige.
+        </p>
+    </section>
+
+    <h2 class="titulo-aprender">O que você vai <span class="accent">aprender</span></h2>
+
+    <!-- ================= 3. BLOCO BRANCO DE DUAS COLUNAS ================= -->
+    <section class="bloco-claro">
+        <div class="container duas-colunas">
+
+            <div class="coluna-esq">
+                <p>
+                    O curso é dividido em dois módulos independentes, dados na mesma turma.
+                    Um resolve o processo eletrônico; o outro, o tempo que você perde
+                    escrevendo e lendo.
+                </p>
+
+                <div class="modulos">
+                    <article class="modulo">
+                        <span class="modulo-rotulo">Módulo 1</span>
+                        <!-- espaço reservado para o ícone do módulo -->
+                        <div class="modulo-icone" aria-hidden="true"></div>
+                        <h3>PJe na prática, do login ao protocolo</h3>
+                        <p>Do certificado que o navegador não reconhece até a petição protocolada com o comprovante no lugar certo.</p>
+                        <ul>
+                            <li>Certificado A1 e A3 no navegador: instalar, testar e descobrir por que ele não aparece</li>
+                            <li>PJe Office e Shodō: instalação, atualização e os erros de Java que travam a assinatura</li>
+                            <li>Cadastro e habilitação nos autos, procuração e substabelecimento</li>
+                            <li>Peticionamento inicial e intercorrente, anexos e tamanho de arquivo</li>
+                            <li>Assinatura digital: em lote, com token e com certificado em nuvem</li>
+                            <li>Intimações, prazos e o painel: onde o prazo aparece e onde ele se esconde</li>
+                            <li>Audiência e sessão virtual: o que testar antes de entrar</li>
+                            <li>Diferenças entre tribunais: TRF, TRT, TJ e as variações que mais confundem</li>
+                        </ul>
+                    </article>
+
+                    <article class="modulo">
+                        <span class="modulo-rotulo">Módulo 2</span>
+                        <!-- espaço reservado para o ícone do módulo -->
+                        <div class="modulo-icone" aria-hidden="true"></div>
+                        <h3>IA Claude aplicada à rotina jurídica</h3>
+                        <p>Claude é a IA da Anthropic. Aqui ela deixa de ser curiosidade e vira ferramenta de trabalho — com método, não com sorte.</p>
+                        <ul>
+                            <li>Primeiros passos: conta, planos, limites e quando compensa pagar</li>
+                            <li>Como escrever um bom pedido: contexto, papel, formato e exemplo</li>
+                            <li>Ler processo grande: resumo de PDF extenso e pontos controvertidos</li>
+                            <li>Redigir com seus modelos: petições, contratos e e-mails no seu estilo</li>
+                            <li>Projects: uma base fixa com seus modelos para não repetir contexto</li>
+                            <li>Revisão de contrato: cláusulas de risco, prazos e obrigações em tabela</li>
+                            <li>Alucinação: por que a IA inventa jurisprudência e como conferir antes</li>
+                            <li>Sigilo e LGPD: o que nunca colar, como anonimizar e o que a OAB orienta</li>
+                        </ul>
+                    </article>
+                </div>
             </div>
-        </a>
-        <nav>
-            <a href="index.html">Início</a>
-            <a href="contato.html">Contato</a>
-        </nav>
-    </header>
 
-    <div class="curso-topo">
-        <section class="curso-hero">
-            <div class="curso-eyebrow"><i class="fa-solid fa-graduation-cap"></i> Curso online ao vivo</div>
-            <h1>Domine o <span>PJe</span> e coloque a <span>IA Claude</span> para trabalhar no seu escritório</h1>
+            <!-- card de preço -->
+            <aside class="card-preco">
+                <!-- espaço reservado para a imagem do card -->
+                <div class="card-capa">
+                    <span class="marca">Claude</span>
+                    <span class="por">BY ANTHROPIC</span>
+                </div>
+                <div class="card-corpo">
+                    <div class="card-valor">R$ 65</div>
+                    <p>por pessoa · Pix, cartão ou boleto</p>
+
+                    <button class="btn-vaga" id="btn-vaga" type="button">Garantir minha vaga</button>
+
+                    <div class="prazo-rotulo" id="prazo-rotulo">Fecha em</div>
+                    <div class="prazo-relogio" id="prazo-relogio">--d --h --m --s</div>
+
+                    <ul class="card-beneficios">
+                        <li>Ao vivo, turma pequena</li>
+                        <li>Gravação liberada depois</li>
+                        <li>Certificado de participação</li>
+                    </ul>
+                </div>
+            </aside>
+
+        </div>
+    </section>
+
+    <!-- ================= 4. COMO VOCÊ ASSISTE ================= -->
+    <section class="secao-escura">
+        <div class="container">
+            <div class="painel-claro">
+                <h2>Como você <span class="accent">assiste</span></h2>
+                <p>Aula ao vivo pelo navegador. Se travar, a gente entra na sua máquina.</p>
+
+                <div class="tres-quadrados">
+                    <!-- espaço reservado para o ícone de cada quadrado -->
+                    <article class="quadrado">
+                        <h3>Microsoft Teams</h3>
+                        <p>O link chega no seu WhatsApp. Abre no navegador, sem conta e sem instalar.</p>
+                    </article>
+                    <article class="quadrado">
+                        <h3>TeamViewer ou AnyDesk</h3>
+                        <p>Certificado, token ou driver que não vai: a gente resolve na sua tela, com você vendo.</p>
+                    </article>
+                    <article class="quadrado">
+                        <h3>Pagamento</h3>
+                        <p>Pix, cartão ou boleto por link individual. A vaga vale com o pagamento.</p>
+                    </article>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= 5. VEJA ANTES DE DECIDIR ================= -->
+    <section class="secao-videos">
+        <div class="container">
+            <h2>Veja <span class="accent">antes</span> de decidir</h2>
             <p>
-                Duas frentes numa turma só: peticionar no PJe sem travar em erro de certificado
-                e usar a inteligência artificial da Anthropic para ler, resumir e redigir — com o
-                cuidado que o sigilo profissional exige.
-            </p>
-        </section>
-
-        <!-- Painel de matrícula: acompanha a rolagem e carrega só o que decide
-             a compra. Nota, avaliações, nível, idioma e contagem de alunos
-             ficam de fora — em turma nova saem zerados. -->
-        <aside class="painel-compra">
-            <div class="painel-capa">
-                <!-- As duas marcas do curso, mesmo par do anúncio no index.
-                     Para pôr uma prévia em vídeo no lugar delas:
-                     <iframe src="https://www.youtube.com/embed/ID" title="Prévia do curso"
-                             allowfullscreen loading="lazy"></iframe> -->
-                <div class="painel-marcas">
-                    <img src="assets/img/pje-claro.png" alt="PJe — Processo Judicial Eletrônico">
-                    <span class="painel-mais">+</span>
-                    <img class="claude" src="assets/img/claude-claro.png" alt="Claude">
-                </div>
-                <div class="painel-foto">
-                    <img src="img/IMG_6924.jpeg" alt="Instrutor do curso" loading="lazy">
-                </div>
-            </div>
-            <div class="painel-corpo">
-                <div class="painel-valor">
-                    R$ 65
-                    <small>por pessoa · Pix, cartão ou boleto</small>
-                </div>
-
-                <a class="btn-matricula js-pagar"
-                   href="https://wa.me/5561986241570?text=Quero%20garantir%20minha%20vaga%20no%20curso%20de%20PJe%20e%20IA%20(R%24%2065)"
-                   target="_blank" rel="noopener">
-                    <i class="fa-brands fa-whatsapp"></i> Garantir minha vaga
-                </a>
-
-                <div class="painel-prazo" id="contagem" data-prazo="2026-08-17T20:00:00-03:00">
-                    <span id="contagem-frase">Fecha em</span>
-                    <span class="relogio">
-                        <span id="c-dias">–</span>d
-                        <span id="c-horas">–</span>h
-                        <span id="c-min">–</span>m
-                        <span id="c-seg">–</span>s
-                    </span>
-                </div>
-
-                <ul class="painel-fatos">
-                    <li><i class="fa-solid fa-video"></i> Ao vivo, turma pequena</li>
-                    <li><i class="fa-solid fa-rotate-left"></i> Gravação liberada depois</li>
-                    <li><i class="fa-solid fa-certificate"></i> Certificado de participação</li>
-                </ul>
-            </div>
-        </aside>
-
-        <section class="curso-secao">
-        <h2>O que você vai <span>aprender</span></h2>
-        <p class="sub">
-            O curso é dividido em dois módulos independentes, dados na mesma turma. Um resolve o
-            processo eletrônico; o outro, o tempo que você perde escrevendo e lendo.
-        </p>
-
-        <div class="modulos">
-            <div class="modulo pje">
-                <div class="modulo-num">Módulo 1</div>
-                <div class="modulo-icone"><i class="fa-solid fa-scale-balanced"></i></div>
-                <h3>PJe na prática, do login ao protocolo</h3>
-                <p>
-                    Do certificado que o navegador não reconhece até a petição protocolada com
-                    o comprovante no lugar certo.
-                </p>
-                <ul>
-                    <li><i class="fa-solid fa-check"></i> Certificado A1 e A3 no navegador: instalar, testar e descobrir por que ele não aparece</li>
-                    <li><i class="fa-solid fa-check"></i> PJe Office e Shodō: instalação, atualização e os erros de Java que travam a assinatura</li>
-                    <li><i class="fa-solid fa-check"></i> Cadastro e habilitação nos autos, procuração e substabelecimento</li>
-                    <li><i class="fa-solid fa-check"></i> Peticionamento inicial e intercorrente, anexos, tipos de documento e tamanho de arquivo</li>
-                    <li><i class="fa-solid fa-check"></i> Assinatura digital: em lote, com token e com certificado em nuvem</li>
-                    <li><i class="fa-solid fa-check"></i> Intimações, prazos e o painel: onde o prazo aparece e onde ele se esconde</li>
-                    <li><i class="fa-solid fa-check"></i> Audiência e sessão virtual: o que testar antes de entrar</li>
-                    <li><i class="fa-solid fa-check"></i> Diferenças entre tribunais: TRF, TRT, TJ e as variações que mais confundem</li>
-                </ul>
-            </div>
-
-            <div class="modulo ia">
-                <div class="modulo-num">Módulo 2</div>
-                <div class="modulo-icone"><i class="fa-solid fa-robot"></i></div>
-                <h3>IA Claude aplicada à rotina jurídica</h3>
-                <p>
-                    Claude é a IA da Anthropic. Aqui ela deixa de ser curiosidade e vira ferramenta
-                    de trabalho — com método, não com sorte.
-                </p>
-                <ul>
-                    <li><i class="fa-solid fa-check"></i> Primeiros passos: conta, planos, limites e quando compensa pagar</li>
-                    <li><i class="fa-solid fa-check"></i> Como escrever um bom pedido: contexto, papel, formato e exemplo</li>
-                    <li><i class="fa-solid fa-check"></i> Ler processo grande: resumo de PDF extenso, linha do tempo e pontos controvertidos</li>
-                    <li><i class="fa-solid fa-check"></i> Redigir com seus modelos: petições, contratos e e-mails no seu estilo</li>
-                    <li><i class="fa-solid fa-check"></i> Projects: uma base fixa com seus modelos e teses para não repetir contexto</li>
-                    <li><i class="fa-solid fa-check"></i> Revisão de contrato: cláusulas de risco, prazos e obrigações em tabela</li>
-                    <li><i class="fa-solid fa-check"></i> Alucinação: por que a IA inventa jurisprudência e como conferir antes de protocolar</li>
-                    <li><i class="fa-solid fa-check"></i> Sigilo e LGPD: o que nunca colar, como anonimizar e o que a OAB já orienta</li>
-                </ul>
-            </div>
-        </div>
-        </section>
-    </div>
-
-    <!-- ================= A DIV BRANCA =================
-         Uma folha só, com os dois assuntos que a pessoa lê antes de decidir:
-         como entrar na aula e o que os vídeos mostram. -->
-    <section class="folha" id="como-assiste" data-telemetria-secao="como-assiste">
-        <div class="folha-inner">
-            <h2 class="reveal">Como você <span>assiste</span></h2>
-            <p class="sub reveal">
-                Aula ao vivo pelo navegador. Se travar, a gente entra na sua máquina.
+                Trechos curtos do que é dado em aula. Se o problema do vídeo é o mesmo que
+                você tem hoje, o curso é para você.
             </p>
 
-            <div class="acesso">
-                <article class="acesso-card teams reveal">
-                    <div class="acesso-icone"><i class="fa-solid fa-video"></i></div>
-                    <span class="acesso-tag">A aula</span>
-                    <h3>Microsoft Teams</h3>
-                    <p>O link chega no seu WhatsApp. Abre no navegador, sem conta e sem instalar.</p>
-                    <div class="acesso-acoes">
-                        <!-- Quando a sala do Teams existir, troque este href pelo link da
-                             reunião. Até lá o botão leva ao WhatsApp, que é onde o link é
-                             entregue — melhor do que um botão que não abre nada. -->
-                        <a class="btn-acesso principal"
-                           href="https://wa.me/5561986241570?text=Quero%20o%20link%20da%20aula%20no%20Teams"
-                           target="_blank" rel="noopener">
-                            <i class="fa-solid fa-arrow-right-to-bracket"></i> Receber o link
-                        </a>
+            <div class="videos">
+                <!-- Para publicar, troque .video-capa por um <iframe> 16:9. -->
+                <article class="video-card">
+                    <div class="video-capa">
+                        <span class="play">
+                            <svg width="20" height="24" viewBox="0 0 20 24" aria-hidden="true">
+                                <path d="M0 0 L20 12 L0 24 Z" fill="#ffffff"></path>
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="video-texto">
+                        <h3>O certificado que o navegador não reconhece</h3>
+                        <p>Do erro na tela ao protocolo aceito, sem pular o passo que ninguém explica.</p>
+                        <!-- duração do trecho entra aqui -->
                     </div>
                 </article>
 
-                <article class="acesso-card remoto reveal atraso-1">
-                    <div class="acesso-icone"><i class="fa-solid fa-headset"></i></div>
-                    <span class="acesso-tag">Se travar</span>
-                    <h3>TeamViewer ou AnyDesk</h3>
-                    <p>Certificado, token ou driver que não vai: a gente resolve na sua tela, com você vendo.</p>
-                    <div class="acesso-acoes">
-                        <a class="btn-acesso principal"
-                           href="https://www.teamviewer.com/pt-br/download/"
-                           target="_blank" rel="noopener">
-                            <i class="fa-solid fa-download"></i> TeamViewer
-                        </a>
-                        <a class="btn-acesso secundario"
-                           href="https://anydesk.com/pt/downloads"
-                           target="_blank" rel="noopener">
-                            <i class="fa-solid fa-download"></i> AnyDesk
-                        </a>
+                <article class="video-card">
+                    <div class="video-capa">
+                        <span class="play">
+                            <svg width="20" height="24" viewBox="0 0 20 24" aria-hidden="true">
+                                <path d="M0 0 L20 12 L0 24 Z" fill="#ffffff"></path>
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="video-texto">
+                        <h3>Ler um processo de 300 páginas com a IA</h3>
+                        <p>O que pedir, o que conferir e por que a resposta pronta nunca vai direto aos autos.</p>
+                        <!-- duração do trecho entra aqui -->
                     </div>
                 </article>
 
-                <article class="acesso-card pagamento reveal atraso-2">
-                    <div class="acesso-icone"><i class="fa-solid fa-credit-card"></i></div>
-                    <span class="acesso-tag">A vaga</span>
-                    <h3>Pagamento</h3>
-                    <p>Pix, cartão ou boleto por link individual. A vaga vale com o pagamento.</p>
-                    <div class="acesso-acoes">
-                        <!-- Quando houver link de checkout do curso no Mercado Pago, ele entra
-                             aqui no lugar do WhatsApp. -->
-                        <a class="btn-acesso principal js-pagar"
-                           href="https://wa.me/5561986241570?text=Quero%20garantir%20minha%20vaga%20no%20curso%20de%20PJe%20e%20IA%20(R%24%2065)"
-                           target="_blank" rel="noopener">
-                            <i class="fa-brands fa-whatsapp"></i> Garantir minha vaga
-                        </a>
+                <article class="video-card">
+                    <div class="video-capa">
+                        <span class="play">
+                            <svg width="20" height="24" viewBox="0 0 20 24" aria-hidden="true">
+                                <path d="M0 0 L20 12 L0 24 Z" fill="#ffffff"></path>
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="video-texto">
+                        <h3>Sigilo: o que não pode ser colado na ferramenta</h3>
+                        <p>Como anonimizar um caso real antes de pedir ajuda à inteligência artificial.</p>
+                        <!-- duração do trecho entra aqui -->
                     </div>
                 </article>
             </div>
-
         </div>
     </section>
+</main>
 
-    <!-- ================= VIDEOS =================
-         Fora da folha: a div branca acaba antes daqui e o fundo do site volta. -->
-    <section class="curso-secao">
-        <h2 class="reveal" id="videos" data-telemetria-secao="videos">Veja <span>antes</span> de decidir</h2>
-        <p class="sub reveal">
-            Trechos curtos do que é dado em aula. Se o problema do vídeo é o mesmo que você
-            tem hoje, o curso é para você.
-        </p>
+<!-- ================= 6. RODAPÉ ================= -->
+<footer class="rodape">
+    <a href="index.html"><img src="assets/img/logo.png" alt="Advcert — suporte de certificados digitais"></a>
+</footer>
 
-        <div class="videos">
-            <!-- Para publicar um vídeo, troque o bloco .video-quadro inteiro por:
-                 <div class="video-quadro">
-                   <iframe src="https://www.youtube.com/embed/ID_DO_VIDEO"
-                           title="..." allowfullscreen loading="lazy"></iframe>
-                              O quadro já está em 16:9, então nada se desloca quando o vídeo entrar. -->
-            <article class="video-card reveal">
-                <div class="video-quadro">
-                    <span class="video-emblema">Em breve</span>
-                    <div class="video-play"><i class="fa-solid fa-play"></i></div>
-                </div>
-                <div class="video-texto">
-                    <h4>O certificado que o navegador não reconhece</h4>
-                    <p>Do erro na tela ao protocolo aceito, sem pular o passo que ninguém explica.</p>
-                    <span class="video-duracao"><i class="fa-regular fa-clock"></i> a definir</span>
-                </div>
-            </article>
+<!-- Scripts do próprio site: apiUrl resolve o endereço do servidor e a
+     telemetria registra a visita. Não são bibliotecas de terceiros. -->
+<script src="assets/js/api.js?v=9"></script>
+<script src="assets/js/telemetria.js?v=2"></script>
 
-            <article class="video-card reveal atraso-1">
-                <div class="video-quadro">
-                    <span class="video-emblema">Em breve</span>
-                    <div class="video-play"><i class="fa-solid fa-play"></i></div>
-                </div>
-                <div class="video-texto">
-                    <h4>Ler um processo de 300 páginas com a IA</h4>
-                    <p>O que pedir, o que conferir e por que a resposta pronta nunca vai direto aos autos.</p>
-                    <span class="video-duracao"><i class="fa-regular fa-clock"></i> a definir</span>
-                </div>
-            </article>
+<script>
+(function () {
+    'use strict';
 
-            <article class="video-card reveal atraso-2">
-                <div class="video-quadro">
-                    <span class="video-emblema">Em breve</span>
-                    <div class="video-play"><i class="fa-solid fa-play"></i></div>
-                </div>
-                <div class="video-texto">
-                    <h4>Sigilo: o que não pode ser colado na ferramenta</h4>
-                    <p>Como anonimizar um caso real antes de pedir ajuda à inteligência artificial.</p>
-                    <span class="video-duracao"><i class="fa-regular fa-clock"></i> a definir</span>
-                </div>
-            </article>
-        </div>
-        </div>
-    </section>
+    /* Data e hora em que as inscrições fecham. -03:00 é Brasília. */
+    var DEADLINE = '2026-08-17T20:00:00-03:00';
 
-    <footer>
-        <div class="footer-content">
-            <div class="footer-logo-mask" role="img" aria-label="AdvogaCert"></div>
-            <div class="footer-links">
-                <a href="index.html">Início</a>
-                <a href="contato.html">Falar com Suporte</a>
-            </div>
-            <div class="footer-copy">© 2026 AdvogaCert. Todos os direitos reservados.</div>
-        </div>
-    </footer>
+    /* WhatsApp: para onde o botão vai enquanto não existir o link de
+       pagamento do curso no Mercado Pago (variável MP_LINK_CURSO no Render). */
+    var WHATSAPP = 'https://wa.me/5561986241570?text=' +
+                   encodeURIComponent('Quero garantir minha vaga no curso de PJe e IA (R$ 65)');
 
-    <!-- JavaScript Principal -->
-    <script src="assets/js/api.js?v=9"></script>
-    <script src="assets/js/telemetria.js?v=2"></script>
-    <script src="assets/js/script.js?v=14"></script>
+    var botao = document.getElementById('btn-vaga');
+    var rotulo = document.getElementById('prazo-rotulo');
+    var relogio = document.getElementById('prazo-relogio');
 
-    <!-- Rolagem e cronômetro. Fica nesta página porque é só dela: o script.js
-         é carregado por todo o site e não tem por que crescer por causa daqui. -->
-    <script>
-    (function () {
-        'use strict';
+    /* ---- contagem regressiva ---- */
+    var prazo = new Date(DEADLINE).getTime();
+    var tempo = null;
 
-        /* ------------------------------------------------------------------
-           PAGAMENTO DO CURSO — R$ 65
-           ------------------------------------------------------------------
-           Mesmo caminho do checkout dos planos: quem manda o cliente para o
-           Mercado Pago é o servidor, em GET /pagamento/link?plano=curso. O
-           endereço mora no Render (MP_LINK_CURSO), não aqui — trocar o link
-           não obriga a publicar o site de novo.
+    function dois(n) { return (n < 10 ? '0' : '') + n; }
 
-           O href do WhatsApp continua escrito no HTML e só é substituído
-           depois que o servidor responde. Assim, se o servidor estiver
-           dormindo ou o link ainda não existir, o botão leva a alguém em vez
-           de não fazer nada. */
-        Array.prototype.forEach.call(document.querySelectorAll('.js-pagar'), function (botao) {
-            botao.addEventListener('click', function (e) {
-                if (!window.apiUrl) return;   // sem api.js, segue o href do HTML
-                e.preventDefault();
-                var voltarAoWhats = botao.getAttribute('href');
-                var rotulo = botao.innerHTML;
-                botao.innerHTML = 'Abrindo o pagamento...';
-
-                fetch(window.apiUrl('/pagamento/link?plano=curso'))
-                    .then(function (r) { return r.json(); })
-                    .then(function (d) {
-                        if (d && d.success && d.url) {
-                            if (window.telemetriaEvento) {
-                                window.telemetriaEvento('checkout_iniciado', {
-                                    plano: 'curso',
-                                    dados: { valor: Number(d.valor) || 65 }
-                                });
-                            }
-                            location.href = d.url;
-                            return;
-                        }
-                        botao.innerHTML = rotulo;
-                        alert((d && d.error) ||
-                              'O pagamento do curso está sendo configurado. Vamos combinar pelo WhatsApp.');
-                        window.open(voltarAoWhats, '_blank', 'noopener');
-                    })
-                    .catch(function () {
-                        botao.innerHTML = rotulo;
-                        window.open(voltarAoWhats, '_blank', 'noopener');
-                    });
-            });
-        });
-
-        var menosMovimento = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-        // ---- barra de progresso ----
-        var barra = document.createElement('div');
-        barra.className = 'barra-rolagem';
-        document.body.appendChild(barra);
-
-        // scroll dispara muitas vezes por segundo; requestAnimationFrame faz a
-        // conta uma vez por quadro, que é o máximo que a tela aproveita.
-        var agendado = false;
-        function medir() {
-            agendado = false;
-            var total = document.documentElement.scrollHeight - innerHeight;
-            barra.style.width = (total > 0 ? Math.min(100, (scrollY / total) * 100) : 0) + '%';
+    function tique() {
+        var falta = prazo - Date.now();
+        if (falta <= 0) {
+            clearInterval(tempo);
+            rotulo.textContent = 'Inscrições encerradas';
+            relogio.textContent = '00d 00h 00m 00s';
+            botao.disabled = true;
+            return;
         }
-        addEventListener('scroll', function () {
-            if (!agendado) { agendado = true; requestAnimationFrame(medir); }
-        }, { passive: true });
-        medir();
+        var s = Math.floor(falta / 1000);
+        relogio.textContent = dois(Math.floor(s / 86400)) + 'd ' +
+                              dois(Math.floor(s % 86400 / 3600)) + 'h ' +
+                              dois(Math.floor(s % 3600 / 60)) + 'm ' +
+                              dois(s % 60) + 's';
+    }
+    tique();
+    tempo = setInterval(tique, 1000);
 
-        // ---- entrada dos blocos ----
-        var blocos = document.querySelectorAll('.reveal');
-        if (menosMovimento || !('IntersectionObserver' in window)) {
-            // Sem observador (ou com movimento reduzido) a página nasce pronta.
-            // Nada aqui pode deixar conteúdo invisível: opacidade zero sem JS
-            // que a tire seria texto perdido.
-            blocos.forEach(function (b) { b.classList.add('visivel'); });
-        } else {
-            var olho = new IntersectionObserver(function (entradas) {
-                entradas.forEach(function (e) {
-                    if (!e.isIntersecting) return;
-                    e.target.classList.add('visivel');
-                    olho.unobserve(e.target);   // entra uma vez só, não pisca ao subir
-                });
-            }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
-            blocos.forEach(function (b) { olho.observe(b); });
-        }
+    /* ---- pagamento ----
+       Mesmo caminho do checkout dos planos: quem diz para onde mandar o
+       cliente é o servidor, em GET /pagamento/link?plano=curso. Se ele não
+       responder ou o link ainda não existir, cai no WhatsApp — o botão nunca
+       fica sem destino. */
+    botao.addEventListener('click', function () {
+        if (botao.disabled) return;
+        var texto = botao.textContent;
 
-        // ---- cronômetro da turma ----
-        var caixa = document.getElementById('contagem');
-        if (caixa) {
-            var prazo = new Date(caixa.getAttribute('data-prazo')).getTime();
-            var campos = {
-                dias: document.getElementById('c-dias'),
-                horas: document.getElementById('c-horas'),
-                min: document.getElementById('c-min'),
-                seg: document.getElementById('c-seg')
-            };
-            var frase = document.getElementById('contagem-frase');
-            var relogio = null;
+        if (!window.apiUrl) { window.open(WHATSAPP, '_blank', 'noopener'); return; }
 
-            function doisDigitos(n) { return (n < 10 ? '0' : '') + n; }
-
-            function tique() {
-                var falta = prazo - Date.now();
-                if (isNaN(prazo)) { return; }
-                if (falta <= 0) {
-                    clearInterval(relogio);
-                    caixa.classList.add('encerrada');
-                    frase.textContent = 'As inscrições desta turma foram encerradas';
-                    campos.dias.textContent = campos.horas.textContent =
-                        campos.min.textContent = campos.seg.textContent = '00';
+        botao.textContent = 'Abrindo o pagamento...';
+        fetch(window.apiUrl('/pagamento/link?plano=curso'))
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (d && d.success && d.url) {
+                    if (window.telemetriaEvento) {
+                        window.telemetriaEvento('checkout_iniciado', {
+                            plano: 'curso',
+                            dados: { valor: Number(d.valor) || 65 }
+                        });
+                    }
+                    location.href = d.url;
                     return;
                 }
-                var seg = Math.floor(falta / 1000);
-                campos.dias.textContent = doisDigitos(Math.floor(seg / 86400));
-                campos.horas.textContent = doisDigitos(Math.floor(seg % 86400 / 3600));
-                campos.min.textContent = doisDigitos(Math.floor(seg % 3600 / 60));
-                campos.seg.textContent = doisDigitos(seg % 60);
-            }
-            tique();
-            relogio = setInterval(tique, 1000);
-        }
-    })();
-    </script>
+                botao.textContent = texto;
+                window.open(WHATSAPP, '_blank', 'noopener');
+            })
+            .catch(function () {
+                botao.textContent = texto;
+                window.open(WHATSAPP, '_blank', 'noopener');
+            });
+    });
+})();
+</script>
 </body>
 </html>
