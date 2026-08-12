@@ -91,20 +91,15 @@
                      'O atendimento entra na fila sem hora marcada. ' +
                      'Se preferir combinar um horário antes, use "Remarcar".')) return;
 
-        global.AdminDesfazer.agendar({
-            texto: item.inscricao + ' → chamado',
-            aoConfirmar: function () {
-                return global.AdminApi.agendarSemHorario(item.verificacao_id)
-                    .then(function (r) {
-                        if (!r || !r.success) throw new Error(r && r.error);
-                        return promoverDireto(item, r.agendamento_id);
-                    })
-                    .catch(function (e) {
-                        alert((e && e.message) || 'Não foi possível abrir o chamado.');
-                        carregar();
-                    });
-            }
-        });
+        return global.AdminApi.agendarSemHorario(item.verificacao_id)
+            .then(function (r) {
+                if (!r || !r.success) throw new Error(r && r.error);
+                return promoverDireto(item, r.agendamento_id);
+            })
+            .catch(function (e) {
+                alert((e && e.message) || 'Não foi possível abrir o chamado.');
+                carregar();
+            });
     }
 
     /** Confirma e promove um agendamento recém-criado, sem passo extra. */
@@ -187,25 +182,20 @@
                      'O horário é confirmado e o atendimento entra na fila de chamados. ' +
                      'Para encerrar depois, é na aba Chamados.')) return;
 
-        global.AdminDesfazer.agendar({
-            texto: item.inscricao + ' → chamado',
-            aoConfirmar: function () {
-                return global.AdminApi.confirmar(item.id)
-                    .then(function (r) {
-                        if (!r || !r.success) throw new Error(r && r.error);
-                        return global.AdminApi.promover(item.id);
-                    })
-                    .then(function (r) {
-                        if (!r || !r.success) throw new Error(r && r.error);
-                        carregar();
-                        if (global.AdminFilaChamados) global.AdminFilaChamados.recarregar();
-                    })
-                    .catch(function (e) {
-                        alert((e && e.message) || 'Não foi possível abrir o chamado.');
-                        carregar();
-                    });
-            }
-        });
+        return global.AdminApi.confirmar(item.id)
+            .then(function (r) {
+                if (!r || !r.success) throw new Error(r && r.error);
+                return global.AdminApi.promover(item.id);
+            })
+            .then(function (r) {
+                if (!r || !r.success) throw new Error(r && r.error);
+                carregar();
+                if (global.AdminFilaChamados) global.AdminFilaChamados.recarregar();
+            })
+            .catch(function (e) {
+                alert((e && e.message) || 'Não foi possível abrir o chamado.');
+                carregar();
+            });
     }
 
     /* ---- Janela da agenda: abrir, fechar, e fechar sozinha ----

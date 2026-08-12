@@ -141,19 +141,14 @@
     }
 
     /**
-     * Confirmação antes de decidir, e 10 segundos para desfazer depois.
-     * "Confere" dispara e-mail ao advogado — e-mail não se despacha de volta,
-     * então a janela de desfazer segura o envio até o prazo passar.
+     * Confirmação antes de decidir. "Confere" dispara e-mail ao advogado, e
+     * a pergunta do confirm() é a última chance de parar — a contagem
+     * regressiva que existia aqui só atrasava o que já estava decidido.
      */
     function confirmarDecisao(item, decisao, rotulo, observacao) {
         if (!confirm('Marcar a inscrição ' + item.inscricao + ' como "' + rotulo + '"?')) return;
-        global.AdminDesfazer.agendar({
-            texto: item.inscricao + ' → ' + rotulo,
-            aoConfirmar: function () {
-                return global.AdminApi.decidirVerificacao(item.id, decisao, observacao)
-                    .then(carregar);
-            }
-        });
+        return global.AdminApi.decidirVerificacao(item.id, decisao, observacao)
+            .then(carregar);
     }
 
     function carregar() {

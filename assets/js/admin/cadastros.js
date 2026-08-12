@@ -765,14 +765,9 @@
 
     /** Baixa: o encontro aconteceu. A linha fica verde e sai da pendência. */
     function darBaixa(a) {
-        global.AdminDesfazer.agendar({
-            texto: (a.nome || a.oab) + ' → atendido',
-            aoConfirmar: function () {
-                return global.AdminApi.atendido(a.id).then(function (r) {
-                    if (r && r.success === false) { alert(r.error || 'Não foi possível dar a baixa.'); }
-                    carregar();
-                });
-            }
+        return global.AdminApi.atendido(a.id).then(function (r) {
+            if (r && r.success === false) { alert(r.error || 'Não foi possível dar a baixa.'); }
+            carregar();
         });
     }
 
@@ -792,14 +787,9 @@
         if (!confirm('Abrir chamado para ' + (a.oab || a.nome) + '?\n\n' +
                      'A partir daqui o prazo de atendimento começa a correr.')) return;
 
-        global.AdminDesfazer.agendar({
-            texto: (a.oab || a.nome) + ' → chamado',
-            aoConfirmar: function () {
-                return global.AdminApi.promover(a.id).then(function () {
-                    carregar();
-                    if (global.AdminFilaChamados) global.AdminFilaChamados.recarregar();
-                });
-            }
+        return global.AdminApi.promover(a.id).then(function () {
+            carregar();
+            if (global.AdminFilaChamados) global.AdminFilaChamados.recarregar();
         });
     }
 

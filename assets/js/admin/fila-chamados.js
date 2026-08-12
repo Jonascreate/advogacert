@@ -116,14 +116,8 @@
         if (!confirm(texto + '\n\nIsso é definitivo. Os indicadores de tempo de ' +
                      'resolução e de reabertura perdem esses registros.')) return;
 
-        global.AdminDesfazer.agendar({
-            texto: quantos === 1 ? 'Apagar chamado #' + itens[0].id
-                                 : 'Apagar ' + quantos + ' chamados',
-            aoConfirmar: function () {
-                return global.AdminApi.apagarChamados({ ids: itens.map(function (c) { return c.id; }) })
-                    .then(carregar);
-            }
-        });
+        return global.AdminApi.apagarChamados({ ids: itens.map(function (c) { return c.id; }) })
+            .then(carregar);
     }
 
     function paginacao() {
