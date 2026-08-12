@@ -328,12 +328,367 @@
             line-height: 1.7;
         }
 
+        /* ==========================================================
+           FOLHA BRANCA
+           ==========================================================
+           A página inteira em preto cansa numa leitura longa, e o que vem
+           daqui para baixo é para ler com calma: como entrar na aula e o que
+           os vídeos mostram. A folha ocupa a largura toda da tela — precisa
+           romper a caixa de 1100px das outras seções, senão fica um retângulo
+           branco solto no meio do escuro em vez de uma faixa.
+
+           Não é branco puro: #f7f8fa tem um resto de azul que evita o estouro
+           de contraste com o preto logo acima. As cores de texto vivem aqui
+           dentro, em variáveis próprias, porque as do site são feitas para
+           fundo escuro e sumiriam no claro. */
+        .folha {
+            position: relative;
+            z-index: 1;
+            --folha-fundo: #f7f8fa;
+            --folha-tinta: #14161a;
+            --folha-tinta-2: #4a5058;
+            --folha-tinta-3: #767d87;
+            --folha-linha: #e2e6ec;
+            background: var(--folha-fundo);
+            color: var(--folha-tinta);
+            padding: 4rem 1.5rem;
+        }
+        /* Segunda folha, meio tom abaixo: duas faixas brancas coladas viram
+           uma faixa só, e a divisão entre os assuntos se perde. */
+        .folha.folha-fria { --folha-fundo: #eef1f5; }
+
+        /* A emenda entre o preto e o branco fica dura demais no corte reto.
+           O filete em degradê é a mesma solução do topo do rodapé. */
+        .folha::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg,
+                transparent, rgba(110, 231, 200, 0.5), rgba(79, 163, 255, 0.5), transparent);
+        }
+
+        .folha-inner { max-width: 1100px; margin: 0 auto; }
+        .folha h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.7rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 0.6rem;
+            color: var(--folha-tinta);
+        }
+        /* O degradê da marca não se lê sobre branco: no claro o destaque vem
+           da versão escura das mesmas duas cores. */
+        .folha h2 span {
+            background: linear-gradient(135deg, var(--accent-mac-dark), var(--accent-win-dark));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .folha .sub {
+            text-align: center;
+            color: var(--folha-tinta-2);
+            max-width: 640px;
+            margin: 0 auto 2.5rem;
+            line-height: 1.7;
+        }
+
+        /* === COMO VOCÊ ASSISTE: flex de dois cartões === */
+        .acesso {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            align-items: stretch;
+        }
+        /* flex: 1 1 320px — os dois dividem a linha em telas largas e
+           empilham sozinhos quando não couberem lado a lado, sem media query
+           para isso. */
+        .acesso-card {
+            flex: 1 1 320px;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            border: 1px solid var(--folha-linha);
+            border-radius: 18px;
+            padding: 2rem 1.85rem;
+            box-shadow: 0 1px 2px rgba(20, 22, 26, 0.04), 0 12px 28px -18px rgba(20, 22, 26, 0.35);
+            transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), box-shadow 0.35s ease;
+        }
+        .acesso-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 1px 2px rgba(20, 22, 26, 0.05), 0 22px 40px -20px rgba(20, 22, 26, 0.45);
+        }
+        .acesso-icone {
+            width: 54px; height: 54px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 15px;
+            font-size: 1.45rem;
+            margin-bottom: 1.1rem;
+        }
+        .acesso-card.teams .acesso-icone {
+            background: rgba(79, 163, 255, 0.12);
+            border: 1px solid rgba(79, 163, 255, 0.3);
+            color: var(--accent-win-dark);
+        }
+        .acesso-card.remoto .acesso-icone {
+            background: rgba(33, 185, 143, 0.12);
+            border: 1px solid rgba(33, 185, 143, 0.3);
+            color: var(--accent-mac-dark);
+        }
+        .acesso-tag {
+            display: inline-block;
+            align-self: flex-start;
+            padding: 0.25rem 0.7rem;
+            margin-bottom: 0.8rem;
+            border-radius: 100px;
+            background: #eef1f5;
+            color: var(--folha-tinta-3);
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .acesso-card h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.22rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .acesso-card > p {
+            color: var(--folha-tinta-2);
+            font-size: 0.94rem;
+            line-height: 1.7;
+        }
+        .acesso-passos {
+            list-style: none;
+            margin: 1.15rem 0 1.5rem;
+            /* margin-top: auto no bloco seguinte empurra o botão para a base:
+               os dois cartões terminam na mesma altura mesmo com textos de
+               tamanhos diferentes. */
+        }
+        .acesso-passos li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.65rem;
+            padding: 0.4rem 0;
+            color: var(--folha-tinta-2);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        .acesso-passos li i { flex-shrink: 0; margin-top: 0.28rem; font-size: 0.75rem; }
+        .acesso-card.teams .acesso-passos li i { color: var(--accent-win-dark); }
+        .acesso-card.remoto .acesso-passos li i { color: var(--accent-mac-dark); }
+
+        .acesso-acoes { margin-top: auto; display: flex; flex-wrap: wrap; gap: 0.7rem; }
+        .btn-acesso {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            padding: 0.85rem 1.4rem;
+            border-radius: 11px;
+            font-size: 0.92rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+        }
+        .btn-acesso.principal {
+            background: linear-gradient(135deg, var(--accent-win-dark), var(--accent-win));
+            color: #fff;
+        }
+        .btn-acesso.principal:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px -10px rgba(31, 111, 209, 0.7);
+        }
+        .btn-acesso.secundario {
+            background: #fff;
+            border: 1px solid var(--folha-linha);
+            color: var(--folha-tinta);
+        }
+        .btn-acesso.secundario:hover { background: #f2f4f7; transform: translateY(-2px); }
+
+        .acesso-nota {
+            margin-top: 2rem;
+            display: flex;
+            gap: 0.8rem;
+            align-items: flex-start;
+            padding: 1.1rem 1.3rem;
+            border-radius: 14px;
+            background: #fff;
+            border: 1px solid var(--folha-linha);
+            color: var(--folha-tinta-2);
+            font-size: 0.88rem;
+            line-height: 1.7;
+        }
+        .acesso-nota i { color: var(--accent-win-dark); margin-top: 0.2rem; }
+
+        /* === VÍDEOS === */
+        .videos {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+        .video-card {
+            flex: 1 1 300px;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            border: 1px solid var(--folha-linha);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        /* aspect-ratio segura o 16:9 sem o truque do padding-bottom: o quadro
+           não muda de altura quando o vídeo real entrar no lugar. */
+        .video-quadro {
+            position: relative;
+            aspect-ratio: 16 / 9;
+            background: linear-gradient(135deg, #1b1d22, #2a2f38);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .video-quadro iframe,
+        .video-quadro video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+        .video-play {
+            width: 58px; height: 58px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            font-size: 1.1rem;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+        }
+        .video-emblema {
+            position: absolute;
+            top: 0.7rem; right: 0.7rem;
+            padding: 0.22rem 0.6rem;
+            border-radius: 100px;
+            background: rgba(0, 0, 0, 0.45);
+            color: #fff;
+            font-size: 0.66rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .video-texto { padding: 1.15rem 1.3rem 1.4rem; }
+        .video-texto h4 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+        }
+        .video-texto p {
+            color: var(--folha-tinta-2);
+            font-size: 0.87rem;
+            line-height: 1.65;
+        }
+        .video-duracao {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-top: 0.7rem;
+            color: var(--folha-tinta-3);
+            font-size: 0.78rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* === CRONÔMETRO DA TURMA === */
+        .contagem {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 2.5rem;
+            padding: 1.75rem 1.5rem;
+            border-radius: 18px;
+            background: #fff;
+            border: 1px solid var(--folha-linha);
+            text-align: center;
+        }
+        .contagem-titulo {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+        .contagem-titulo i { color: var(--accent-win-dark); margin-right: 0.4rem; }
+        .contagem-caixas { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.7rem; }
+        .contagem-caixa {
+            min-width: 78px;
+            padding: 0.8rem 0.9rem;
+            border-radius: 13px;
+            background: linear-gradient(160deg, #1b1d22, #2a2f38);
+            color: #fff;
+        }
+        /* tabular-nums: sem isso o número dança de largura a cada segundo,
+           porque o 1 é mais estreito que o 8 na maioria das fontes. */
+        .contagem-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.65rem;
+            font-weight: 700;
+            line-height: 1.1;
+            font-variant-numeric: tabular-nums;
+        }
+        .contagem-rot {
+            margin-top: 0.2rem;
+            font-size: 0.66rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .contagem-nota { color: var(--folha-tinta-3); font-size: 0.83rem; }
+        .contagem.encerrada .contagem-caixas { opacity: 0.45; }
+
+        /* ==========================================================
+           ROLAGEM
+           ==========================================================
+           Barra fina no topo mostrando quanto falta, e cada bloco entrando
+           quando chega à vista. O JS no fim da página só troca uma classe —
+           a animação toda é daqui. */
+        .barra-rolagem {
+            position: fixed;
+            top: 0; left: 0;
+            height: 3px;
+            width: 0;
+            z-index: 9999;
+            background: linear-gradient(90deg, var(--accent-mac), var(--accent-win));
+            transition: width 0.1s linear;
+        }
+        .reveal {
+            opacity: 0;
+            transform: translateY(26px);
+            transition: opacity 0.7s cubic-bezier(0.4,0,0.2,1), transform 0.7s cubic-bezier(0.4,0,0.2,1);
+        }
+        .reveal.visivel { opacity: 1; transform: none; }
+        /* Escalonado: os cartões de uma mesma linha não sobem todos juntos,
+           entram um atrás do outro. */
+        .reveal.atraso-1 { transition-delay: 0.08s; }
+        .reveal.atraso-2 { transition-delay: 0.16s; }
+        .reveal.atraso-3 { transition-delay: 0.24s; }
+
+        /* Quem pediu menos movimento no sistema recebe a página pronta, sem
+           nada deslizando — e sem depender do JS para isso. */
+        @media (prefers-reduced-motion: reduce) {
+            .reveal { opacity: 1; transform: none; transition: none; }
+            .barra-rolagem { transition: none; }
+            .acesso-card, .btn-acesso, .modulo { transition: none; }
+        }
+
         @media (max-width: 860px) {
             .curso-hero { padding: 8rem 1.25rem 2rem; }
             .curso-hero h1 { font-size: 2rem; }
             .modulos,
             .publico,
             .faq-curso { grid-template-columns: 1fr; }
+            .folha { padding: 3rem 1.25rem; }
+            .acesso-card { padding: 1.6rem 1.4rem; }
+            .btn-acesso { width: 100%; justify-content: center; }
         }
     </style>
 </head>
@@ -422,6 +777,183 @@
         </div>
     </section>
 
+    <!-- ================= COMO VOCÊ ASSISTE =================
+         Folha branca: daqui para baixo é leitura de decisão — como entrar,
+         como pagar, o que os vídeos mostram. -->
+    <section class="folha" id="como-assiste" data-telemetria-secao="como-assiste">
+        <div class="folha-inner">
+            <h2 class="reveal">Como você <span>assiste</span></h2>
+            <p class="sub reveal">
+                A aula é online e ao vivo. Você entra pelo navegador, sem instalar nada — e se o
+                seu computador travar no meio, a gente entra nele para resolver junto com você.
+            </p>
+
+            <div class="acesso">
+                <article class="acesso-card teams reveal">
+                    <div class="acesso-icone"><i class="fa-solid fa-video"></i></div>
+                    <span class="acesso-tag">A aula</span>
+                    <h3>Microsoft Teams</h3>
+                    <p>
+                        O link da sala chega no seu WhatsApp e no e-mail no dia anterior. Abre no
+                        navegador, sem conta da Microsoft e sem instalar programa.
+                    </p>
+                    <ul class="acesso-passos">
+                        <li><i class="fa-solid fa-check"></i> Clique no link e escolha "Continuar neste navegador"</li>
+                        <li><i class="fa-solid fa-check"></i> Escreva seu nome como está na inscrição</li>
+                        <li><i class="fa-solid fa-check"></i> Câmera é opcional; microfone só quando for perguntar</li>
+                        <li><i class="fa-solid fa-check"></i> A gravação fica disponível para quem se inscreveu</li>
+                    </ul>
+                    <div class="acesso-acoes">
+                        <!-- Quando a sala do Teams existir, troque este href pelo link da
+                             reunião. Até lá o botão leva ao WhatsApp, que é onde o link é
+                             entregue — melhor do que um botão que não abre nada. -->
+                        <a class="btn-acesso principal"
+                           href="https://wa.me/5561986241570?text=Quero%20o%20link%20da%20aula%20no%20Teams"
+                           target="_blank" rel="noopener">
+                            <i class="fa-solid fa-arrow-right-to-bracket"></i> Receber o link da sala
+                        </a>
+                        <a class="btn-acesso secundario"
+                           href="https://www.microsoft.com/pt-br/microsoft-teams/download-app"
+                           target="_blank" rel="noopener">
+                            <i class="fa-solid fa-download"></i> Baixar o Teams
+                        </a>
+                    </div>
+                </article>
+
+                <article class="acesso-card remoto reveal atraso-1">
+                    <div class="acesso-icone"><i class="fa-solid fa-headset"></i></div>
+                    <span class="acesso-tag">Se travar</span>
+                    <h3>TeamViewer ou AnyDesk</h3>
+                    <p>
+                        Certificado que o navegador não reconhece, token que some, driver que não
+                        instala: nesses casos a explicação por voz não resolve. Você libera o
+                        acesso e a gente arruma na sua máquina, com você vendo a tela.
+                    </p>
+                    <ul class="acesso-passos">
+                        <li><i class="fa-solid fa-check"></i> Baixe o programa e nos passe o número que aparecer</li>
+                        <li><i class="fa-solid fa-check"></i> O acesso só existe enquanto o programa estiver aberto</li>
+                        <li><i class="fa-solid fa-check"></i> Você acompanha tudo e encerra quando quiser</li>
+                    </ul>
+                    <div class="acesso-acoes">
+                        <a class="btn-acesso principal"
+                           href="https://www.teamviewer.com/pt-br/download/"
+                           target="_blank" rel="noopener">
+                            <i class="fa-solid fa-download"></i> Baixar o TeamViewer
+                        </a>
+                        <a class="btn-acesso secundario"
+                           href="https://anydesk.com/pt/downloads"
+                           target="_blank" rel="noopener">
+                            <i class="fa-solid fa-download"></i> Baixar o AnyDesk
+                        </a>
+                    </div>
+                </article>
+
+                <article class="acesso-card pagamento reveal atraso-2">
+                    <div class="acesso-icone"><i class="fa-solid fa-credit-card"></i></div>
+                    <span class="acesso-tag">A vaga</span>
+                    <h3>Pagamento e inscrição</h3>
+                    <p>
+                        A vaga é confirmada com o pagamento. Combinamos tudo pelo WhatsApp antes:
+                        você recebe o link, paga e a inscrição volta confirmada por escrito.
+                    </p>
+                    <ul class="acesso-passos">
+                        <li><i class="fa-solid fa-check"></i> Pix, cartão ou boleto pelo Mercado Pago</li>
+                        <li><i class="fa-solid fa-check"></i> Link individual: nada de dados de cartão por mensagem</li>
+                        <li><i class="fa-solid fa-check"></i> Recibo e certificado saem no nome da inscrição</li>
+                    </ul>
+                    <div class="acesso-acoes">
+                        <!-- Quando houver link de checkout do curso no Mercado Pago, ele entra
+                             aqui no lugar do WhatsApp. -->
+                        <a class="btn-acesso principal"
+                           href="https://wa.me/5561986241570?text=Quero%20garantir%20minha%20vaga%20no%20curso%20de%20PJe%20e%20IA"
+                           target="_blank" rel="noopener">
+                            <i class="fa-brands fa-whatsapp"></i> Garantir minha vaga
+                        </a>
+                    </div>
+                </article>
+            </div>
+
+            <!-- data-prazo manda no cronômetro: troque a data e hora daqui e a
+                 contagem toda se ajusta. O -03:00 é Brasília. -->
+            <div class="contagem reveal" id="contagem" data-prazo="2026-08-17T20:00:00-03:00">
+                <div class="contagem-titulo">
+                    <i class="fa-regular fa-clock"></i>
+                    <span id="contagem-frase">Faltam para o fim das inscrições</span>
+                </div>
+                <div class="contagem-caixas" id="contagem-caixas" role="timer" aria-live="off">
+                    <div class="contagem-caixa"><div class="contagem-num" id="c-dias">–</div><div class="contagem-rot">dias</div></div>
+                    <div class="contagem-caixa"><div class="contagem-num" id="c-horas">–</div><div class="contagem-rot">horas</div></div>
+                    <div class="contagem-caixa"><div class="contagem-num" id="c-min">–</div><div class="contagem-rot">min</div></div>
+                    <div class="contagem-caixa"><div class="contagem-num" id="c-seg">–</div><div class="contagem-rot">seg</div></div>
+                </div>
+                <p class="contagem-nota">As turmas são pequenas para caber pergunta de todo mundo.</p>
+            </div>
+
+            <div class="acesso-nota reveal">
+                <i class="fa-solid fa-circle-info"></i>
+                <p>
+                    <strong>Não precisa saber mexer em computador.</strong> O módulo de PJe começa do
+                    zero, incluindo a instalação do certificado. Se você travar no meio da aula, a
+                    turma para e a gente resolve — é para isso que o acesso remoto existe.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= VÍDEOS ================= -->
+    <section class="folha folha-fria" id="videos" data-telemetria-secao="videos">
+        <div class="folha-inner">
+            <h2 class="reveal">Veja <span>antes</span> de decidir</h2>
+            <p class="sub reveal">
+                Trechos curtos do que é dado em aula. Se o problema do vídeo é o mesmo que você
+                tem hoje, o curso é para você.
+            </p>
+
+            <div class="videos">
+                <!-- Para publicar um vídeo, troque o bloco .video-quadro inteiro por:
+                     <div class="video-quadro">
+                       <iframe src="https://www.youtube.com/embed/ID_DO_VIDEO"
+                               title="..." allowfullscreen loading="lazy"></iframe>
+                     </div>
+                     O quadro já está em 16:9, então nada se desloca quando o vídeo entrar. -->
+                <article class="video-card reveal">
+                    <div class="video-quadro">
+                        <span class="video-emblema">Em breve</span>
+                        <div class="video-play"><i class="fa-solid fa-play"></i></div>
+                    </div>
+                    <div class="video-texto">
+                        <h4>O certificado que o navegador não reconhece</h4>
+                        <p>Do erro na tela ao protocolo aceito, sem pular o passo que ninguém explica.</p>
+                        <span class="video-duracao"><i class="fa-regular fa-clock"></i> a definir</span>
+                    </div>
+                </article>
+
+                <article class="video-card reveal atraso-1">
+                    <div class="video-quadro">
+                        <span class="video-emblema">Em breve</span>
+                        <div class="video-play"><i class="fa-solid fa-play"></i></div>
+                    </div>
+                    <div class="video-texto">
+                        <h4>Ler um processo de 300 páginas com a IA</h4>
+                        <p>O que pedir, o que conferir e por que a resposta pronta nunca vai direto aos autos.</p>
+                        <span class="video-duracao"><i class="fa-regular fa-clock"></i> a definir</span>
+                    </div>
+                </article>
+
+                <article class="video-card reveal atraso-2">
+                    <div class="video-quadro">
+                        <span class="video-emblema">Em breve</span>
+                        <div class="video-play"><i class="fa-solid fa-play"></i></div>
+                    </div>
+                    <div class="video-texto">
+                        <h4>Sigilo: o que não pode ser colado na ferramenta</h4>
+                        <p>Como anonimizar um caso real antes de pedir ajuda à inteligência artificial.</p>
+                        <span class="video-duracao"><i class="fa-regular fa-clock"></i> a definir</span>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
 
     <footer>
         <div class="footer-content">
@@ -438,5 +970,86 @@
     <script src="assets/js/api.js?v=9"></script>
     <script src="assets/js/telemetria.js?v=2"></script>
     <script src="assets/js/script.js?v=14"></script>
+
+    <!-- Rolagem e cronômetro. Fica nesta página porque é só dela: o script.js
+         é carregado por todo o site e não tem por que crescer por causa daqui. -->
+    <script>
+    (function () {
+        'use strict';
+        var menosMovimento = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // ---- barra de progresso ----
+        var barra = document.createElement('div');
+        barra.className = 'barra-rolagem';
+        document.body.appendChild(barra);
+
+        // scroll dispara muitas vezes por segundo; requestAnimationFrame faz a
+        // conta uma vez por quadro, que é o máximo que a tela aproveita.
+        var agendado = false;
+        function medir() {
+            agendado = false;
+            var total = document.documentElement.scrollHeight - innerHeight;
+            barra.style.width = (total > 0 ? Math.min(100, (scrollY / total) * 100) : 0) + '%';
+        }
+        addEventListener('scroll', function () {
+            if (!agendado) { agendado = true; requestAnimationFrame(medir); }
+        }, { passive: true });
+        medir();
+
+        // ---- entrada dos blocos ----
+        var blocos = document.querySelectorAll('.reveal');
+        if (menosMovimento || !('IntersectionObserver' in window)) {
+            // Sem observador (ou com movimento reduzido) a página nasce pronta.
+            // Nada aqui pode deixar conteúdo invisível: opacidade zero sem JS
+            // que a tire seria texto perdido.
+            blocos.forEach(function (b) { b.classList.add('visivel'); });
+        } else {
+            var olho = new IntersectionObserver(function (entradas) {
+                entradas.forEach(function (e) {
+                    if (!e.isIntersecting) return;
+                    e.target.classList.add('visivel');
+                    olho.unobserve(e.target);   // entra uma vez só, não pisca ao subir
+                });
+            }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+            blocos.forEach(function (b) { olho.observe(b); });
+        }
+
+        // ---- cronômetro da turma ----
+        var caixa = document.getElementById('contagem');
+        if (caixa) {
+            var prazo = new Date(caixa.getAttribute('data-prazo')).getTime();
+            var campos = {
+                dias: document.getElementById('c-dias'),
+                horas: document.getElementById('c-horas'),
+                min: document.getElementById('c-min'),
+                seg: document.getElementById('c-seg')
+            };
+            var frase = document.getElementById('contagem-frase');
+            var relogio = null;
+
+            function doisDigitos(n) { return (n < 10 ? '0' : '') + n; }
+
+            function tique() {
+                var falta = prazo - Date.now();
+                if (isNaN(prazo)) { return; }
+                if (falta <= 0) {
+                    clearInterval(relogio);
+                    caixa.classList.add('encerrada');
+                    frase.textContent = 'As inscrições desta turma foram encerradas';
+                    campos.dias.textContent = campos.horas.textContent =
+                        campos.min.textContent = campos.seg.textContent = '00';
+                    return;
+                }
+                var seg = Math.floor(falta / 1000);
+                campos.dias.textContent = doisDigitos(Math.floor(seg / 86400));
+                campos.horas.textContent = doisDigitos(Math.floor(seg % 86400 / 3600));
+                campos.min.textContent = doisDigitos(Math.floor(seg % 3600 / 60));
+                campos.seg.textContent = doisDigitos(seg % 60);
+            }
+            tique();
+            relogio = setInterval(tique, 1000);
+        }
+    })();
+    </script>
 </body>
 </html>
