@@ -331,22 +331,61 @@ document.addEventListener('DOMContentLoaded', function() {
     // O campo aceita e-mail também: quem normaliza o que foi digitado é o
     // servidor, em /otp/enviar, então aqui não se tenta adivinhar o formato.
     // ==========================================
+    // A entrada agora é por e-mail e senha (a rota action:'login' já existia
+    // no servidor; só nunca tinha tela — o front a usava apenas logo depois
+    // do cadastro, para retomar um checkout).
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            const campo = document.getElementById('login-telefone');
+            const campoEmail = document.getElementById('login-email');
+            const campoSenha = document.getElementById('login-senha');
             const messageDiv = document.getElementById('login-message');
-            const destino = campo.value.trim();
+            const botao = document.getElementById('login-btn-entrar');
 
-            if (!destino) {
+            // Sem os campos na tela não há login por senha a fazer: é o caso
+            // de outra página que reaproveite este script.
+            if (!campoEmail || !campoSenha) return;
+
+            const email = campoEmail.value.trim().toLowerCase();
+            const senha = campoSenha.value;
+
+            if (!email || !senha) {
                 messageDiv.style.color = '#ef4444';
-                messageDiv.textContent = '✗ Informe seu celular com DDD ou seu e-mail';
+                messageDiv.textContent = '✗ Informe seu e-mail e sua senha';
                 return;
             }
 
-            messageDiv.textContent = '';
-            iniciarOtp(destino, document.getElementById('login-btn-codigo'));
+            const textoBotao = botao ? botao.textContent : '';
+            if (botao) { botao.disabled = true; botao.textContent = 'Entrando...'; }
+            messageDiv.style.color = '#8a8a90';
+            messageDiv.textContent = 'Verificando...';
+
+            fetch(apiUrl('/login.php'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'login', email: email, senha: senha })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.success) {
+                    sessionStorage.setItem('user', JSON.stringify(data.user));
+                    messageDiv.style.color = '#10b981';
+                    messageDiv.textContent = '✓ Tudo certo. Entrando...';
+                    // destinoPosLogin() leva de volta ao checkout quando havia
+                    // um plano esperando, e à home quando não havia.
+                    setTimeout(() => { window.location.href = destinoPosLogin(); }, 800);
+                    return;
+                }
+                messageDiv.style.color = '#ef4444';
+                messageDiv.textContent = '✗ ' + ((data && data.error) || 'E-mail ou senha incorretos');
+                if (botao) { botao.disabled = false; botao.textContent = textoBotao; }
+            })
+            .catch(() => {
+                messageDiv.style.color = '#ef4444';
+                messageDiv.textContent = '✗ Sem conexão com o servidor. Tente de novo.';
+                if (botao) { botao.disabled = false; botao.textContent = textoBotao; }
+            });
         });
     }
 

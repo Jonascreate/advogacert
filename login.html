@@ -511,17 +511,48 @@
                 <h2>Cadastro</h2>
                 <p class="login-subtitle">Acesse sua conta para gerenciar pedidos e cursos</p>
 
+                <!-- Google primeiro, e de propósito: é o caminho que funciona
+                     em um clique e serve a qualquer e-mail. O código por
+                     e-mail fica como alternativa para quem não usa Google.
+
+                     O campo pedia "celular ou e-mail", mas o envio por SMS
+                     está desligado no servidor — quem digitava o telefone
+                     recebia "não está disponível" depois de tentar. Prometer
+                     e não cumprir na tela de entrada é onde o cliente
+                     desconfia do resto. Agora só se promete o que existe. -->
+                <!-- Duas entradas, e nenhuma promessa vazia: Google em um
+                     clique, e e-mail com senha para quem não usa Google —
+                     inclusive Hotmail e e-mail de escritório.
+
+                     O código por SMS saiu da tela: o canal está desligado no
+                     servidor, e o campo prometia um envio que respondia "não
+                     está disponível" depois de a pessoa tentar. -->
                 <form id="loginForm" style="display: block;">
-                    <div class="form-group">
-                        <label for="login-telefone">Celular ou e-mail</label>
-                        <input type="text" id="login-telefone" placeholder="(DDD) 99999-9999 ou seu@email.com" autocomplete="tel email" required>
-                    </div>
-                    <p class="otp-hint">Você recebe um código de 6 dígitos. Sem senha para lembrar.</p>
-                    <button type="submit" class="login-btn" id="login-btn-codigo">Enviar código</button>
-                    <div id="login-message" style="margin-top:15px;text-align:center;font-size:14px;"></div>
-                    <div class="login-divider">ou entre com</div>
-                    <div class="social-login">
+                    <div class="social-login social-login-destaque">
                         <a href="/auth/google" data-auth="google" class="social-login-btn google"><i class="fab fa-google"></i> Entrar com Google</a>
+                    </div>
+                    <div class="login-divider">ou com e-mail e senha</div>
+                    <div class="form-group">
+                        <label for="login-email">E-mail</label>
+                        <input type="email" id="login-email" placeholder="seu@email.com" autocomplete="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-senha">Senha</label>
+                        <input type="password" id="login-senha" placeholder="••••••••" autocomplete="current-password" required>
+                    </div>
+                    <button type="submit" class="login-btn" id="login-btn-entrar">Entrar</button>
+                    <div id="login-message" style="margin-top:15px;text-align:center;font-size:14px;"></div>
+                    <div class="login-links">
+                        <a href="#" onclick="showRegisterForm(); return false;">Criar conta</a>
+                    </div>
+
+                    <!-- Campos do código por e-mail: ficam no HTML porque o
+                         script.js os referencia ao carregar, e removê-los
+                         deixaria referências nulas que derrubam o JavaScript
+                         da tela inteira, botão do Google incluído. -->
+                    <div id="login-codigo-oculto" style="display:none;">
+                        <input type="email" id="login-telefone" autocomplete="email">
+                        <button type="button" id="login-btn-codigo">Enviar código</button>
                     </div>
                 </form>
 
@@ -560,16 +591,15 @@
                     <div class="login-divider">ou cadastre-se com</div>
                     <div class="social-login">
                         <a href="/auth/google" data-auth="google" class="social-login-btn google"><i class="fab fa-google"></i> Cadastrar com Google</a>
-                        <button type="button" class="social-login-btn codigo" onclick="showOtpForm()"><i class="fas fa-key"></i> Entrar sem senha</button>
                     </div>
                 </form>
 
-                <!-- Login por código (OTP): passo 1 pede o celular, passo 2 confere o código -->
+                <!-- Login por código (OTP): passo 1 pede o e-mail, passo 2 confere o código -->
                 <form id="otpForm" style="display: none;">
                     <div id="otp-passo-destino">
                         <div class="form-group">
-                            <label for="otp-destino-input">Celular ou e-mail</label>
-                            <input type="text" id="otp-destino-input" placeholder="(DDD) 99999-9999 ou seu@email.com" autocomplete="tel email" required>
+                            <label for="otp-destino-input">Seu e-mail</label>
+                            <input type="email" id="otp-destino-input" placeholder="seu@email.com" autocomplete="email" required>
                         </div>
                         <p class="otp-hint">Enviamos um código de 6 dígitos. Sem senha para lembrar.</p>
                         <button type="submit" class="login-btn" id="otp-btn-enviar">Enviar código</button>
@@ -604,6 +634,6 @@
 
     <script src="assets/js/api.js?v=9"></script>
 
-    <script src="assets/js/script.js?v=9"></script>
+    <script src="assets/js/script.js?v=10"></script>
 </body>
 </html>
