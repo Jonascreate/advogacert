@@ -266,9 +266,10 @@ body {
     max-width: 400px;
     /* Era --bg-secondary, cor chapada do site: sobre a foto da montanha a
        caixa virava um retângulo preto no meio do poente. Agora é o mesmo
-       vidro do cartão do painel, um degrau mais fino de tinta (15% contra
-       20%) — a caixa é pequena e fica bem no centro da imagem, então precisa
-       deixar mais paisagem passar do que o cartão grande deixa. */
+       vidro do cartão do painel, mas com mais tinta que ele (35% contra 20%):
+       atrás do cartão grande há painel inteiro para segurar o texto, atrás
+       desta caixa há só a montanha, e vidro fino demais deixava a senha
+       disputar leitura com a foto. */
     background:
         linear-gradient(180deg,
             oklch(var(--acento-frio) / var(--vidro-ceu)),
@@ -277,7 +278,7 @@ body {
             oklch(var(--luz-cor) / var(--vidro-poente)) 0%,
             oklch(var(--luz-cor) / calc(var(--vidro-poente) * 0.45)) 35%,
             oklch(var(--luz-cor) / 0) 72%),
-        oklch(var(--vidro-cor) / var(--o-15));
+        oklch(var(--vidro-cor) / var(--o-35));
     backdrop-filter: blur(var(--vidro-blur)) saturate(150%);
     -webkit-backdrop-filter: blur(var(--vidro-blur)) saturate(150%);
     border: 1px solid var(--border-color);
@@ -312,6 +313,19 @@ body {
     }
 }
 .login-box { animation: loginGlow 3.2s ease-in-out infinite; }
+
+/* Jateado — o mesmo grão do cartão do painel (ver .admin-page::before).
+   Vidro liso e desfocado ainda se lê como vidro de janela; é o grão que faz
+   ler como vidro fosco. Fica acima do fundo e abaixo do conteúdo, e não
+   pega clique. */
+.login-box::before {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: var(--vidro-grao);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
 .login-box > * { position: relative; z-index: 1; }
 
 .login-logo {
