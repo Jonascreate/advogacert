@@ -65,26 +65,6 @@
             line-height: 1.75;
         }
 
-        /* linha de fatos: formato, carga horária, turma */
-        .curso-fatos {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 0.6rem;
-            margin-top: 1.75rem;
-        }
-        .curso-fato {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.55rem 1rem;
-            border-radius: 100px;
-            background: rgba(22, 22, 24, 0.5);
-            border: 1px solid var(--border-color);
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-        }
-        .curso-fato i { color: var(--accent-mac); font-size: 0.85rem; }
 
         /* === BLOCOS DE SEÇÃO === */
         .curso-secao {
@@ -331,14 +311,12 @@
         /* ==========================================================
            FOLHA BRANCA
            ==========================================================
-           A página inteira em preto cansa numa leitura longa, e o que vem
-           daqui para baixo é para ler com calma: como entrar na aula e o que
-           os vídeos mostram. A folha ocupa a largura toda da tela — precisa
-           romper a caixa de 1100px das outras seções, senão fica um retângulo
-           branco solto no meio do escuro em vez de uma faixa.
+           Uma div clara dentro da página escura, como na referência — não uma
+           faixa atravessando a tela. É o cartão de conteúdo: cabe nele o que
+           a pessoa lê antes de decidir, e o resto da página continua escuro.
 
            Não é branco puro: #f7f8fa tem um resto de azul que evita o estouro
-           de contraste com o preto logo acima. As cores de texto vivem aqui
+           de contraste com o preto em volta. As cores de texto vivem aqui
            dentro, em variáveis próprias, porque as do site são feitas para
            fundo escuro e sumiriam no claro. */
         .folha {
@@ -349,23 +327,19 @@
             --folha-tinta-2: #4a5058;
             --folha-tinta-3: #767d87;
             --folha-linha: #e2e6ec;
+            max-width: 1180px;
+            margin: 1rem auto 3rem;
+            padding: 3rem 2.25rem;
+            border-radius: 24px;
             background: var(--folha-fundo);
             color: var(--folha-tinta);
-            padding: 4rem 1.5rem;
+            box-shadow: 0 30px 70px -40px rgba(0, 0, 0, 0.9);
         }
-        /* Segunda folha, meio tom abaixo: duas faixas brancas coladas viram
-           uma faixa só, e a divisão entre os assuntos se perde. */
-        .folha.folha-fria { --folha-fundo: #eef1f5; }
-
-        /* A emenda entre o preto e o branco fica dura demais no corte reto.
-           O filete em degradê é a mesma solução do topo do rodapé. */
-        .folha::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 1px;
-            background: linear-gradient(90deg,
-                transparent, rgba(110, 231, 200, 0.5), rgba(79, 163, 255, 0.5), transparent);
+        /* Divisória entre os dois assuntos dentro da mesma folha. */
+        .folha-divisa {
+            margin: 3rem 0 2.5rem;
+            border: 0;
+            border-top: 1px solid var(--folha-linha);
         }
 
         .folha-inner { max-width: 1100px; margin: 0 auto; }
@@ -599,51 +573,145 @@
             font-family: 'JetBrains Mono', monospace;
         }
 
-        /* === CRONÔMETRO DA TURMA === */
-        .contagem {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1rem;
-            margin-top: 2.5rem;
-            padding: 1.75rem 1.5rem;
-            border-radius: 18px;
-            background: #fff;
-            border: 1px solid var(--folha-linha);
-            text-align: center;
+        /* ==========================================================
+           TOPO EM DUAS COLUNAS + PAINEL DE COMPRA
+           ==========================================================
+           O arranjo da referência: texto à esquerda, cartão de matrícula à
+           direita acompanhando a rolagem. Grid e não flex porque o painel
+           precisa ocupar duas linhas da coluna da direita (herói e módulos)
+           enquanto a esquerda empilha — com flex isso viraria aninhamento.
+
+           O painel é curto de propósito. A página da referência empilha nota,
+           avaliações, duração, nível, alunos, idioma e "este curso inclui":
+           ninguém lê essa coluna, e boa parte dela sai zerada em turma nova,
+           o que tira credibilidade em vez de dar. */
+        .curso-topo {
+            position: relative;
+            z-index: 1;
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 9.5rem 1.5rem 3rem;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 340px;
+            gap: 2.5rem;
+            align-items: start;
         }
-        .contagem-titulo {
+        .curso-topo .curso-hero {
+            grid-column: 1;
+            max-width: none;
+            margin: 0;
+            padding: 0;
+            text-align: left;
+        }
+        .curso-topo .curso-secao {
+            grid-column: 1;
+            max-width: none;
+            margin: 0;
+            padding: 2.75rem 0 0;
+        }
+        .curso-topo .curso-secao > h2,
+        .curso-topo .curso-secao > .sub { text-align: left; margin-left: 0; }
+
+        .painel-compra {
+            grid-column: 2;
+            grid-row: 1 / span 2;
+            /* sticky preso ao topo, com folga para o cabeçalho fixo do site */
+            position: sticky;
+            top: 6rem;
+            background: rgba(22, 22, 24, 0.55);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        .painel-capa {
+            position: relative;
+            aspect-ratio: 16 / 9;
+            background: linear-gradient(135deg, #1b1d22, #2a2f38);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .painel-capa iframe, .painel-capa video, .painel-capa img {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            border: 0; object-fit: cover;
+        }
+        .painel-corpo { padding: 1.4rem 1.4rem 1.5rem; }
+        .painel-valor {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.05rem;
-            font-weight: 600;
-        }
-        .contagem-titulo i { color: var(--accent-win-dark); margin-right: 0.4rem; }
-        .contagem-caixas { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.7rem; }
-        .contagem-caixa {
-            min-width: 78px;
-            padding: 0.8rem 0.9rem;
-            border-radius: 13px;
-            background: linear-gradient(160deg, #1b1d22, #2a2f38);
-            color: #fff;
-        }
-        /* tabular-nums: sem isso o número dança de largura a cada segundo,
-           porque o 1 é mais estreito que o 8 na maioria das fontes. */
-        .contagem-num {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1.65rem;
+            font-size: 1.55rem;
             font-weight: 700;
-            line-height: 1.1;
+            line-height: 1.2;
+        }
+        .painel-valor small {
+            display: block;
+            margin-top: 0.25rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+        .btn-matricula {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.55rem;
+            width: 100%;
+            margin-top: 1.1rem;
+            padding: 1rem 1.2rem;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent-mac-dark), var(--accent-mac));
+            color: #062018;
+            font-weight: 700;
+            font-size: 0.98rem;
+            text-decoration: none;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .btn-matricula:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px -12px rgba(110, 231, 200, 0.6);
+        }
+        /* Três fatos, um por linha, sem ícone de enfeite: é o mínimo que
+           responde "como é a aula" antes do clique. */
+        .painel-fatos {
+            list-style: none;
+            margin-top: 1.2rem;
+            padding-top: 1.1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .painel-fatos li {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.35rem 0;
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+        }
+        .painel-fatos i { color: var(--accent-mac); font-size: 0.8rem; width: 1rem; }
+
+        /* === CRONÔMETRO DA TURMA === */
+        /* Dentro do painel ele vira uma linha só; a versão em quadros grandes
+           saía cara demais em espaço para o que informa. */
+        .painel-prazo {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1.1rem;
+            padding: 0.7rem 0.85rem;
+            border-radius: 11px;
+            background: rgba(79, 163, 255, 0.1);
+            border: 1px solid rgba(79, 163, 255, 0.28);
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+        }
+        .painel-prazo .relogio {
+            font-family: 'JetBrains Mono', monospace;
             font-variant-numeric: tabular-nums;
+            font-weight: 700;
+            color: var(--accent-win);
         }
-        .contagem-rot {
-            margin-top: 0.2rem;
-            font-size: 0.66rem;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.6);
-        }
-        .contagem-nota { color: var(--folha-tinta-3); font-size: 0.83rem; }
-        .contagem.encerrada .contagem-caixas { opacity: 0.45; }
+        .painel-prazo.encerrada { opacity: 0.6; }
+
 
         /* ==========================================================
            ROLAGEM
@@ -711,23 +779,60 @@
         </nav>
     </header>
 
-    <section class="curso-hero">
-        <div class="curso-eyebrow"><i class="fa-solid fa-graduation-cap"></i> Curso online ao vivo</div>
-        <h1>Domine o <span>PJe</span> e coloque a <span>IA Claude</span> para trabalhar no seu escritório</h1>
-        <p>
-            Duas frentes numa turma só: peticionar no PJe sem travar em erro de certificado
-            e usar a inteligência artificial da Anthropic para ler, resumir e redigir — com o
-            cuidado que o sigilo profissional exige.
-        </p>
-        <div class="curso-fatos">
-            <span class="curso-fato"><i class="fa-solid fa-video"></i> Ao vivo, em turmas</span>
-            <span class="curso-fato"><i class="fa-solid fa-users"></i> Turmas pequenas, com perguntas</span>
-            <span class="curso-fato"><i class="fa-solid fa-certificate"></i> Certificado de participação</span>
-            <span class="curso-fato"><i class="fa-solid fa-rotate-left"></i> Gravação liberada depois</span>
-        </div>
-    </section>
+    <div class="curso-topo">
+        <section class="curso-hero">
+            <div class="curso-eyebrow"><i class="fa-solid fa-graduation-cap"></i> Curso online ao vivo</div>
+            <h1>Domine o <span>PJe</span> e coloque a <span>IA Claude</span> para trabalhar no seu escritório</h1>
+            <p>
+                Duas frentes numa turma só: peticionar no PJe sem travar em erro de certificado
+                e usar a inteligência artificial da Anthropic para ler, resumir e redigir — com o
+                cuidado que o sigilo profissional exige.
+            </p>
+        </section>
 
-    <section class="curso-secao">
+        <!-- Painel de matrícula: acompanha a rolagem e carrega só o que decide
+             a compra. Nota, avaliações, nível, idioma e contagem de alunos
+             ficam de fora — em turma nova saem zerados. -->
+        <aside class="painel-compra">
+            <div class="painel-capa">
+                <!-- Prévia em vídeo: troque este bloco por
+                     <iframe src="https://www.youtube.com/embed/ID" title="Prévia do curso"
+                             allowfullscreen loading="lazy"></iframe> -->
+                <div class="video-play"><i class="fa-solid fa-play"></i></div>
+            </div>
+            <div class="painel-corpo">
+                <!-- Quando houver preço:
+                     <div class="painel-valor">R$ 000<small><s>R$ 000</s> à vista ou em Nx</small></div> -->
+                <div class="painel-valor">
+                    Vagas abertas
+                    <small>Valor e forma de pagamento pelo WhatsApp</small>
+                </div>
+
+                <a class="btn-matricula"
+                   href="https://wa.me/5561986241570?text=Quero%20garantir%20minha%20vaga%20no%20curso%20de%20PJe%20e%20IA"
+                   target="_blank" rel="noopener">
+                    <i class="fa-brands fa-whatsapp"></i> Garantir minha vaga
+                </a>
+
+                <div class="painel-prazo" id="contagem" data-prazo="2026-08-17T20:00:00-03:00">
+                    <span id="contagem-frase">Fecha em</span>
+                    <span class="relogio">
+                        <span id="c-dias">–</span>d
+                        <span id="c-horas">–</span>h
+                        <span id="c-min">–</span>m
+                        <span id="c-seg">–</span>s
+                    </span>
+                </div>
+
+                <ul class="painel-fatos">
+                    <li><i class="fa-solid fa-video"></i> Ao vivo, turma pequena</li>
+                    <li><i class="fa-solid fa-rotate-left"></i> Gravação liberada depois</li>
+                    <li><i class="fa-solid fa-certificate"></i> Certificado de participação</li>
+                </ul>
+            </div>
+        </aside>
+
+        <section class="curso-secao">
         <h2>O que você vai <span>aprender</span></h2>
         <p class="sub">
             O curso é dividido em dois módulos independentes, dados na mesma turma. Um resolve o
@@ -775,11 +880,12 @@
                 </ul>
             </div>
         </div>
-    </section>
+        </section>
+    </div>
 
-    <!-- ================= COMO VOCÊ ASSISTE =================
-         Folha branca: daqui para baixo é leitura de decisão — como entrar,
-         como pagar, o que os vídeos mostram. -->
+    <!-- ================= A DIV BRANCA =================
+         Uma folha só, com os dois assuntos que a pessoa lê antes de decidir:
+         como entrar na aula e o que os vídeos mostram. -->
     <section class="folha" id="como-assiste" data-telemetria-secao="como-assiste">
         <div class="folha-inner">
             <h2 class="reveal">Como você <span>assiste</span></h2>
@@ -798,10 +904,8 @@
                         navegador, sem conta da Microsoft e sem instalar programa.
                     </p>
                     <ul class="acesso-passos">
-                        <li><i class="fa-solid fa-check"></i> Clique no link e escolha "Continuar neste navegador"</li>
-                        <li><i class="fa-solid fa-check"></i> Escreva seu nome como está na inscrição</li>
-                        <li><i class="fa-solid fa-check"></i> Câmera é opcional; microfone só quando for perguntar</li>
-                        <li><i class="fa-solid fa-check"></i> A gravação fica disponível para quem se inscreveu</li>
+                        <li><i class="fa-solid fa-check"></i> Continuar neste navegador — sem conta da Microsoft</li>
+                        <li><i class="fa-solid fa-check"></i> Câmera opcional, microfone só para perguntar</li>
                     </ul>
                     <div class="acesso-acoes">
                         <!-- Quando a sala do Teams existir, troque este href pelo link da
@@ -830,9 +934,8 @@
                         acesso e a gente arruma na sua máquina, com você vendo a tela.
                     </p>
                     <ul class="acesso-passos">
-                        <li><i class="fa-solid fa-check"></i> Baixe o programa e nos passe o número que aparecer</li>
-                        <li><i class="fa-solid fa-check"></i> O acesso só existe enquanto o programa estiver aberto</li>
-                        <li><i class="fa-solid fa-check"></i> Você acompanha tudo e encerra quando quiser</li>
+                        <li><i class="fa-solid fa-check"></i> Você passa o número e acompanha a tela</li>
+                        <li><i class="fa-solid fa-check"></i> O acesso acaba quando você fecha o programa</li>
                     </ul>
                     <div class="acesso-acoes">
                         <a class="btn-acesso principal"
@@ -858,8 +961,7 @@
                     </p>
                     <ul class="acesso-passos">
                         <li><i class="fa-solid fa-check"></i> Pix, cartão ou boleto pelo Mercado Pago</li>
-                        <li><i class="fa-solid fa-check"></i> Link individual: nada de dados de cartão por mensagem</li>
-                        <li><i class="fa-solid fa-check"></i> Recibo e certificado saem no nome da inscrição</li>
+                        <li><i class="fa-solid fa-check"></i> Link individual, nunca cartão por mensagem</li>
                     </ul>
                     <div class="acesso-acoes">
                         <!-- Quando houver link de checkout do curso no Mercado Pago, ele entra
@@ -873,22 +975,6 @@
                 </article>
             </div>
 
-            <!-- data-prazo manda no cronômetro: troque a data e hora daqui e a
-                 contagem toda se ajusta. O -03:00 é Brasília. -->
-            <div class="contagem reveal" id="contagem" data-prazo="2026-08-17T20:00:00-03:00">
-                <div class="contagem-titulo">
-                    <i class="fa-regular fa-clock"></i>
-                    <span id="contagem-frase">Faltam para o fim das inscrições</span>
-                </div>
-                <div class="contagem-caixas" id="contagem-caixas" role="timer" aria-live="off">
-                    <div class="contagem-caixa"><div class="contagem-num" id="c-dias">–</div><div class="contagem-rot">dias</div></div>
-                    <div class="contagem-caixa"><div class="contagem-num" id="c-horas">–</div><div class="contagem-rot">horas</div></div>
-                    <div class="contagem-caixa"><div class="contagem-num" id="c-min">–</div><div class="contagem-rot">min</div></div>
-                    <div class="contagem-caixa"><div class="contagem-num" id="c-seg">–</div><div class="contagem-rot">seg</div></div>
-                </div>
-                <p class="contagem-nota">As turmas são pequenas para caber pergunta de todo mundo.</p>
-            </div>
-
             <div class="acesso-nota reveal">
                 <i class="fa-solid fa-circle-info"></i>
                 <p>
@@ -897,13 +983,10 @@
                     turma para e a gente resolve — é para isso que o acesso remoto existe.
                 </p>
             </div>
-        </div>
-    </section>
 
-    <!-- ================= VÍDEOS ================= -->
-    <section class="folha folha-fria" id="videos" data-telemetria-secao="videos">
-        <div class="folha-inner">
-            <h2 class="reveal">Veja <span>antes</span> de decidir</h2>
+            <hr class="folha-divisa">
+
+            <h2 class="reveal" id="videos" data-telemetria-secao="videos">Veja <span>antes</span> de decidir</h2>
             <p class="sub reveal">
                 Trechos curtos do que é dado em aula. Se o problema do vídeo é o mesmo que você
                 tem hoje, o curso é para você.
