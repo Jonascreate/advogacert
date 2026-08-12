@@ -19,6 +19,8 @@
     var NOMES_FUNIL = {
         pagina_visualizada:  'Visitaram o site',
         secao_visualizada:   'Viram uma seção',
+        curso_clicado:       'Clicaram no curso (PJe + Claude)',
+        bot_conversou:       'Conversaram com o bot',
         plano_clicado:       'Clicaram em plano',
         formulario_iniciado: 'Iniciaram cadastro',
         formulario_enviado:  'Enviaram cadastro',

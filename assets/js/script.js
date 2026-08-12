@@ -674,6 +674,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let chatHistory = [];
         let conversaAtiva = false;
+        let botMedido = false;   // uma conversa por página, não uma por mensagem
 
         btn.onclick = () => {
             const wasClosed = frame.style.display === 'none' || frame.style.display === '';
@@ -774,6 +775,14 @@ document.addEventListener('DOMContentLoaded', function() {
         async function sendMsg() {
             const text = input.value.trim();
             if (!text) return;
+
+            /* O funil quer saber quem falou com o bot, não quanto falou: só o
+               primeiro envio da página conta. O texto da pergunta nunca sai
+               daqui — vai apenas o fato de ter havido conversa. */
+            if (!botMedido && window.telemetriaEvento) {
+                botMedido = true;
+                window.telemetriaEvento('bot_conversou');
+            }
 
             conversaAtiva = true;
             addMsg(text, 'user');

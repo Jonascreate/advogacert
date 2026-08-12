@@ -2465,9 +2465,12 @@ const server = http.createServer((req, res) => {
                 const pagamentosConfirmados = (db.assinaturas || []).filter(a =>
                     a.status === 'ativa' && new Date(a.criado_em || a.inicio).getTime() >= new Date(desde).getTime()).length;
                 porEvento.pagamento_confirmado = pagamentosConfirmados;
+                // Curso e bot entram como etapas de interesse: acontecem depois
+                // de olhar a página e antes de escolher plano.
                 const funilNomes = [
-                    'pagina_visualizada', 'secao_visualizada', 'plano_clicado',
-                    'formulario_iniciado', 'formulario_enviado', 'checkout_iniciado', 'pagamento_confirmado'
+                    'pagina_visualizada', 'secao_visualizada', 'curso_clicado', 'bot_conversou',
+                    'plano_clicado', 'formulario_iniciado', 'formulario_enviado',
+                    'checkout_iniciado', 'pagamento_confirmado'
                 ];
                 const funil = funilNomes.map(nome => ({ evento: nome, total: porEvento[nome] || 0 }));
 

@@ -143,6 +143,8 @@
         if (!alvo) return;
         var plano = alvo.dataset && alvo.dataset.plano;
         if (plano) enviar('plano_clicado', { plano: plano });
+        // O anúncio do curso no index e qualquer chamada que leve à página dele.
+        if (alvo.matches('.curso-anuncio, [href*="curso.html"]')) enviar('curso_clicado');
         if (alvo.matches('.btn-anydesk, [href*="anydesk.com"]')) enviar('download_anydesk');
         if (alvo.matches('[data-driver], .cert-card[href]')) enviar('download_driver', { servico: alvo.dataset.driver || alvo.getAttribute('aria-label') });
         if (/wa\.me|whatsapp/i.test(alvo.href || '')) enviar('whatsapp_clicado');
