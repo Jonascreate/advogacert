@@ -8,7 +8,12 @@
 
     <!-- Fontes do site. A pilha de sistema fica como reserva: se o Google
          Fonts não responder, a página não troca de cara nem desalinha. -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- A folha do site inteiro: é dela que vêm as fontes e os tokens. O
+         <style> abaixo só acrescenta o que é próprio desta landing, e como
+         vem depois, vence nos poucos pontos em que os dois se cruzam. -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
 
     <style>
         /* ==========================================================
@@ -64,7 +69,56 @@
             align-items: center;
             padding: 0 60px;
         }
-        .topo img, .rodape img { height: 70px; width: auto; display: block; }
+        /* A marca vem por máscara, como no resto do site: o PNG define o
+           recorte e a cor vem do fundo, então ela funciona sobre qualquer
+           faixa sem precisar de um arquivo por cor. */
+        .topo { justify-content: space-between; }
+        .topo-marca { display: block; }
+        .topo-marca .logo-mask {
+            width: 200px; height: 70px;
+            background: var(--text-on-dark);
+            -webkit-mask: url('assets/img/logo.png') no-repeat center / contain;
+            mask: url('assets/img/logo.png') no-repeat center / contain;
+        }
+        .topo-nav { display: flex; gap: 28px; }
+        .topo-nav a {
+            color: var(--muted-on-dark);
+            text-decoration: none;
+            font-size: 15px;
+        }
+        .topo-nav a:hover { color: var(--text-on-dark); }
+
+        .rodape-conteudo {
+            width: 100%;
+            max-width: var(--largura);
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .rodape-links { display: flex; gap: 24px; }
+        .rodape-links a { color: var(--muted-on-dark); text-decoration: none; font-size: 15px; }
+        .rodape-links a:hover { color: var(--text-on-dark); }
+        .rodape-copy { color: #8a8a8a; font-size: 13px; }
+
+        /* Selo do herói, o mesmo que a página tinha. */
+        .curso-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            margin-bottom: 20px;
+            border-radius: 100px;
+            background: rgba(34, 197, 242, 0.12);
+            border: 1px solid rgba(34, 197, 242, 0.35);
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
 
         /* ==========================================================
            2. HERO
@@ -152,7 +206,11 @@
         /* --- card de preço --- */
         /* sticky: acompanha a rolagem até o fim do bloco branco, que é o
            limite natural do pai. */
+        /* O card nasce um pouco acima da faixa branca e cruza a emenda — é
+           assim no layout, e é o que o tira da fileira e o põe em primeiro
+           plano. O -104px equivale ao respiro do título mais o topo da faixa. */
         .card-preco {
+            margin-top: -104px;
             position: sticky;
             top: 24px;
             background: var(--panel);
@@ -169,8 +227,22 @@
             justify-content: center;
             color: #111;
         }
-        .card-capa .marca { font-family: Georgia, 'Times New Roman', serif; font-size: 34px; }
-        .card-capa .por { font-size: 9px; letter-spacing: 3px; margin-top: 4px; }
+        /* Marcas à esquerda, foto à direita, dividindo a mesma caixa 16:10. */
+        .card-capa { flex-direction: row; background: #1b1d22; padding: 0; }
+        .card-marcas {
+            flex: 1 1 auto;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 6px; padding: 14px 10px; min-width: 0;
+        }
+        .card-marcas img { width: 100%; max-width: 104px; height: auto; }
+        .card-mais { color: #8a8a8a; font-size: 15px; line-height: 1; }
+        .card-foto { flex: 0 0 44%; position: relative; overflow: hidden; }
+        .card-foto img {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
+            object-fit: cover; object-position: center 22%;
+        }
         .card-corpo { padding: 28px; text-align: center; }
         .card-valor { font-family: var(--fonte-titulo); font-size: 34px; }
         .card-valor + p { font-size: 17px; color: #444; margin-bottom: 20px; }
@@ -218,6 +290,9 @@
             margin-top: 40px;
         }
         .quadrado {
+            /* 1:1 é o mínimo: com os botões dentro, a proporção travada
+               cortaria o último link em tela estreita. */
+            min-height: 0;
             aspect-ratio: 1 / 1;
             border: 1px solid #111;
             border-radius: 20px;
@@ -229,6 +304,25 @@
         }
         .quadrado h3 { font-size: 17px; }
         .quadrado p { font-size: 14px; color: #444; }
+        /* Os links de download estavam na versão anterior da página e voltam
+           aqui: sem eles o quadrado conta o que fazer e não deixa fazer. */
+        .quadrado-acoes {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .quadrado-acoes a {
+            padding: 9px 12px;
+            border: 1px solid #111;
+            border-radius: 10px;
+            color: #111;
+            font-size: 13.5px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .quadrado-acoes a:first-child { background: var(--accent); border-color: var(--accent); color: #062028; }
+        .quadrado-acoes a:hover { filter: brightness(1.06); }
 
         /* ==========================================================
            5. VEJA ANTES DE DECIDIR
@@ -247,7 +341,25 @@
             gap: 28px;
         }
         .video-card { border-radius: var(--raio-card); overflow: hidden; }
+        .video-selo {
+            position: absolute;
+            top: 12px; right: 12px;
+            padding: 3px 10px;
+            border-radius: 100px;
+            background: rgba(0, 0, 0, 0.45);
+            font-size: 11px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .video-duracao {
+            display: inline-block;
+            margin-top: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--muted-on-dark);
+        }
         .video-capa {
+            position: relative;
             aspect-ratio: 16 / 9;
             background: #3a3a3a;
             display: flex;
@@ -288,11 +400,14 @@
             /* Sem coluna lateral, o card perde o sticky e vai para o fim da
                seção, em largura inteira. */
             .duas-colunas { grid-template-columns: 1fr; }
-            .card-preco { position: static; width: 100%; }
+            .card-preco { position: static; width: 100%; margin-top: 0; }
             .topo, .rodape { padding: 0 24px; }
         }
         @media (max-width: 900px) {
             .videos { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 1080px) {
+            .quadrado { aspect-ratio: auto; }
         }
         @media (max-width: 720px) {
             .tres-quadrados { grid-template-columns: 1fr; }
@@ -304,14 +419,28 @@
 </head>
 <body>
 
+<!-- As manchas de luz do site: o script.js as arrasta com o ponteiro. -->
+<div class="blush-container">
+    <div class="blush blush-1" id="blush1"></div>
+    <div class="blush blush-2" id="blush2"></div>
+    <div class="blush blush-3" id="blush3"></div>
+</div>
+
 <!-- ================= 1. BARRA DO TOPO ================= -->
 <header class="topo">
-    <a href="index.html"><img src="assets/img/logo.png" alt="Advcert — suporte de certificados digitais"></a>
+    <a href="index.html" class="topo-marca">
+        <div class="logo-mask" role="img" aria-label="Advcert — suporte de certificados digitais"></div>
+    </a>
+    <nav class="topo-nav">
+        <a href="index.html">Início</a>
+        <a href="contato.html">Contato</a>
+    </nav>
 </header>
 
 <main>
     <!-- ================= 2. HERO ================= -->
     <section class="hero">
+        <div class="curso-eyebrow"><i class="fa-solid fa-graduation-cap"></i> Curso online ao vivo</div>
         <h1>Domine o <span class="accent">PJe</span> e coloque a <span class="accent">IA Claude</span> para trabalhar no seu escritório</h1>
         <p>
             Duas frentes numa turma só: peticionar no PJe sem travar em erro de certificado
@@ -376,8 +505,14 @@
             <aside class="card-preco">
                 <!-- espaço reservado para a imagem do card -->
                 <div class="card-capa">
-                    <span class="marca">Claude</span>
-                    <span class="por">BY ANTHROPIC</span>
+                    <div class="card-marcas">
+                        <img src="assets/img/pje-claro.png" alt="PJe — Processo Judicial Eletrônico">
+                        <span class="card-mais">+</span>
+                        <img src="assets/img/claude-claro.png" alt="Claude">
+                    </div>
+                    <div class="card-foto">
+                        <img src="img/IMG_6924.jpeg" alt="Instrutor do curso" loading="lazy">
+                    </div>
                 </div>
                 <div class="card-corpo">
                     <div class="card-valor">R$ 65</div>
@@ -411,14 +546,27 @@
                     <article class="quadrado">
                         <h3>Microsoft Teams</h3>
                         <p>O link chega no seu WhatsApp. Abre no navegador, sem conta e sem instalar.</p>
+                        <div class="quadrado-acoes">
+                            <!-- Quando a sala do Teams existir, troque este endereço pelo link
+                                 da reunião. Até lá vale o WhatsApp, que é por onde ele chega. -->
+                            <a href="https://wa.me/5561986241570?text=Quero%20o%20link%20da%20aula%20no%20Teams" target="_blank" rel="noopener">Receber o link</a>
+                            <a href="https://www.microsoft.com/pt-br/microsoft-teams/download-app" target="_blank" rel="noopener">Baixar o Teams</a>
+                        </div>
                     </article>
                     <article class="quadrado">
                         <h3>TeamViewer ou AnyDesk</h3>
                         <p>Certificado, token ou driver que não vai: a gente resolve na sua tela, com você vendo.</p>
+                        <div class="quadrado-acoes">
+                            <a href="https://www.teamviewer.com/pt-br/download/" target="_blank" rel="noopener">Baixar o TeamViewer</a>
+                            <a href="https://anydesk.com/pt/downloads" target="_blank" rel="noopener">Baixar o AnyDesk</a>
+                        </div>
                     </article>
                     <article class="quadrado">
                         <h3>Pagamento</h3>
                         <p>Pix, cartão ou boleto por link individual. A vaga vale com o pagamento.</p>
+                        <div class="quadrado-acoes">
+                            <a href="https://wa.me/5561986241570?text=Quero%20garantir%20minha%20vaga%20no%20curso%20de%20PJe%20e%20IA%20(R%24%2065)" target="_blank" rel="noopener">Garantir minha vaga</a>
+                        </div>
                     </article>
                 </div>
             </div>
@@ -438,6 +586,7 @@
                 <!-- Para publicar, troque .video-capa por um <iframe> 16:9. -->
                 <article class="video-card">
                     <div class="video-capa">
+                        <span class="video-selo">Em breve</span>
                         <span class="play">
                             <svg width="20" height="24" viewBox="0 0 20 24" aria-hidden="true">
                                 <path d="M0 0 L20 12 L0 24 Z" fill="#ffffff"></path>
@@ -447,12 +596,13 @@
                     <div class="video-texto">
                         <h3>O certificado que o navegador não reconhece</h3>
                         <p>Do erro na tela ao protocolo aceito, sem pular o passo que ninguém explica.</p>
-                        <!-- duração do trecho entra aqui -->
+                        <span class="video-duracao">Duração a definir</span>
                     </div>
                 </article>
 
                 <article class="video-card">
                     <div class="video-capa">
+                        <span class="video-selo">Em breve</span>
                         <span class="play">
                             <svg width="20" height="24" viewBox="0 0 20 24" aria-hidden="true">
                                 <path d="M0 0 L20 12 L0 24 Z" fill="#ffffff"></path>
@@ -462,12 +612,13 @@
                     <div class="video-texto">
                         <h3>Ler um processo de 300 páginas com a IA</h3>
                         <p>O que pedir, o que conferir e por que a resposta pronta nunca vai direto aos autos.</p>
-                        <!-- duração do trecho entra aqui -->
+                        <span class="video-duracao">Duração a definir</span>
                     </div>
                 </article>
 
                 <article class="video-card">
                     <div class="video-capa">
+                        <span class="video-selo">Em breve</span>
                         <span class="play">
                             <svg width="20" height="24" viewBox="0 0 20 24" aria-hidden="true">
                                 <path d="M0 0 L20 12 L0 24 Z" fill="#ffffff"></path>
@@ -477,7 +628,7 @@
                     <div class="video-texto">
                         <h3>Sigilo: o que não pode ser colado na ferramenta</h3>
                         <p>Como anonimizar um caso real antes de pedir ajuda à inteligência artificial.</p>
-                        <!-- duração do trecho entra aqui -->
+                        <span class="video-duracao">Duração a definir</span>
                     </div>
                 </article>
             </div>
@@ -487,13 +638,23 @@
 
 <!-- ================= 6. RODAPÉ ================= -->
 <footer class="rodape">
-    <a href="index.html"><img src="assets/img/logo.png" alt="Advcert — suporte de certificados digitais"></a>
+    <div class="rodape-conteudo">
+        <a href="index.html" class="topo-marca">
+            <div class="logo-mask" role="img" aria-label="Advcert — suporte de certificados digitais"></div>
+        </a>
+        <div class="rodape-links">
+            <a href="index.html">Início</a>
+            <a href="contato.html">Falar com Suporte</a>
+        </div>
+        <div class="rodape-copy">© 2026 AdvogaCert. Todos os direitos reservados.</div>
+    </div>
 </footer>
 
 <!-- Scripts do próprio site: apiUrl resolve o endereço do servidor e a
      telemetria registra a visita. Não são bibliotecas de terceiros. -->
 <script src="assets/js/api.js?v=9"></script>
 <script src="assets/js/telemetria.js?v=2"></script>
+<script src="assets/js/script.js?v=14"></script>
 
 <script>
 (function () {
