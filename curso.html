@@ -20,13 +20,14 @@
            TOKENS
            ========================================================== */
         :root {
-            --bg: #000000;
-            --surface: #2b2b2b;
-            --panel: #ffffff;
-            --accent: #22c5f2;
-            --text-on-dark: #ffffff;
-            --muted-on-dark: #b8b8b8;
-            --text-on-light: #111111;
+            --bg: #07090d;
+            --surface: rgba(17, 22, 29, 0.82);
+            --panel: rgba(16, 21, 28, 0.78);
+            --accent: #6ee7c8;
+            --accent-blue: #60a5fa;
+            --text-on-dark: #f7fafc;
+            --muted-on-dark: #a8b1bf;
+            --text-on-light: #f7fafc;
 
             --raio-card: 12px;
             --raio-painel: 24px;
@@ -46,6 +47,11 @@
             font-family: var(--fonte-texto);
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            background-image:
+                radial-gradient(circle at 16% 10%, rgba(110, 231, 200, .12), transparent 28%),
+                radial-gradient(circle at 86% 22%, rgba(96, 165, 250, .12), transparent 30%),
+                linear-gradient(180deg, #07090d 0%, #090d13 58%, #07090d 100%);
         }
 
         /* Títulos leves, não bold: é traço do layout, não descuido. */
@@ -63,11 +69,16 @@
            1. BARRA DO TOPO
            ========================================================== */
         .topo {
-            background: var(--surface);
-            min-height: 130px;
+            background: rgba(7, 9, 13, .72);
+            min-height: 84px;
             display: flex;
             align-items: center;
-            padding: 0 60px;
+            padding: 0 max(24px, calc((100vw - var(--largura)) / 2));
+            border-bottom: 1px solid rgba(255,255,255,.08);
+            backdrop-filter: blur(18px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
         /* A marca vem por máscara, como no resto do site: o PNG define o
            recorte e a cor vem do fundo, então ela funciona sobre qualquer
@@ -125,32 +136,51 @@
            ========================================================== */
         .hero {
             text-align: center;
-            padding: 72px 24px 56px;
+            padding: 96px 24px 74px;
+            position: relative;
         }
         .hero h1 {
-            font-size: clamp(30px, 4.2vw, 44px);
-            max-width: 860px;
+            font-size: clamp(42px, 6vw, 76px);
+            max-width: 1040px;
             margin: 0 auto;
+            font-weight: 600;
+            letter-spacing: -.045em;
+            line-height: 1.02;
         }
         .hero p {
-            max-width: 620px;
+            max-width: 760px;
             margin: 28px auto 0;
-            font-size: 15px;
+            font-size: clamp(16px, 1.6vw, 19px);
             color: var(--muted-on-dark);
         }
         /* Título de seção que ainda pertence ao preto: o branco começa
            logo abaixo dele. */
         .titulo-aprender {
-            font-size: 30px;
+            font-size: clamp(30px, 4vw, 48px);
             text-align: center;
-            padding: 64px 24px 40px;
+            padding: 72px 24px 32px;
+            font-weight: 600;
+            letter-spacing: -.03em;
         }
+
+        .hero-acoes { display:flex; justify-content:center; gap:14px; flex-wrap:wrap; margin-top:34px; }
+        .cta-principal, .cta-secundario {
+            display:inline-flex; align-items:center; justify-content:center; gap:9px;
+            min-height:52px; padding:0 22px; border-radius:14px; text-decoration:none;
+            font-family:var(--fonte-titulo); font-weight:700; transition:.25s ease;
+        }
+        .cta-principal { background:linear-gradient(135deg,#45d7b5,#8df0d7); color:#05231b; box-shadow:0 15px 40px rgba(110,231,200,.2); }
+        .cta-secundario { color:#e6edf5; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.04); }
+        .cta-principal:hover, .cta-secundario:hover { transform:translateY(-3px); }
+        .hero-provas { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin:26px auto 0; color:#b9c3cf; font-size:13px; }
+        .hero-provas span { padding:8px 12px; border-radius:999px; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.07); }
+        .hero-provas i { color:var(--accent); margin-right:6px; }
 
         /* ==========================================================
            3. BLOCO BRANCO DE DUAS COLUNAS
            ========================================================== */
         .bloco-claro {
-            background: var(--panel);
+            background: transparent;
             color: var(--text-on-light);
             padding: 48px 0 64px;
         }
@@ -177,8 +207,9 @@
            em vez de aspect-ratio, o card cresce se o texto do módulo passar
            dessa altura, em vez de cortar a lista. */
         .modulo {
-            background: var(--panel);
-            border: 1px solid #111;
+            background: linear-gradient(145deg, rgba(19,26,34,.92), rgba(11,15,21,.88));
+            border: 1px solid rgba(255,255,255,.09);
+            box-shadow: 0 24px 70px rgba(0,0,0,.25);
             border-radius: var(--raio-painel);
             padding: 20px;
             display: flex;
@@ -420,6 +451,74 @@
             .painel-claro { padding: 32px 20px; }
             .hero { padding: 48px 24px 40px; }
         }
+        /* ==========================================================
+           ACABAMENTO COMERCIAL — mesma linguagem visual da home
+           ========================================================== */
+        .accent {
+            background: linear-gradient(90deg, var(--accent), #b5f7e7 52%, var(--accent-blue));
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        .duas-colunas { grid-template-columns: minmax(0, 1fr) 360px; gap: 32px; }
+        .coluna-esq > p { color: var(--muted-on-dark); font-size: 17px; }
+        .modulo { border-radius: 22px; padding: 28px; color: var(--text-on-dark); position:relative; overflow:hidden; }
+        .modulo::before { content:''; position:absolute; width:150px; height:150px; border-radius:50%; background:rgba(110,231,200,.1); filter:blur(45px); right:-70px; top:-70px; }
+        .modulo-rotulo { color:var(--accent); border-color:rgba(110,231,200,.28); background:rgba(110,231,200,.08); }
+        .modulo-icone { width:50px; height:50px; border-radius:15px; background:linear-gradient(135deg,rgba(110,231,200,.18),rgba(96,165,250,.12)); border:1px solid rgba(110,231,200,.22); }
+        .modulo h3 { font-weight:600; font-size:23px; letter-spacing:-.02em; }
+        .modulo p { color:#aab4c2; }
+        .modulo li { color:#d6dde7; border-color:rgba(255,255,255,.07); }
+        .modulo li::before { color:var(--accent); }
+
+        .card-preco {
+            position:sticky; top:108px; border-radius:24px; overflow:hidden;
+            background:linear-gradient(160deg,rgba(25,33,43,.96),rgba(10,14,19,.98));
+            border:1px solid rgba(110,231,200,.22); box-shadow:0 28px 90px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.025) inset;
+        }
+        .card-capa { background:radial-gradient(circle at 50% 20%,rgba(110,231,200,.18),transparent 55%),#0d1218; }
+        .card-corpo { color:var(--text-on-dark); padding:28px; }
+        .card-valor { font-family:var(--fonte-titulo); font-size:52px; font-weight:700; letter-spacing:-.04em; }
+        .card-corpo > p { color:var(--muted-on-dark); }
+        .btn-vaga { min-height:54px; border-radius:14px; background:linear-gradient(135deg,#45d7b5,#8df0d7); color:#05231b; font-family:var(--fonte-titulo); font-weight:700; box-shadow:0 14px 35px rgba(110,231,200,.2); }
+        .btn-vaga:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 18px 45px rgba(110,231,200,.28); }
+        .prazo-rotulo { color:#8f9aa8; }
+        .prazo-relogio { color:var(--accent); font-family:'JetBrains Mono',monospace; }
+        .card-beneficios { border-color:rgba(255,255,255,.08); }
+        .card-beneficios li { color:#d8e0e9; }
+
+        .secao-escura, .secao-videos { background:transparent; padding:80px 0; }
+        .painel-claro { color:var(--text-on-dark); background:rgba(15,20,27,.72); border:1px solid rgba(255,255,255,.08); border-radius:28px; box-shadow:0 28px 90px rgba(0,0,0,.25); backdrop-filter:blur(16px); }
+        .painel-claro > h2, .secao-videos h2 { font-weight:600; font-size:clamp(30px,4vw,46px); letter-spacing:-.03em; }
+        .painel-claro > p, .secao-videos > .container > p { color:var(--muted-on-dark); }
+        .quadrado, .video-card { background:linear-gradient(145deg,rgba(19,26,34,.9),rgba(10,14,19,.9)); color:var(--text-on-dark); border:1px solid rgba(255,255,255,.08); border-radius:20px; box-shadow:0 18px 55px rgba(0,0,0,.22); }
+        .quadrado h3, .video-card h3 { font-weight:600; }
+        .quadrado p, .video-card p { color:#aab4c2; }
+        .quadrado-acoes a { color:var(--accent); border-color:rgba(110,231,200,.25); background:rgba(110,231,200,.07); }
+        .video-capa { background:radial-gradient(circle at 50% 40%,rgba(96,165,250,.16),transparent 55%),#0d1218; }
+        .play { background:linear-gradient(135deg,#45d7b5,#60a5fa); box-shadow:0 10px 30px rgba(96,165,250,.25); }
+        footer { border-top:1px solid rgba(255,255,255,.08); background:#07090d; }
+
+        .compra-mobile { display:none; }
+        @media (max-width: 920px) {
+            .topo { padding:0 20px; min-height:72px; }
+            .topo-marca .logo-mask { width:150px; height:54px; }
+            .topo-nav { gap:16px; }
+            .hero { padding:72px 20px 54px; }
+            .duas-colunas { grid-template-columns:1fr; }
+            .card-preco { position:relative; top:auto; max-width:520px; width:100%; margin:0 auto; }
+            .modulos { grid-template-columns:1fr; }
+            .compra-mobile { display:block; position:fixed; z-index:90; left:12px; right:12px; bottom:12px; }
+            .compra-mobile button { width:100%; min-height:52px; border:0; border-radius:14px; background:linear-gradient(135deg,#45d7b5,#8df0d7); color:#05231b; font:700 16px var(--fonte-titulo); box-shadow:0 16px 50px rgba(0,0,0,.45); }
+            body { padding-bottom:76px; }
+        }
+        @media (max-width: 560px) {
+            .topo-nav a:first-child { display:none; }
+            .hero h1 { font-size:39px; }
+            .hero-provas { align-items:stretch; flex-direction:column; }
+            .hero-provas span { width:100%; }
+            .titulo-aprender { padding-top:50px; }
+            .bloco-claro { padding-top:28px; }
+            .modulo { padding:22px; }
+        }
     </style>
 </head>
 <body>
@@ -452,12 +551,22 @@
             e usar a inteligência artificial da Anthropic para ler, resumir e redigir — com o
             cuidado que o sigilo profissional exige.
         </p>
+        <div class="hero-acoes">
+            <a class="cta-principal" href="#inscricao"><i class="fa-solid fa-bolt"></i> Garantir minha vaga</a>
+            <a class="cta-secundario" href="#conteudo"><i class="fa-solid fa-circle-play"></i> Ver o conteúdo</a>
+        </div>
+        <div class="hero-provas" aria-label="Benefícios principais">
+            <span><i class="fa-solid fa-video"></i> Aula ao vivo</span>
+            <span><i class="fa-solid fa-users"></i> Turma pequena</span>
+            <span><i class="fa-solid fa-certificate"></i> Certificado incluso</span>
+            <span><i class="fa-solid fa-rotate"></i> Gravação disponível</span>
+        </div>
     </section>
 
     <h2 class="titulo-aprender">O que você vai <span class="accent">aprender</span></h2>
 
     <!-- ================= 3. BLOCO BRANCO DE DUAS COLUNAS ================= -->
-    <section class="bloco-claro">
+    <section class="bloco-claro" id="conteudo">
         <div class="container duas-colunas">
 
             <div class="coluna-esq">
@@ -507,7 +616,7 @@
             </div>
 
             <!-- card de preço -->
-            <aside class="card-preco">
+            <aside class="card-preco" id="inscricao">
                 <!-- espaço reservado para a imagem do card -->
                 <div class="card-capa">
                     <div class="card-marcas">
@@ -641,6 +750,10 @@
     </section>
 </main>
 
+<div class="compra-mobile">
+    <button type="button" id="btn-vaga-mobile">Garantir vaga por R$ 65</button>
+</div>
+
 <!-- ================= 6. RODAPÉ ================= -->
 <footer class="rodape">
     <div class="rodape-conteudo">
@@ -674,6 +787,7 @@
                    encodeURIComponent('Quero garantir minha vaga no curso de PJe e IA (R$ 65)');
 
     var botao = document.getElementById('btn-vaga');
+    var botaoMobile = document.getElementById('btn-vaga-mobile');
     var rotulo = document.getElementById('prazo-rotulo');
     var relogio = document.getElementById('prazo-relogio');
 
@@ -734,6 +848,12 @@
                 window.open(WHATSAPP, '_blank', 'noopener');
             });
     });
+    if (botaoMobile) {
+        botaoMobile.addEventListener('click', function () {
+            document.getElementById('inscricao').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(function () { if (!botao.disabled) botao.click(); }, 450);
+        });
+    }
 })();
 </script>
 </body>
