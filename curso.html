@@ -11,7 +11,7 @@
     <style>
         /* Escala geral da vitrine: todos os componentes baseados em rem
            diminuem juntos, preservando a proporção do layout da home. */
-        html { font-size: 87.5%; }
+        html { font-size: 70%; }
         .course-page { position: relative; z-index: 1; }
         .course-shell { width: min(100% - 8rem, 1120px); margin-inline: auto; }
         .course-hero { min-height: 100vh; display: flex; align-items: center; padding: 10rem 0 5rem; }
@@ -103,7 +103,6 @@
             .decision-items { max-width: 620px; margin-inline: auto; text-align: left; }
         }
         @media (max-width: 768px) {
-            html { font-size: 93.75%; }
             .course-shell { width: min(100% - 3rem, 600px); }
             .course-hero { min-height: auto; padding: 8rem 0 4rem; }
             .course-hero h1 { font-size: clamp(2.45rem,11vw,3.3rem); }
