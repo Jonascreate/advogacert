@@ -3,857 +3,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Curso de PJe e IA Claude para advogados | AdvogaCert</title>
-    <meta name="description" content="Curso online ao vivo para advogados: PJe do login ao protocolo e IA Claude aplicada à rotina do escritório, com segurança e sigilo.">
-
-    <!-- Fontes do site. A pilha de sistema fica como reserva: se o Google
-         Fonts não responder, a página não troca de cara nem desalinha. -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-    <!-- A folha do site inteiro: é dela que vêm as fontes e os tokens. O
-         <style> abaixo só acrescenta o que é próprio desta landing, e como
-         vem depois, vence nos poucos pontos em que os dois se cruzam. -->
+    <title>Curso PJe e IA para advogados | AdvogaCert</title>
+    <meta name="description" content="Curso online ao vivo de PJe e inteligência artificial para advogados, com suporte prático, gravação e certificado.">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/style.css">
-
     <style>
-        /* ==========================================================
-           TOKENS
-           ========================================================== */
         :root {
-            --bg: #07090d;
-            --surface: rgba(17, 22, 29, 0.82);
-            --panel: rgba(16, 21, 28, 0.78);
-            --accent: #6ee7c8;
-            --accent-blue: #60a5fa;
-            --text-on-dark: #f7fafc;
-            --muted-on-dark: #a8b1bf;
-            --text-on-light: #f7fafc;
-
-            --raio-card: 12px;
-            --raio-painel: 24px;
-            --largura: 1200px;
-
-            --fonte-titulo: 'Outfit', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            --fonte-texto: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            --preto: #000;
+            --grafite: #171717;
+            --cinza-escuro: #4d4d4d;
+            --cinza: #808080;
+            --cinza-claro: #d8d8d8;
+            --branco: #fff;
+            --ciano: #00ffff;
+            --largura: 1180px;
+            --fonte: "Myriad Pro", Myriad, "Segoe UI", Arial, sans-serif;
         }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; }
+        body { background: var(--preto); color: var(--branco); font-family: var(--fonte); line-height: 1.48; overflow-x: hidden; }
+        button, a { font: inherit; }
+        img { display: block; max-width: 100%; }
+        .container { width: min(calc(100% - 48px), var(--largura)); margin-inline: auto; }
+        .ciano { color: var(--ciano); }
 
-        body {
-            background: var(--bg);
-            color: var(--text-on-dark);
-            font-family: var(--fonte-texto);
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-            overflow-x: hidden;
-            background-image:
-                radial-gradient(circle at 16% 10%, rgba(110, 231, 200, .12), transparent 28%),
-                radial-gradient(circle at 86% 22%, rgba(96, 165, 250, .12), transparent 30%),
-                linear-gradient(180deg, #07090d 0%, #090d13 58%, #07090d 100%);
-        }
+        .topo { height: 88px; border-bottom: 1px solid #242424; background: rgba(0,0,0,.94); position: sticky; top: 0; z-index: 50; }
+        .topo-inner { height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 28px; }
+        .logo { width: 184px; height: 58px; background: #fff; -webkit-mask: url('assets/img/logo.png') center/contain no-repeat; mask: url('assets/img/logo.png') center/contain no-repeat; }
+        .nav { display: flex; align-items: center; gap: 28px; }
+        .nav a { color: #ccc; text-decoration: none; font-size: 16px; }
+        .nav a:hover { color: var(--ciano); }
 
-        /* Títulos leves, não bold: é traço do layout, não descuido. */
-        h1, h2, h3 { font-family: var(--fonte-titulo); font-weight: 400; line-height: 1.25; }
+        .hero { min-height: 600px; display: grid; align-items: center; position: relative; isolation: isolate; overflow: hidden; }
+        .hero::before { content: ""; position: absolute; inset: 0; z-index: -2; background: radial-gradient(circle at 78% 34%, rgba(0,255,255,.14), transparent 31%), linear-gradient(120deg,#000 28%,#121212); }
+        .hero::after { content: ""; position: absolute; width: 470px; height: 470px; right: -130px; top: 60px; z-index: -1; border: 1px solid rgba(0,255,255,.26); border-radius: 50%; box-shadow: 0 0 100px rgba(0,255,255,.1); }
+        .hero-grid { display: grid; grid-template-columns: minmax(0,1fr) 360px; gap: 72px; align-items: center; padding-block: 72px; }
+        .selo { display: inline-flex; align-items: center; gap: 9px; color: var(--ciano); border: 1px solid rgba(0,255,255,.42); padding: 8px 13px; font-size: 14px; text-transform: uppercase; letter-spacing: .08em; }
+        h1 { max-width: 780px; margin-top: 25px; font-size: clamp(45px,6vw,72px); font-weight: 400; line-height: .98; letter-spacing: -.035em; }
+        .hero-texto > p { max-width: 680px; margin-top: 26px; color: #bdbdbd; font-size: 21px; }
+        .hero-acoes { margin-top: 34px; display: flex; gap: 14px; flex-wrap: wrap; }
+        .btn { min-height: 54px; padding: 0 24px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; border: 1px solid var(--ciano); text-decoration: none; cursor: pointer; transition: .2s ease; }
+        .btn-primary { background: var(--ciano); color: #000; font-weight: 700; }
+        .btn-secondary { color: #fff; background: transparent; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,255,255,.15); }
+        .hero-dados { border-left: 1px solid var(--ciano); padding-left: 28px; display: grid; gap: 26px; }
+        .hero-dado strong { display: block; color: var(--ciano); font-size: 33px; font-weight: 400; line-height: 1; }
+        .hero-dado span { display: block; color: #aaa; font-size: 16px; margin-top: 7px; }
 
-        .accent { color: var(--accent); }
+        .faixa { background: var(--ciano); color: #000; }
+        .faixa-inner { min-height: 84px; display: grid; grid-template-columns: repeat(4,1fr); align-items: center; }
+        .faixa-item { text-align: center; padding: 12px 18px; border-right: 1px solid rgba(0,0,0,.25); font-size: 17px; }
+        .faixa-item:last-child { border-right: 0; }
+        .faixa-item i { margin-right: 7px; }
 
-        .container {
-            max-width: var(--largura);
-            margin: 0 auto;
-            padding: 0 24px;
-        }
+        .conteudo { background: #fff; color: #000; padding: 90px 0; }
+        .secao-cabecalho { max-width: 760px; margin-bottom: 45px; }
+        .kicker { color: #4d4d4d; text-transform: uppercase; letter-spacing: .1em; font-size: 15px; }
+        h2 { margin-top: 8px; font-size: clamp(37px,4.4vw,54px); font-weight: 400; line-height: 1.05; letter-spacing: -.025em; }
+        .secao-cabecalho p { margin-top: 17px; color: #666; font-size: 20px; }
+        .venda-grid { display: grid; grid-template-columns: minmax(0,1fr) 360px; gap: 36px; align-items: start; }
+        .modulos { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+        .modulo { border: 1px solid #bdbdbd; padding: 28px; min-width: 0; }
+        .modulo-numero { width: 52px; height: 52px; display: grid; place-items: center; background: #000; color: var(--ciano); font-size: 25px; }
+        .modulo h3 { margin-top: 24px; font-size: 33px; line-height: 1.05; font-weight: 400; }
+        .modulo > p { color: #666; font-size: 17px; margin-top: 15px; }
+        .modulo ul { margin-top: 22px; list-style: none; }
+        .modulo li { position: relative; padding: 11px 0 11px 22px; border-top: 1px solid #e2e2e2; color: #333; font-size: 16px; }
+        .modulo li::before { content: "+"; position: absolute; left: 0; color: #009999; font-weight: 700; }
 
-        /* ==========================================================
-           1. BARRA DO TOPO
-           ========================================================== */
-        .topo {
-            background: rgba(7, 9, 13, .72);
-            min-height: 84px;
-            display: flex;
-            align-items: center;
-            padding: 0 max(24px, calc((100vw - var(--largura)) / 2));
-            border-bottom: 1px solid rgba(255,255,255,.08);
-            backdrop-filter: blur(18px);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        /* A marca vem por máscara, como no resto do site: o PNG define o
-           recorte e a cor vem do fundo, então ela funciona sobre qualquer
-           faixa sem precisar de um arquivo por cor. */
-        .topo { justify-content: space-between; }
-        .topo-marca { display: block; }
-        .topo-marca .logo-mask {
-            width: 200px; height: 70px;
-            background: var(--text-on-dark);
-            -webkit-mask: url('assets/img/logo.png') no-repeat center / contain;
-            mask: url('assets/img/logo.png') no-repeat center / contain;
-        }
-        .topo-nav { display: flex; gap: 28px; }
-        .topo-nav a {
-            color: var(--muted-on-dark);
-            text-decoration: none;
-            font-size: 15px;
-        }
-        .topo-nav a:hover { color: var(--text-on-dark); }
+        .oferta { position: sticky; top: 112px; border: 1px solid #000; background: #000; color: #fff; }
+        .oferta-capa { min-height: 206px; padding: 26px; background: radial-gradient(circle at 80% 10%,rgba(0,255,255,.23),transparent 44%),#141414; display: flex; flex-direction: column; justify-content: space-between; }
+        .oferta-capa small { color: var(--ciano); font-size: 15px; text-transform: uppercase; letter-spacing: .08em; }
+        .oferta-capa h3 { max-width: 270px; font-size: 33px; line-height: 1.05; font-weight: 400; }
+        .oferta-corpo { padding: 28px; }
+        .preco { font-size: 54px; line-height: 1; font-weight: 400; }
+        .preco-nota { color: #aaa; margin-top: 7px; }
+        .btn-comprar { width: 100%; margin-top: 24px; border: 0; background: var(--ciano); color: #000; min-height: 56px; font-weight: 700; cursor: pointer; }
+        .btn-comprar:hover { background: #fff; }
+        .relogio-area { margin-top: 20px; padding: 16px 0; border-block: 1px solid #333; }
+        .relogio-area span { color: #999; font-size: 14px; }
+        #prazo-relogio { color: var(--ciano); font-size: 19px; letter-spacing: .03em; }
+        .oferta ul { list-style: none; margin-top: 20px; }
+        .oferta li { color: #ddd; padding: 7px 0; }
+        .oferta li i { color: var(--ciano); width: 22px; }
 
-        .rodape-conteudo {
-            width: 100%;
-            max-width: var(--largura);
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-        .rodape-links { display: flex; gap: 24px; }
-        .rodape-links a { color: var(--muted-on-dark); text-decoration: none; font-size: 15px; }
-        .rodape-links a:hover { color: var(--text-on-dark); }
-        .rodape-copy { color: #8a8a8a; font-size: 13px; }
+        .como { padding: 90px 0; background: #111; }
+        .como .secao-cabecalho p { color: #aaa; }
+        .passos { display: grid; grid-template-columns: repeat(3,1fr); border: 1px solid #444; }
+        .passo { min-height: 240px; padding: 30px; border-right: 1px solid #444; }
+        .passo:last-child { border-right: 0; }
+        .passo i { color: var(--ciano); font-size: 33px; }
+        .passo h3 { margin-top: 28px; font-size: 25px; font-weight: 400; }
+        .passo p { margin-top: 12px; color: #aaa; }
+        .passo a { color: var(--ciano); display: inline-block; margin-top: 18px; }
 
-        /* Selo do herói, o mesmo que a página tinha. */
-        .curso-eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 16px;
-            margin-bottom: 20px;
-            border-radius: 100px;
-            background: rgba(34, 197, 242, 0.12);
-            border: 1px solid rgba(34, 197, 242, 0.35);
-            color: var(--accent);
-            font-size: 12px;
-            font-weight: 600;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-        }
+        .decisao { background: #fff; color: #000; padding: 90px 0; }
+        .videos { display: grid; grid-template-columns: repeat(3,1fr); gap: 22px; }
+        .video { border: 1px solid #bdbdbd; }
+        .video-capa { aspect-ratio: 16/9; background: #111; display: grid; place-items: center; position: relative; }
+        .video-capa i { color: var(--ciano); font-size: 48px; }
+        .video-capa span { position: absolute; top: 12px; right: 12px; color: #000; background: var(--ciano); padding: 5px 8px; font-size: 13px; }
+        .video-corpo { padding: 22px; }
+        .video h3 { font-size: 25px; line-height: 1.1; font-weight: 400; }
+        .video p { color: #666; margin-top: 12px; }
 
-        /* ==========================================================
-           2. HERO
-           ========================================================== */
-        .hero {
-            text-align: center;
-            padding: 96px 24px 74px;
-            position: relative;
-        }
-        .hero h1 {
-            font-size: clamp(42px, 6vw, 76px);
-            max-width: 1040px;
-            margin: 0 auto;
-            font-weight: 600;
-            letter-spacing: -.045em;
-            line-height: 1.02;
-        }
-        .hero p {
-            max-width: 760px;
-            margin: 28px auto 0;
-            font-size: clamp(16px, 1.6vw, 19px);
-            color: var(--muted-on-dark);
-        }
-        /* Título de seção que ainda pertence ao preto: o branco começa
-           logo abaixo dele. */
-        .titulo-aprender {
-            font-size: clamp(30px, 4vw, 48px);
-            text-align: center;
-            padding: 72px 24px 32px;
-            font-weight: 600;
-            letter-spacing: -.03em;
-        }
+        .cta-final { padding: 80px 0; text-align: center; background: var(--preto); }
+        .cta-final h2 { max-width: 800px; margin-inline: auto; }
+        .cta-final p { color: #aaa; font-size: 19px; margin: 18px auto 28px; }
+        .rodape { border-top: 1px solid #292929; padding: 34px 0; color: #888; }
+        .rodape-inner { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+        .rodape a { color: #bbb; text-decoration: none; margin-left: 20px; }
+        .mobile-buy { display: none; }
 
-        .hero-acoes { display:flex; justify-content:center; gap:14px; flex-wrap:wrap; margin-top:34px; }
-        .cta-principal, .cta-secundario {
-            display:inline-flex; align-items:center; justify-content:center; gap:9px;
-            min-height:52px; padding:0 22px; border-radius:14px; text-decoration:none;
-            font-family:var(--fonte-titulo); font-weight:700; transition:.25s ease;
-        }
-        .cta-principal { background:linear-gradient(135deg,#45d7b5,#8df0d7); color:#05231b; box-shadow:0 15px 40px rgba(110,231,200,.2); }
-        .cta-secundario { color:#e6edf5; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.04); }
-        .cta-principal:hover, .cta-secundario:hover { transform:translateY(-3px); }
-        .hero-provas { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin:26px auto 0; color:#b9c3cf; font-size:13px; }
-        .hero-provas span { padding:8px 12px; border-radius:999px; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.07); }
-        .hero-provas i { color:var(--accent); margin-right:6px; }
-
-        /* ==========================================================
-           3. BLOCO BRANCO DE DUAS COLUNAS
-           ========================================================== */
-        .bloco-claro {
-            background: transparent;
-            color: var(--text-on-light);
-            padding: 48px 0 64px;
-        }
-        .duas-colunas {
-            display: grid;
-            grid-template-columns: 62% 34%;
-            gap: 40px;
-            align-items: start;
-        }
-        .coluna-esq > p {
-            text-align: center;
-            font-size: 16px;
-            max-width: 640px;
-            margin: 0 auto 36px;
-        }
-
-        /* --- os dois módulos --- */
-        .modulos {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-        }
-        /* A proporção 1:1.8 é o mínimo, não a camisa de força: com min-height
-           em vez de aspect-ratio, o card cresce se o texto do módulo passar
-           dessa altura, em vez de cortar a lista. */
-        .modulo {
-            background: linear-gradient(145deg, rgba(19,26,34,.92), rgba(11,15,21,.88));
-            border: 1px solid rgba(255,255,255,.09);
-            box-shadow: 0 24px 70px rgba(0,0,0,.25);
-            border-radius: var(--raio-painel);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-        }
-        .modulo-rotulo { font-size: 13px; color: #555; }
-        /* Quadrado reservado para o ícone — fica vazio de propósito. */
-        .modulo-icone {
-            width: 60px; height: 60px;
-            margin: 10px 0 16px;
-            border: 1px solid #111;
-            border-radius: var(--raio-card);
-        }
-        .modulo h3 { font-size: 18px; margin-bottom: 8px; }
-        .modulo > p { font-size: 14px; color: #444; margin-bottom: 12px; }
-        .modulo ul { list-style: none; font-size: 13.5px; color: #333; }
-        .modulo li { padding: 3px 0 3px 14px; position: relative; }
-        .modulo li::before {
-            content: '';
-            position: absolute; left: 0; top: 12px;
-            width: 5px; height: 5px; border-radius: 50%;
-            background: var(--accent);
-        }
-
-        /* --- card de preço --- */
-        /* sticky: acompanha a rolagem até o fim do bloco branco, que é o
-           limite natural do pai. */
-        /* O card nasce um pouco acima da faixa branca e cruza a emenda — é
-           assim no layout, e é o que o tira da fileira e o põe em primeiro
-           plano. O -104px equivale ao respiro do título mais o topo da faixa. */
-        .card-preco {
-            margin-top: -104px;
-            position: sticky;
-            top: 24px;
-            background: var(--panel);
-            border: 1px solid #111;
-            border-radius: var(--raio-painel);
-            overflow: hidden;
-        }
-        .card-capa {
-            aspect-ratio: 16 / 10;
-            background: #a8a8a8;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: #111;
-        }
-        /* Marcas à esquerda, foto à direita, dividindo a mesma caixa 16:10. */
-        .card-capa { flex-direction: row; background: #1b1d22; padding: 0; }
-        .card-marcas {
-            flex: 1 1 auto;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            gap: 6px; padding: 14px 10px; min-width: 0;
-        }
-        .card-marcas img { width: 100%; max-width: 104px; height: auto; }
-        .card-mais { color: #8a8a8a; font-size: 15px; line-height: 1; }
-        .card-foto { flex: 0 0 44%; position: relative; overflow: hidden; }
-        /* A foto está recortada, com fundo transparente: em vez de cortar
-           num retângulo, ela apoia na base da capa e o fundo escuro do card
-           aparece em volta. contain preserva o recorte inteiro. */
-        .card-foto img {
-            position: absolute;
-            left: 0; right: 0; bottom: 0;
-            width: 100%; height: 100%;
-            object-fit: contain;
-            object-position: center bottom;
-        }
-        .card-corpo { padding: 28px; text-align: center; }
-        .card-valor { font-family: var(--fonte-titulo); font-size: 34px; }
-        .card-valor + p { font-size: 17px; color: #444; margin-bottom: 20px; }
-        .btn-vaga {
-            display: block;
-            width: 100%;
-            padding: 14px 16px;
-            border: 0;
-            border-radius: 10px;
-            background: var(--accent);
-            color: #062028;
-            font-family: inherit;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .btn-vaga:hover { filter: brightness(1.06); }
-        .btn-vaga:disabled { background: #c9ccd1; color: #6b6b70; cursor: not-allowed; }
-        .prazo-rotulo { font-size: 15px; color: #555; margin-top: 20px; }
-        .prazo-relogio {
-            font-size: 22px;
-            font-variant-numeric: tabular-nums;
-            margin-bottom: 18px;
-        }
-        .card-beneficios { list-style: none; font-size: 17px; color: #222; }
-        .card-beneficios li { padding: 3px 0; }
-
-        /* ==========================================================
-           4. COMO VOCÊ ASSISTE
-           ========================================================== */
-        .secao-escura { padding: 72px 0; }
-        .painel-claro {
-            background: var(--panel);
-            color: var(--text-on-light);
-            border-radius: var(--raio-painel);
-            padding: 60px;
-            text-align: center;
-        }
-        .painel-claro h2 { font-size: 30px; }
-        .painel-claro > p { font-size: 20px; margin-top: 10px; }
-        .tres-quadrados {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 28px;
-            margin-top: 40px;
-        }
-        .quadrado {
-            /* 1:1 é o mínimo: com os botões dentro, a proporção travada
-               cortaria o último link em tela estreita. */
-            min-height: 0;
-            aspect-ratio: 1 / 1;
-            border: 1px solid #111;
-            border-radius: 20px;
-            padding: 22px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 8px;
-        }
-        .quadrado h3 { font-size: 17px; }
-        .quadrado p { font-size: 14px; color: #444; }
-        /* Os links de download estavam na versão anterior da página e voltam
-           aqui: sem eles o quadrado conta o que fazer e não deixa fazer. */
-        .quadrado-acoes {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-top: 6px;
-        }
-        .quadrado-acoes a {
-            padding: 9px 12px;
-            border: 1px solid #111;
-            border-radius: 10px;
-            color: #111;
-            font-size: 13.5px;
-            font-weight: 600;
-            text-decoration: none;
-        }
-        .quadrado-acoes a:first-child { background: var(--accent); border-color: var(--accent); color: #062028; }
-        .quadrado-acoes a:hover { filter: brightness(1.06); }
-
-        /* ==========================================================
-           5. VEJA ANTES DE DECIDIR
-           ========================================================== */
-        .secao-videos { text-align: center; padding: 8px 0 72px; }
-        .secao-videos h2 { font-size: 30px; }
-        .secao-videos > .container > p {
-            font-size: 19px;
-            color: var(--muted-on-dark);
-            max-width: 720px;
-            margin: 12px auto 40px;
-        }
-        .videos {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 28px;
-        }
-        .video-card { border-radius: var(--raio-card); overflow: hidden; }
-        .video-selo {
-            position: absolute;
-            top: 12px; right: 12px;
-            padding: 3px 10px;
-            border-radius: 100px;
-            background: rgba(0, 0, 0, 0.45);
-            font-size: 11px;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-        }
-        .video-duracao {
-            display: inline-block;
-            margin-top: 10px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 12px;
-            color: var(--muted-on-dark);
-        }
-        .video-capa {
-            position: relative;
-            aspect-ratio: 16 / 9;
-            background: #3a3a3a;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .play {
-            width: 70px; height: 70px;
-            border: 2px solid #ffffff66;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .video-texto {
-            min-height: 160px;
-            background: #0d0d0d;
-            padding: 20px;
-            text-align: left;
-        }
-        .video-texto h3 { font-size: 16px; }
-        .video-texto p { font-size: 13.5px; color: var(--muted-on-dark); margin-top: 6px; }
-
-        /* ==========================================================
-           6. RODAPÉ
-           ========================================================== */
-        .rodape {
-            border-top: 1px solid #333;
-            background: var(--surface);
-            min-height: 140px;
-            display: flex;
-            align-items: center;
-            padding: 0 60px;
-        }
-
-        /* ==========================================================
-           RESPONSIVO
-           ========================================================== */
-        @media (max-width: 960px) {
-            /* Sem coluna lateral, o card perde o sticky e vai para o fim da
-               seção, em largura inteira. */
-            .duas-colunas { grid-template-columns: 1fr; }
-            .card-preco { position: static; width: 100%; margin-top: 0; }
-            .topo, .rodape { padding: 0 24px; }
-        }
-        @media (max-width: 900px) {
-            .videos { grid-template-columns: 1fr; }
-        }
-        @media (max-width: 1080px) {
-            .quadrado { aspect-ratio: auto; }
+        @media (max-width: 980px) {
+            .hero-grid, .venda-grid { grid-template-columns: 1fr; }
+            .hero { min-height: auto; }
+            .hero-dados { grid-template-columns: repeat(3,1fr); border-left: 0; border-top: 1px solid var(--ciano); padding: 24px 0 0; }
+            .oferta { position: static; width: min(100%,580px); margin-inline: auto; }
+            .passos { grid-template-columns: 1fr; }
+            .passo { min-height: auto; border-right: 0; border-bottom: 1px solid #444; }
+            .passo:last-child { border-bottom: 0; }
+            .videos { grid-template-columns: 1fr 1fr; }
         }
         @media (max-width: 720px) {
-            .tres-quadrados { grid-template-columns: 1fr; }
-            .modulos { grid-template-columns: 1fr; }
-            .painel-claro { padding: 32px 20px; }
-            .hero { padding: 48px 24px 40px; }
-        }
-        /* ==========================================================
-           ACABAMENTO COMERCIAL — mesma linguagem visual da home
-           ========================================================== */
-        .accent {
-            background: linear-gradient(90deg, var(--accent), #b5f7e7 52%, var(--accent-blue));
-            -webkit-background-clip: text; background-clip: text; color: transparent;
-        }
-        .duas-colunas { grid-template-columns: minmax(0, 1fr) 360px; gap: 32px; }
-        .coluna-esq > p { color: var(--muted-on-dark); font-size: 17px; }
-        .modulo { border-radius: 22px; padding: 28px; color: var(--text-on-dark); position:relative; overflow:hidden; }
-        .modulo::before { content:''; position:absolute; width:150px; height:150px; border-radius:50%; background:rgba(110,231,200,.1); filter:blur(45px); right:-70px; top:-70px; }
-        .modulo-rotulo { color:var(--accent); border-color:rgba(110,231,200,.28); background:rgba(110,231,200,.08); }
-        .modulo-icone { width:50px; height:50px; border-radius:15px; background:linear-gradient(135deg,rgba(110,231,200,.18),rgba(96,165,250,.12)); border:1px solid rgba(110,231,200,.22); }
-        .modulo h3 { font-weight:600; font-size:23px; letter-spacing:-.02em; }
-        .modulo p { color:#aab4c2; }
-        .modulo li { color:#d6dde7; border-color:rgba(255,255,255,.07); }
-        .modulo li::before { color:var(--accent); }
-
-        .card-preco {
-            position:sticky; top:108px; border-radius:24px; overflow:hidden;
-            background:linear-gradient(160deg,rgba(25,33,43,.96),rgba(10,14,19,.98));
-            border:1px solid rgba(110,231,200,.22); box-shadow:0 28px 90px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.025) inset;
-        }
-        .card-capa { background:radial-gradient(circle at 50% 20%,rgba(110,231,200,.18),transparent 55%),#0d1218; }
-        .card-corpo { color:var(--text-on-dark); padding:28px; }
-        .card-valor { font-family:var(--fonte-titulo); font-size:52px; font-weight:700; letter-spacing:-.04em; }
-        .card-corpo > p { color:var(--muted-on-dark); }
-        .btn-vaga { min-height:54px; border-radius:14px; background:linear-gradient(135deg,#45d7b5,#8df0d7); color:#05231b; font-family:var(--fonte-titulo); font-weight:700; box-shadow:0 14px 35px rgba(110,231,200,.2); }
-        .btn-vaga:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 18px 45px rgba(110,231,200,.28); }
-        .prazo-rotulo { color:#8f9aa8; }
-        .prazo-relogio { color:var(--accent); font-family:'JetBrains Mono',monospace; }
-        .card-beneficios { border-color:rgba(255,255,255,.08); }
-        .card-beneficios li { color:#d8e0e9; }
-
-        .secao-escura, .secao-videos { background:transparent; padding:80px 0; }
-        .painel-claro { color:var(--text-on-dark); background:rgba(15,20,27,.72); border:1px solid rgba(255,255,255,.08); border-radius:28px; box-shadow:0 28px 90px rgba(0,0,0,.25); backdrop-filter:blur(16px); }
-        .painel-claro > h2, .secao-videos h2 { font-weight:600; font-size:clamp(30px,4vw,46px); letter-spacing:-.03em; }
-        .painel-claro > p, .secao-videos > .container > p { color:var(--muted-on-dark); }
-        .quadrado, .video-card { background:linear-gradient(145deg,rgba(19,26,34,.9),rgba(10,14,19,.9)); color:var(--text-on-dark); border:1px solid rgba(255,255,255,.08); border-radius:20px; box-shadow:0 18px 55px rgba(0,0,0,.22); }
-        .quadrado h3, .video-card h3 { font-weight:600; }
-        .quadrado p, .video-card p { color:#aab4c2; }
-        .quadrado-acoes a { color:var(--accent); border-color:rgba(110,231,200,.25); background:rgba(110,231,200,.07); }
-        .video-capa { background:radial-gradient(circle at 50% 40%,rgba(96,165,250,.16),transparent 55%),#0d1218; }
-        .play { background:linear-gradient(135deg,#45d7b5,#60a5fa); box-shadow:0 10px 30px rgba(96,165,250,.25); }
-        footer { border-top:1px solid rgba(255,255,255,.08); background:#07090d; }
-
-        .compra-mobile { display:none; }
-        @media (max-width: 920px) {
-            .topo { padding:0 20px; min-height:72px; }
-            .topo-marca .logo-mask { width:150px; height:54px; }
-            .topo-nav { gap:16px; }
-            .hero { padding:72px 20px 54px; }
-            .duas-colunas { grid-template-columns:1fr; }
-            .card-preco { position:relative; top:auto; max-width:520px; width:100%; margin:0 auto; }
-            .modulos { grid-template-columns:1fr; }
-            .compra-mobile { display:block; position:fixed; z-index:90; left:12px; right:12px; bottom:12px; }
-            .compra-mobile button { width:100%; min-height:52px; border:0; border-radius:14px; background:linear-gradient(135deg,#45d7b5,#8df0d7); color:#05231b; font:700 16px var(--fonte-titulo); box-shadow:0 16px 50px rgba(0,0,0,.45); }
-            body { padding-bottom:76px; }
-        }
-        @media (max-width: 560px) {
-            .topo-nav a:first-child { display:none; }
-            .hero h1 { font-size:39px; }
-            .hero-provas { align-items:stretch; flex-direction:column; }
-            .hero-provas span { width:100%; }
-            .titulo-aprender { padding-top:50px; }
-            .bloco-claro { padding-top:28px; }
-            .modulo { padding:22px; }
+            .container { width: min(calc(100% - 32px),var(--largura)); }
+            .topo { height: 72px; }
+            .logo { width: 145px; height: 48px; }
+            .nav a:first-child { display: none; }
+            .hero-grid { gap: 46px; padding-block: 58px; }
+            h1 { font-size: clamp(41px,12vw,58px); }
+            .hero-texto > p { font-size: 19px; }
+            .hero-acoes .btn { width: 100%; }
+            .hero-dados { grid-template-columns: 1fr; }
+            .faixa-inner { grid-template-columns: 1fr 1fr; }
+            .faixa-item:nth-child(2) { border-right: 0; }
+            .faixa-item { min-height: 64px; display: grid; place-items: center; border-bottom: 1px solid rgba(0,0,0,.2); }
+            .modulos, .videos { grid-template-columns: 1fr; }
+            .conteudo, .como, .decisao { padding: 64px 0; }
+            .secao-cabecalho p { font-size: 18px; }
+            .mobile-buy { display: block; position: fixed; z-index: 45; left: 10px; right: 10px; bottom: 10px; }
+            .mobile-buy button { width: 100%; min-height: 54px; border: 0; background: var(--ciano); color: #000; font-weight: 700; box-shadow: 0 12px 35px rgba(0,0,0,.5); }
+            body { padding-bottom: 70px; }
         }
     </style>
 </head>
 <body>
-
-<!-- As manchas de luz do site: o script.js as arrasta com o ponteiro. -->
-<div class="blush-container">
-    <div class="blush blush-1" id="blush1"></div>
-    <div class="blush blush-2" id="blush2"></div>
-    <div class="blush blush-3" id="blush3"></div>
-</div>
-
-<!-- ================= 1. BARRA DO TOPO ================= -->
 <header class="topo">
-    <a href="index.html" class="topo-marca">
-        <div class="logo-mask" role="img" aria-label="Advcert — suporte de certificados digitais"></div>
-    </a>
-    <nav class="topo-nav">
-        <a href="index.html">Início</a>
-        <a href="contato.html">Contato</a>
-    </nav>
+    <div class="container topo-inner">
+        <a href="index.html" aria-label="AdvogaCert"><span class="logo"></span></a>
+        <nav class="nav"><a href="index.html">Início</a><a href="contato.html">Falar com suporte</a></nav>
+    </div>
 </header>
 
 <main>
-    <!-- ================= 2. HERO ================= -->
     <section class="hero">
-        <div class="curso-eyebrow"><i class="fa-solid fa-graduation-cap"></i> Curso online ao vivo</div>
-        <h1>Domine o <span class="accent">PJe</span> e coloque a <span class="accent">IA Claude</span> para trabalhar no seu escritório</h1>
-        <p>
-            Duas frentes numa turma só: peticionar no PJe sem travar em erro de certificado
-            e usar a inteligência artificial da Anthropic para ler, resumir e redigir — com o
-            cuidado que o sigilo profissional exige.
-        </p>
-        <div class="hero-acoes">
-            <a class="cta-principal" href="#inscricao"><i class="fa-solid fa-bolt"></i> Garantir minha vaga</a>
-            <a class="cta-secundario" href="#conteudo"><i class="fa-solid fa-circle-play"></i> Ver o conteúdo</a>
-        </div>
-        <div class="hero-provas" aria-label="Benefícios principais">
-            <span><i class="fa-solid fa-video"></i> Aula ao vivo</span>
-            <span><i class="fa-solid fa-users"></i> Turma pequena</span>
-            <span><i class="fa-solid fa-certificate"></i> Certificado incluso</span>
-            <span><i class="fa-solid fa-rotate"></i> Gravação disponível</span>
+        <div class="container hero-grid">
+            <div class="hero-texto">
+                <span class="selo"><i class="fa-solid fa-graduation-cap"></i> curso online ao vivo</span>
+                <h1>Domine o PJe e use <span class="ciano">IA</span> na rotina jurídica</h1>
+                <p>Um treinamento direto para advogados que querem protocolar sem travar, trabalhar mais rápido e usar inteligência artificial com responsabilidade.</p>
+                <div class="hero-acoes">
+                    <a class="btn btn-primary" href="#comprar"><i class="fa-solid fa-bolt"></i> Garantir minha vaga</a>
+                    <a class="btn btn-secondary" href="#programa">Ver programa completo</a>
+                </div>
+            </div>
+            <div class="hero-dados" aria-label="Resumo do curso">
+                <div class="hero-dado"><strong>2</strong><span>módulos completos</span></div>
+                <div class="hero-dado"><strong>Ao vivo</strong><span>com espaço para dúvidas</span></div>
+                <div class="hero-dado"><strong>R$ 65</strong><span>por participante</span></div>
+            </div>
         </div>
     </section>
 
-    <h2 class="titulo-aprender">O que você vai <span class="accent">aprender</span></h2>
+    <div class="faixa"><div class="container faixa-inner">
+        <div class="faixa-item"><i class="fa-solid fa-video"></i> Aula ao vivo</div>
+        <div class="faixa-item"><i class="fa-solid fa-users"></i> Turma pequena</div>
+        <div class="faixa-item"><i class="fa-solid fa-rotate"></i> Gravação liberada</div>
+        <div class="faixa-item"><i class="fa-solid fa-certificate"></i> Certificado incluso</div>
+    </div></div>
 
-    <!-- ================= 3. BLOCO BRANCO DE DUAS COLUNAS ================= -->
-    <section class="bloco-claro" id="conteudo">
-        <div class="container duas-colunas">
-
-            <div class="coluna-esq">
-                <p>
-                    O curso é dividido em dois módulos independentes, dados na mesma turma.
-                    Um resolve o processo eletrônico; o outro, o tempo que você perde
-                    escrevendo e lendo.
-                </p>
-
+    <section class="conteudo" id="programa">
+        <div class="container">
+            <header class="secao-cabecalho"><span class="kicker">Programa do treinamento</span><h2>O que você vai aprender</h2><p>Dois módulos independentes na mesma turma: processo eletrônico e inteligência artificial aplicada ao escritório.</p></header>
+            <div class="venda-grid">
                 <div class="modulos">
-                    <article class="modulo">
-                        <span class="modulo-rotulo">Módulo 1</span>
-                        <!-- espaço reservado para o ícone do módulo -->
-                        <div class="modulo-icone" aria-hidden="true"></div>
-                        <h3>PJe na prática, do login ao protocolo</h3>
-                        <p>Do certificado que o navegador não reconhece até a petição protocolada com o comprovante no lugar certo.</p>
-                        <ul>
-                            <li>Certificado A1 e A3 no navegador: instalar, testar e descobrir por que ele não aparece</li>
-                            <li>PJe Office e Shodō: instalação, atualização e os erros de Java que travam a assinatura</li>
-                            <li>Cadastro e habilitação nos autos, procuração e substabelecimento</li>
-                            <li>Peticionamento inicial e intercorrente, anexos e tamanho de arquivo</li>
-                            <li>Assinatura digital: em lote, com token e com certificado em nuvem</li>
-                            <li>Intimações, prazos e o painel: onde o prazo aparece e onde ele se esconde</li>
-                            <li>Audiência e sessão virtual: o que testar antes de entrar</li>
-                            <li>Diferenças entre tribunais: TRF, TRT, TJ e as variações que mais confundem</li>
-                        </ul>
-                    </article>
-
-                    <article class="modulo">
-                        <span class="modulo-rotulo">Módulo 2</span>
-                        <!-- espaço reservado para o ícone do módulo -->
-                        <div class="modulo-icone" aria-hidden="true"></div>
-                        <h3>IA Claude aplicada à rotina jurídica</h3>
-                        <p>Claude é a IA da Anthropic. Aqui ela deixa de ser curiosidade e vira ferramenta de trabalho — com método, não com sorte.</p>
-                        <ul>
-                            <li>Primeiros passos: conta, planos, limites e quando compensa pagar</li>
-                            <li>Como escrever um bom pedido: contexto, papel, formato e exemplo</li>
-                            <li>Ler processo grande: resumo de PDF extenso e pontos controvertidos</li>
-                            <li>Redigir com seus modelos: petições, contratos e e-mails no seu estilo</li>
-                            <li>Projects: uma base fixa com seus modelos para não repetir contexto</li>
-                            <li>Revisão de contrato: cláusulas de risco, prazos e obrigações em tabela</li>
-                            <li>Alucinação: por que a IA inventa jurisprudência e como conferir antes</li>
-                            <li>Sigilo e LGPD: o que nunca colar, como anonimizar e o que a OAB orienta</li>
-                        </ul>
-                    </article>
+                    <article class="modulo"><div class="modulo-numero">01</div><h3>PJe do login ao protocolo</h3><p>Resolva os pontos que mais travam a rotina do advogado.</p><ul>
+                        <li>Certificados A1, A3 e em nuvem</li><li>PJe Office, Shodō e erros de Java</li><li>Cadastro, habilitação e procurações</li><li>Petição inicial e intercorrente</li><li>Anexos, assinatura e comprovantes</li><li>Intimações, prazos e audiências</li><li>Diferenças entre tribunais</li>
+                    </ul></article>
+                    <article class="modulo"><div class="modulo-numero">02</div><h3>IA aplicada à advocacia</h3><p>Transforme a ferramenta em método de trabalho seguro.</p><ul>
+                        <li>Como estruturar comandos eficientes</li><li>Resumo e análise de processos extensos</li><li>Petições, contratos e e-mails</li><li>Revisão de cláusulas e riscos</li><li>Uso dos seus próprios modelos</li><li>Conferência de alucinações</li><li>Sigilo profissional e LGPD</li>
+                    </ul></article>
                 </div>
-            </div>
-
-            <!-- card de preço -->
-            <aside class="card-preco" id="inscricao">
-                <!-- espaço reservado para a imagem do card -->
-                <div class="card-capa">
-                    <div class="card-marcas">
-                        <img src="assets/img/pje-claro.png" alt="PJe — Processo Judicial Eletrônico">
-                        <span class="card-mais">+</span>
-                        <img src="assets/img/claude-claro.png" alt="Claude">
+                <aside class="oferta" id="comprar">
+                    <div class="oferta-capa"><small>PJe + inteligência artificial</small><h3>Uma turma para mudar sua rotina</h3></div>
+                    <div class="oferta-corpo"><div class="preco">R$ 65</div><div class="preco-nota">Pix, cartão ou boleto</div>
+                        <button class="btn-comprar" id="btn-vaga" type="button">Garantir minha vaga</button>
+                        <div class="relogio-area"><span id="prazo-rotulo">Inscrições fecham em</span><div id="prazo-relogio">--d --h --m --s</div></div>
+                        <ul><li><i class="fa-solid fa-check"></i> Aula online ao vivo</li><li><i class="fa-solid fa-check"></i> Gravação depois da aula</li><li><i class="fa-solid fa-check"></i> Certificado de participação</li><li><i class="fa-solid fa-check"></i> Apoio para acessar a aula</li></ul>
                     </div>
-                    <div class="card-foto">
-                        <img src="img/jonas-recorte.png" alt="Instrutor do curso" loading="lazy">
-                    </div>
-                </div>
-                <div class="card-corpo">
-                    <div class="card-valor">R$ 65</div>
-                    <p>por pessoa · Pix, cartão ou boleto</p>
-
-                    <button class="btn-vaga" id="btn-vaga" type="button">Garantir minha vaga</button>
-
-                    <div class="prazo-rotulo" id="prazo-rotulo">Fecha em</div>
-                    <div class="prazo-relogio" id="prazo-relogio">--d --h --m --s</div>
-
-                    <ul class="card-beneficios">
-                        <li>Ao vivo, turma pequena</li>
-                        <li>Gravação liberada depois</li>
-                        <li>Certificado de participação</li>
-                    </ul>
-                </div>
-            </aside>
-
-        </div>
-    </section>
-
-    <!-- ================= 4. COMO VOCÊ ASSISTE ================= -->
-    <section class="secao-escura">
-        <div class="container">
-            <div class="painel-claro">
-                <h2>Como você <span class="accent">assiste</span></h2>
-                <p>Aula ao vivo pelo navegador. Se travar, a gente entra na sua máquina.</p>
-
-                <div class="tres-quadrados">
-                    <!-- espaço reservado para o ícone de cada quadrado -->
-                    <article class="quadrado">
-                        <h3>Microsoft Teams</h3>
-                        <p>O link chega no seu WhatsApp. Abre no navegador, sem conta e sem instalar.</p>
-                        <div class="quadrado-acoes">
-                            <!-- Quando a sala do Teams existir, troque este endereço pelo link
-                                 da reunião. Até lá vale o WhatsApp, que é por onde ele chega. -->
-                            <a href="https://wa.me/5561986241570?text=Quero%20o%20link%20da%20aula%20no%20Teams" target="_blank" rel="noopener">Receber o link</a>
-                            <a href="https://www.microsoft.com/pt-br/microsoft-teams/download-app" target="_blank" rel="noopener">Baixar o Teams</a>
-                        </div>
-                    </article>
-                    <article class="quadrado">
-                        <h3>TeamViewer ou AnyDesk</h3>
-                        <p>Certificado, token ou driver que não vai: a gente resolve na sua tela, com você vendo.</p>
-                        <div class="quadrado-acoes">
-                            <a href="https://www.teamviewer.com/pt-br/download/" target="_blank" rel="noopener">Baixar o TeamViewer</a>
-                            <a href="https://anydesk.com/pt/downloads" target="_blank" rel="noopener">Baixar o AnyDesk</a>
-                        </div>
-                    </article>
-                    <article class="quadrado">
-                        <h3>Pagamento</h3>
-                        <p>Pix, cartão ou boleto por link individual. A vaga vale com o pagamento.</p>
-                        <div class="quadrado-acoes">
-                            <a href="https://wa.me/5561986241570?text=Quero%20garantir%20minha%20vaga%20no%20curso%20de%20PJe%20e%20IA%20(R%24%2065)" target="_blank" rel="noopener">Garantir minha vaga</a>
-                        </div>
-                    </article>
-                </div>
+                </aside>
             </div>
         </div>
     </section>
 
-    <!-- ================= 5. VEJA ANTES DE DECIDIR ================= -->
-    <section class="secao-videos">
-        <div class="container">
-            <h2>Veja <span class="accent">antes</span> de decidir</h2>
-            <p>
-                Trechos curtos do que é dado em aula. Se o problema do vídeo é o mesmo que
-                você tem hoje, o curso é para você.
-            </p>
-
-            <div class="videos">
-                <!-- Para publicar, troque .video-capa por um <iframe> 16:9. -->
-                <article class="video-card">
-                    <div class="video-capa">
-                        <span class="video-selo">Em breve</span>
-                        <span class="play">
-                            <svg width="20" height="24" viewBox="0 0 20 24" aria-hidden="true">
-                                <path d="M0 0 L20 12 L0 24 Z" fill="#ffffff"></path>
-                            </svg>
-                        </span>
-                    </div>
-                    <div class="video-texto">
-                        <h3>O certificado que o navegador não reconhece</h3>
-                        <p>Do erro na tela ao protocolo aceito, sem pular o passo que ninguém explica.</p>
-                        <span class="video-duracao">Duração a definir</span>
-                    </div>
-                </article>
-
-                <article class="video-card">
-                    <div class="video-capa">
-                        <span class="video-selo">Em breve</span>
-                        <span class="play">
-                            <svg width="20" height="24" viewBox="0 0 20 24" aria-hidden="true">
-                                <path d="M0 0 L20 12 L0 24 Z" fill="#ffffff"></path>
-                            </svg>
-                        </span>
-                    </div>
-                    <div class="video-texto">
-                        <h3>Ler um processo de 300 páginas com a IA</h3>
-                        <p>O que pedir, o que conferir e por que a resposta pronta nunca vai direto aos autos.</p>
-                        <span class="video-duracao">Duração a definir</span>
-                    </div>
-                </article>
-
-                <article class="video-card">
-                    <div class="video-capa">
-                        <span class="video-selo">Em breve</span>
-                        <span class="play">
-                            <svg width="20" height="24" viewBox="0 0 20 24" aria-hidden="true">
-                                <path d="M0 0 L20 12 L0 24 Z" fill="#ffffff"></path>
-                            </svg>
-                        </span>
-                    </div>
-                    <div class="video-texto">
-                        <h3>Sigilo: o que não pode ser colado na ferramenta</h3>
-                        <p>Como anonimizar um caso real antes de pedir ajuda à inteligência artificial.</p>
-                        <span class="video-duracao">Duração a definir</span>
-                    </div>
-                </article>
-            </div>
+    <section class="como"><div class="container">
+        <header class="secao-cabecalho"><span class="kicker ciano">Como funciona</span><h2>Simples para assistir. Prático para aplicar.</h2><p>Você recebe as orientações e entra pelo navegador. Se houver dificuldade técnica, a equipe ajuda.</p></header>
+        <div class="passos">
+            <article class="passo"><i class="fa-brands fa-microsoft"></i><h3>Aula pelo Teams</h3><p>O link chega no WhatsApp e pode ser aberto diretamente no navegador.</p><a href="https://www.microsoft.com/pt-br/microsoft-teams/download-app" target="_blank" rel="noopener">Baixar Teams</a></article>
+            <article class="passo"><i class="fa-solid fa-headset"></i><h3>Suporte de acesso</h3><p>Se certificado, token ou programa travar, ajudamos com você acompanhando.</p><a href="https://anydesk.com/pt/downloads" target="_blank" rel="noopener">Baixar AnyDesk</a></article>
+            <article class="passo"><i class="fa-solid fa-credit-card"></i><h3>Pagamento seguro</h3><p>A vaga é confirmada após o pagamento pelo ambiente do Mercado Pago.</p><a href="#comprar">Ver oferta</a></article>
         </div>
-    </section>
+    </div></section>
+
+    <section class="decisao"><div class="container">
+        <header class="secao-cabecalho"><span class="kicker">Conteúdo demonstrativo</span><h2>Veja antes de decidir</h2><p>Os materiais de prévia serão publicados aqui para você conhecer a didática.</p></header>
+        <div class="videos">
+            <article class="video"><div class="video-capa"><span>Em breve</span><i class="fa-regular fa-circle-play"></i></div><div class="video-corpo"><h3>Certificado não reconhecido</h3><p>O caminho entre o erro no navegador e o protocolo aceito.</p></div></article>
+            <article class="video"><div class="video-capa"><span>Em breve</span><i class="fa-regular fa-circle-play"></i></div><div class="video-corpo"><h3>Processos extensos com IA</h3><p>Como localizar fatos, pedidos e pontos controvertidos.</p></div></article>
+            <article class="video"><div class="video-capa"><span>Em breve</span><i class="fa-regular fa-circle-play"></i></div><div class="video-corpo"><h3>Sigilo profissional</h3><p>O que deve ser anonimizado e o que não deve ser enviado.</p></div></article>
+        </div>
+    </div></section>
+
+    <section class="cta-final"><div class="container"><h2>Menos tempo resolvendo erros. Mais tempo exercendo a advocacia.</h2><p>Garanta sua participação na próxima turma.</p><a class="btn btn-primary" href="#comprar">Quero participar</a></div></section>
 </main>
 
-<div class="compra-mobile">
-    <button type="button" id="btn-vaga-mobile">Garantir vaga por R$ 65</button>
-</div>
+<div class="mobile-buy"><button type="button" id="btn-vaga-mobile">Garantir vaga por R$ 65</button></div>
+<footer class="rodape"><div class="container rodape-inner"><span>© 2026 AdvogaCert.</span><div><a href="index.html">Início</a><a href="contato.html">Suporte</a></div></div></footer>
 
-<!-- ================= 6. RODAPÉ ================= -->
-<footer class="rodape">
-    <div class="rodape-conteudo">
-        <a href="index.html" class="topo-marca">
-            <div class="logo-mask" role="img" aria-label="Advcert — suporte de certificados digitais"></div>
-        </a>
-        <div class="rodape-links">
-            <a href="index.html">Início</a>
-            <a href="contato.html">Falar com Suporte</a>
-        </div>
-        <div class="rodape-copy">© 2026 AdvogaCert. Todos os direitos reservados.</div>
-    </div>
-</footer>
-
-<!-- Scripts do próprio site: apiUrl resolve o endereço do servidor e a
-     telemetria registra a visita. Não são bibliotecas de terceiros. -->
 <script src="assets/js/api.js?v=9"></script>
 <script src="assets/js/telemetria.js?v=2"></script>
-<script src="assets/js/script.js?v=14"></script>
-
 <script>
 (function () {
     'use strict';
-
-    /* Data e hora em que as inscrições fecham. -03:00 é Brasília. */
     var DEADLINE = '2026-08-17T20:00:00-03:00';
-
-    /* WhatsApp: para onde o botão vai enquanto não existir o link de
-       pagamento do curso no Mercado Pago (variável MP_LINK_CURSO no Render). */
-    var WHATSAPP = 'https://wa.me/5561986241570?text=' +
-                   encodeURIComponent('Quero garantir minha vaga no curso de PJe e IA (R$ 65)');
-
+    var WHATSAPP = 'https://wa.me/5561986241570?text=' + encodeURIComponent('Quero garantir minha vaga no curso de PJe e IA (R$ 65)');
     var botao = document.getElementById('btn-vaga');
-    var botaoMobile = document.getElementById('btn-vaga-mobile');
+    var mobile = document.getElementById('btn-vaga-mobile');
     var rotulo = document.getElementById('prazo-rotulo');
     var relogio = document.getElementById('prazo-relogio');
-
-    /* ---- contagem regressiva ---- */
     var prazo = new Date(DEADLINE).getTime();
-    var tempo = null;
-
-    function dois(n) { return (n < 10 ? '0' : '') + n; }
-
-    function tique() {
+    function dois(n) { return String(n).padStart(2, '0'); }
+    function atualizarPrazo() {
         var falta = prazo - Date.now();
-        if (falta <= 0) {
-            clearInterval(tempo);
-            rotulo.textContent = 'Inscrições encerradas';
-            relogio.textContent = '00d 00h 00m 00s';
-            botao.disabled = true;
-            return;
-        }
+        if (falta <= 0) { rotulo.textContent = 'Inscrições encerradas'; relogio.textContent = '00d 00h 00m 00s'; botao.disabled = true; if (mobile) mobile.disabled = true; return; }
         var s = Math.floor(falta / 1000);
-        relogio.textContent = dois(Math.floor(s / 86400)) + 'd ' +
-                              dois(Math.floor(s % 86400 / 3600)) + 'h ' +
-                              dois(Math.floor(s % 3600 / 60)) + 'm ' +
-                              dois(s % 60) + 's';
+        relogio.textContent = dois(Math.floor(s / 86400)) + 'd ' + dois(Math.floor(s % 86400 / 3600)) + 'h ' + dois(Math.floor(s % 3600 / 60)) + 'm ' + dois(s % 60) + 's';
     }
-    tique();
-    tempo = setInterval(tique, 1000);
-
-    /* ---- pagamento ----
-       Mesmo caminho do checkout dos planos: quem diz para onde mandar o
-       cliente é o servidor, em GET /pagamento/link?plano=curso. Se ele não
-       responder ou o link ainda não existir, cai no WhatsApp — o botão nunca
-       fica sem destino. */
-    botao.addEventListener('click', function () {
+    atualizarPrazo(); setInterval(atualizarPrazo, 1000);
+    function comprar() {
         if (botao.disabled) return;
-        var texto = botao.textContent;
-
-        if (!window.apiUrl) { window.open(WHATSAPP, '_blank', 'noopener'); return; }
-
-        botao.textContent = 'Abrindo o pagamento...';
-        fetch(window.apiUrl('/pagamento/link?plano=curso'))
-            .then(function (r) { return r.json(); })
-            .then(function (d) {
-                if (d && d.success && d.url) {
-                    if (window.telemetriaEvento) {
-                        window.telemetriaEvento('checkout_iniciado', {
-                            plano: 'curso',
-                            dados: { valor: Number(d.valor) || 65 }
-                        });
-                    }
-                    location.href = d.url;
-                    return;
-                }
-                botao.textContent = texto;
-                window.open(WHATSAPP, '_blank', 'noopener');
-            })
-            .catch(function () {
-                botao.textContent = texto;
-                window.open(WHATSAPP, '_blank', 'noopener');
-            });
-    });
-    if (botaoMobile) {
-        botaoMobile.addEventListener('click', function () {
-            document.getElementById('inscricao').scrollIntoView({ behavior: 'smooth', block: 'center' });
-            setTimeout(function () { if (!botao.disabled) botao.click(); }, 450);
-        });
+        var texto = botao.textContent; botao.textContent = 'Abrindo pagamento...';
+        fetch(window.apiUrl('/pagamento/link?plano=curso')).then(function (r) { return r.json(); }).then(function (d) {
+            if (d && d.success && d.url) { if (window.telemetriaEvento) window.telemetriaEvento('checkout_iniciado', { plano: 'curso', dados: { valor: Number(d.valor) || 65 } }); location.href = d.url; return; }
+            botao.textContent = texto; window.open(WHATSAPP, '_blank', 'noopener');
+        }).catch(function () { botao.textContent = texto; window.open(WHATSAPP, '_blank', 'noopener'); });
     }
+    botao.addEventListener('click', comprar);
+    if (mobile) mobile.addEventListener('click', comprar);
 })();
 </script>
 </body>
