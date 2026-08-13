@@ -238,10 +238,15 @@
         .card-marcas img { width: 100%; max-width: 104px; height: auto; }
         .card-mais { color: #8a8a8a; font-size: 15px; line-height: 1; }
         .card-foto { flex: 0 0 44%; position: relative; overflow: hidden; }
+        /* A foto está recortada, com fundo transparente: em vez de cortar
+           num retângulo, ela apoia na base da capa e o fundo escuro do card
+           aparece em volta. contain preserva o recorte inteiro. */
         .card-foto img {
-            position: absolute; inset: 0;
+            position: absolute;
+            left: 0; right: 0; bottom: 0;
             width: 100%; height: 100%;
-            object-fit: cover; object-position: center 22%;
+            object-fit: contain;
+            object-position: center bottom;
         }
         .card-corpo { padding: 28px; text-align: center; }
         .card-valor { font-family: var(--fonte-titulo); font-size: 34px; }
@@ -511,7 +516,7 @@
                         <img src="assets/img/claude-claro.png" alt="Claude">
                     </div>
                     <div class="card-foto">
-                        <img src="img/IMG_6924.jpeg" alt="Instrutor do curso" loading="lazy">
+                        <img src="img/jonas-recorte.png" alt="Instrutor do curso" loading="lazy">
                     </div>
                 </div>
                 <div class="card-corpo">
