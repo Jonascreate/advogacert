@@ -9,15 +9,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <style>
-        /* Escala geral da vitrine: todos os componentes baseados em rem
-           diminuem juntos, preservando a proporção do layout da home. */
-        html { font-size: 70%; }
         .course-page { position: relative; z-index: 1; }
         .course-shell { width: min(100% - 8rem, 1120px); margin-inline: auto; }
         .course-hero { min-height: 100vh; display: flex; align-items: center; padding: 10rem 0 5rem; }
         .course-hero-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(320px, .7fr); gap: 5rem; align-items: center; }
         .course-eyebrow, .section-badge { display: inline-flex; align-items: center; gap: .55rem; padding: .5rem 1rem; border-radius: 50px; color: var(--accent-mac); background: rgba(110,231,200,.1); border: 1px solid rgba(110,231,200,.3); font-size: .8rem; font-weight: 600; }
-        .course-hero h1 { font-family: 'Outfit', sans-serif; font-size: clamp(3.15rem, 5.4vw, 4.8rem); font-weight: 600; line-height: 1.05; letter-spacing: -.03em; margin: 1.6rem 0; }
+        /* Tipografia ancorada na index: h1 2.45rem, h2 de seção 2.1rem,
+           h3 de card 1.4rem, sempre em peso 600. Sem vw e sem clamp — a
+           index usa tamanho fixo por breakpoint, e vw não acompanha o rem. */
+        .course-hero h1 { font-family: 'Outfit', sans-serif; font-size: 2.45rem; font-weight: 600; line-height: 1.2; letter-spacing: -.02em; margin: 1.6rem 0; }
         .gradient-text { background: linear-gradient(135deg, var(--accent-mac), var(--accent-win)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
         .course-lead { max-width: 660px; color: var(--text-secondary); font-size: 1.15rem; line-height: 1.75; }
         .course-actions { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 2.3rem; }
@@ -42,20 +42,20 @@
         .benefit-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
         .benefit { min-height: 120px; padding: 1.7rem; display: flex; align-items: center; gap: 1rem; border-right: 1px solid var(--border-color); }
         .benefit:last-child { border-right: 0; }
-        .benefit i { color: var(--accent-mac); font-size: 1.3rem; }
+        .benefit i { color: var(--accent-mac); font-size: .95rem; }
         .benefit strong { display: block; font-size: .95rem; }
         .benefit small { display: block; color: var(--text-muted); line-height: 1.45; margin-top: .3rem; }
 
         .course-section { padding: 7rem 0; }
         .course-section.alt { background: var(--bg-secondary); }
         .section-heading { max-width: 720px; text-align: center; margin: 0 auto 4rem; }
-        .section-heading h2 { font-family: 'Outfit',sans-serif; font-size: clamp(3rem,5vw,4rem); line-height: 1.12; margin: 1.15rem 0; }
+        .section-heading h2 { font-family: 'Outfit',sans-serif; font-size: 2.1rem; font-weight: 600; line-height: 1.12; margin: 1.15rem 0; }
         .section-heading p { color: var(--text-secondary); font-size: 1.08rem; line-height: 1.7; }
         .module-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 2rem; }
         .module-card { position: relative; overflow: hidden; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 2.5rem; transition: .4s ease; }
         .module-card:hover { transform: translateY(-6px); border-color: rgba(110,231,200,.4); box-shadow: 0 20px 50px rgba(110,231,200,.08); }
-        .module-number { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 14px; background: rgba(110,231,200,.1); border: 1px solid rgba(110,231,200,.2); color: var(--accent-mac); font-family: 'JetBrains Mono',monospace; }
-        .module-card h3 { font-family: 'Outfit',sans-serif; font-size: 1.65rem; margin: 1.5rem 0 .75rem; }
+        .module-number { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 11px; background: rgba(110,231,200,.1); border: 1px solid rgba(110,231,200,.2); color: var(--accent-mac); font-family: 'JetBrains Mono',monospace; font-size: .95rem; }
+        .module-card h3 { font-family: 'Outfit',sans-serif; font-size: 1.4rem; font-weight: 600; margin: 1.5rem 0 .75rem; }
         .module-card > p { color: var(--text-secondary); line-height: 1.65; }
         .module-list { list-style: none; margin-top: 1.5rem; }
         .module-list li { display: flex; gap: .7rem; padding: .8rem 0; color: var(--text-secondary); border-top: 1px solid var(--border-color); line-height: 1.45; }
@@ -63,13 +63,13 @@
 
         .steps-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; }
         .step-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 2.2rem; }
-        .step-icon { width: 58px; height: 58px; display: grid; place-items: center; border-radius: 16px; color: var(--accent-mac); background: rgba(110,231,200,.1); font-size: 1.45rem; }
-        .step-card h3 { font-family: 'Outfit',sans-serif; font-size: 1.3rem; margin: 1.5rem 0 .75rem; }
+        .step-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 11px; color: var(--accent-mac); background: rgba(110,231,200,.1); font-size: 1.2rem; }
+        .step-card h3 { font-family: 'Outfit',sans-serif; font-size: 1.4rem; font-weight: 600; margin: 1.5rem 0 .75rem; }
         .step-card p { color: var(--text-secondary); line-height: 1.65; }
         .step-card a { display: inline-flex; gap: .4rem; align-items: center; color: var(--accent-mac); text-decoration: none; font-size: .9rem; margin-top: 1.25rem; }
 
         .decision-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
-        .decision-copy h2 { font-family: 'Outfit',sans-serif; font-size: clamp(3rem,5vw,4.2rem); line-height: 1.1; }
+        .decision-copy h2 { font-family: 'Outfit',sans-serif; font-size: 2.1rem; font-weight: 600; line-height: 1.1; }
         .decision-copy > p { color: var(--text-secondary); font-size: 1.05rem; line-height: 1.7; margin: 1.2rem 0 2rem; }
         .decision-items { display: grid; gap: 1rem; }
         .decision-item { display: flex; gap: 1rem; align-items: flex-start; }
@@ -77,13 +77,13 @@
         .decision-item strong { display: block; }
         .decision-item span { color: var(--text-muted); font-size: .9rem; line-height: 1.5; }
         .decision-offer { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; padding: 2.5rem; }
-        .decision-offer h3 { font-family: 'Outfit',sans-serif; font-size: 1.75rem; }
+        .decision-offer h3 { font-family: 'Outfit',sans-serif; font-size: 1.4rem; font-weight: 600; }
         .decision-offer ul { list-style: none; margin: 1.5rem 0; }
         .decision-offer li { display: flex; gap: .7rem; color: var(--text-secondary); padding: .65rem 0; }
         .decision-offer li i { color: var(--accent-mac); }
         .final-cta { padding: 6.5rem 0; text-align: center; }
         .final-cta-inner { max-width: 850px; margin: auto; padding: 4rem; border: 1px solid var(--border-color); border-radius: 24px; background: var(--bg-secondary); }
-        .final-cta h2 { font-family: 'Outfit',sans-serif; font-size: clamp(3rem,5vw,4.2rem); line-height: 1.12; }
+        .final-cta h2 { font-family: 'Outfit',sans-serif; font-size: 2.1rem; font-weight: 600; line-height: 1.12; }
         .final-cta p { color: var(--text-secondary); margin: 1.2rem auto 2rem; font-size: 1.05rem; }
         .mobile-purchase { display: none; }
         button.btn-primary { font-family: 'Inter',sans-serif; }
@@ -105,7 +105,9 @@
         @media (max-width: 768px) {
             .course-shell { width: min(100% - 3rem, 600px); }
             .course-hero { min-height: auto; padding: 8rem 0 4rem; }
-            .course-hero h1 { font-size: clamp(2.45rem,11vw,3.3rem); }
+            /* mesmos valores do breakpoint 768px da index */
+            .course-hero h1 { font-size: 2rem; }
+            .section-heading h2, .decision-copy h2, .final-cta h2 { font-size: 1.7rem; }
             .course-lead { font-size: 1rem; }
             .course-actions { flex-direction: column; }
             .course-actions a { justify-content: center; width: 100%; }
@@ -125,7 +127,6 @@
         }
         @media (max-width: 420px) {
             .course-shell { width: min(100% - 2rem, 600px); }
-            .course-hero h1 { font-size: 2.35rem; }
             .offer-brand img { max-width: 94px; }
             .hero-offer { padding: 24px; }
         }
