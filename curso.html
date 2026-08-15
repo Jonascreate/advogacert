@@ -32,7 +32,61 @@
         .course-proof i { color: var(--accent-mac); }
         /* Este bloco estava todo em px — foi assim que escapou da escala de
            70% e ficou grande quando ela saiu. Agora em rem, como a index. */
-        .hero-offer { position: relative; overflow: hidden; width: 100%; max-width: 400px; justify-self: end; background: rgba(22,22,24,.92); border: 1px solid var(--border-color); border-radius: 20px; padding: 2.25rem 2rem; box-shadow: 0 24px 80px rgba(0,0,0,.35); }
+        /* ─── CARD VITRIFICADO ─────────────────────────────────────────────
+           O fundo era rgba(22,22,24,.92): quase opaco, ou seja, um retângulo
+           escuro com sombra — não vidro. Baixando para ~58% e ligando o
+           backdrop-filter, os blushes coloridos que o style.css põe atrás da
+           página passam a ser refratados pelo cartão. É o que separa vidro de
+           "cinza com transparência": o desfoque precisa ter o que desfocar.
+
+           saturate(180%) junto do blur não é enfeite — vidro real satura o
+           que atravessa. Sem isso o desfoque lava a cor e o efeito lê como
+           névoa suja.                                                        */
+        .hero-offer {
+            position: relative; overflow: hidden; width: 100%; max-width: 400px; justify-self: end;
+            border-radius: 20px; padding: 2.25rem 2rem;
+            background: color-mix(in oklab, var(--bg-card) 58%, transparent);
+            backdrop-filter: blur(26px) saturate(180%);
+            -webkit-backdrop-filter: blur(26px) saturate(180%);
+            /* A borda vira transparente e quem desenha o contorno é o ::after,
+               em degradê. Transparente e não removida: assim a caixa mantém a
+               mesma largura de antes e nada se desloca. */
+            border: 1px solid transparent;
+            /* Sombra em camadas no lugar de um borrão único. Luz real cai em
+               progressão: várias sombras com deslocamento e desfoque crescentes
+               e opacidade decrescente dão profundidade que `0 24px 80px` sozinho
+               não alcança. Os dois `inset` são o brilho da quina superior e a
+               sombra da inferior — é esse par que faz a borda parecer espessa,
+               como vidro tem espessura. */
+            box-shadow:
+                0 1px 1px rgba(0,0,0,.10),
+                0 4px 6px rgba(0,0,0,.13),
+                0 12px 18px rgba(0,0,0,.17),
+                0 28px 46px rgba(0,0,0,.23),
+                0 56px 92px rgba(0,0,0,.32),
+                inset 0 1px 0 rgba(255,255,255,.11),
+                inset 0 -1px 0 rgba(0,0,0,.34);
+        }
+        /* Contorno em degradê: claro em cima à esquerda, apagando na diagonal.
+           Imita a luz correndo pela quina do vidro, em vez da moldura de cor
+           chapada que uma borda comum dá. */
+        .hero-offer::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            pointer-events: none;
+            background: linear-gradient(158deg,
+                rgba(255,255,255,.36) 0%,
+                color-mix(in oklab, var(--accent-mac) 30%, transparent) 24%,
+                rgba(255,255,255,.06) 56%,
+                rgba(255,255,255,.02) 100%);
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            mask-composite: exclude;
+        }
         .hero-offer::before { content: ''; position: absolute; width: 260px; height: 260px; right: -120px; top: -130px; border-radius: 50%; background: rgba(110,231,200,.16); filter: blur(45px); }
         /* Três marcas onde antes cabiam duas: com os 18px originais a linha
            somava ~364px dentro de um card de 336px úteis e estourava. */
@@ -47,7 +101,58 @@
         .offer-brand-icon { max-height: 31px; }
         .offer-brand .plus { color: var(--text-muted); font-family: 'Outfit',sans-serif; font-size: 1.1rem; font-weight: 300; }
         .offer-caption { color: var(--text-secondary); margin-top: 1.5rem; font-size: 1rem; }
-        .offer-price { font-family: 'JetBrains Mono',monospace; font-size: 2.1rem; font-weight: 700; line-height: 1; margin-top: .6rem; }
+        /* ─── PREÇO EM DESTAQUE ───────────────────────────────────────────
+           Era JetBrains Mono: fonte de programador, e monoespaçada espalha os
+           dígitos em vez de deixá-los baterem como um bloco só. Outfit já é
+           carregada pela página, então a troca não custa um byte — e com
+           letter-spacing negativo o número ganha peso de preço.
+
+           O "R$" cai para 46% e sobe alinhado ao topo: é o que faz o 65
+           dominar sem precisar aumentar nada. */
+        .offer-price { position: relative; display: inline-flex; align-items: flex-start; gap: .12rem; font-family: 'Outfit',sans-serif; font-size: 3.05rem; font-weight: 700; line-height: .95; letter-spacing: -.035em; margin-top: .6rem; }
+        .offer-price > span { position: relative; z-index: 1; }
+        .offer-price .moeda { font-size: .46em; font-weight: 600; margin-top: .32em; letter-spacing: -.01em; color: var(--accent-mac); }
+
+        /* A varredura: uma faixa clara atravessa os dígitos e depois descansa.
+           O gradiente é quase 3× mais largo que o texto e desliza por trás do
+           recorte das letras — em movimento a maior parte do tempo o número
+           fica na cor normal, e só num trecho curto do ciclo o brilho passa.
+           Efeito em preço cansa rápido se for contínuo. */
+        .offer-price .valor {
+            background: linear-gradient(100deg,
+                var(--text-primary) 0%, var(--text-primary) 40%,
+                var(--accent-mac) 47%, #ffffff 50%, var(--accent-mac) 53%,
+                var(--text-primary) 60%, var(--text-primary) 100%);
+            background-size: 280% 100%;
+            background-position: -40% 0;
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: precoBrilho 7s ease-in-out infinite;
+        }
+        @keyframes precoBrilho {
+            0%           { background-position: 140% 0; }
+            26%, 100%    { background-position: -40% 0; }
+        }
+
+        /* Halo atrás do número, pulsando junto com a passagem da luz. Fica no
+           ::before, abaixo dos dígitos (que sobem para z-index 1), e não entra
+           no fluxo: nada de layout se mexe. */
+        .offer-price::before {
+            content: '';
+            position: absolute;
+            inset: -55% -18%;
+            border-radius: 50%;
+            pointer-events: none;
+            background: radial-gradient(50% 58% at 50% 50%, color-mix(in oklab, var(--accent-mac) 34%, transparent), transparent 72%);
+            filter: blur(16px);
+            opacity: .25;
+            animation: precoHalo 7s ease-in-out infinite;
+        }
+        @keyframes precoHalo {
+            0%, 100% { opacity: .22; transform: scale(.94); }
+            18%      { opacity: .85; transform: scale(1.06); }
+            40%      { opacity: .25; transform: scale(.97); }
+        }
         .offer-payment { color: var(--text-muted); font-size: .92rem; margin-top: .5rem; }
         .offer-button { width: 100%; justify-content: center; margin-top: 1.5rem; }
         .countdown { margin-top: 1.4rem; padding-top: 1.2rem; border-top: 1px solid var(--border-color); text-align: center; }
@@ -105,20 +210,70 @@
            escura que existia aqui competia com ele. O limite de largura existe
            porque agora ela ocupa a seção toda: solta nos 1100px do shell, a
            conversa e a folha ficariam longe demais uma da outra. */
-        .ia-palco { max-width: 760px; margin-inline: auto; display: grid; grid-template-columns: minmax(0,.92fr) minmax(0,1fr); gap: 2rem; align-items: center; }
+        .ia-palco { position: relative; max-width: 760px; margin-inline: auto; display: grid; grid-template-columns: minmax(0,.92fr) minmax(0,1fr); gap: 2rem; align-items: center; }
         .ia-palco .ia-nota { grid-column: 1 / -1; }
 
+        /* Radial de palco: pega a conversa e a folha juntas, não cada uma por
+           si. São dois gradientes na mesma camada — um clarão frio no miolo e
+           um escurecimento que fecha as bordas. É o contraste entre os dois que
+           empurra a cena para frente; só escurecer deixaria tudo no mesmo plano,
+           mais escuro e igualmente chapado.
+
+           Sem `filter: blur()`: o próprio radial-gradient já tem queda suave, e
+           desfocar uma área deste tamanho custaria caro por nada.
+
+           O sangramento lateral é curto porque este bloco vive dentro do shell
+           de 1100px — inset horizontal grande aqui volta a estourar a largura
+           da página no celular. */
+        .ia-palco::before {
+            content: '';
+            position: absolute;
+            /* Recuo em rem e não em %: o palco passa a acompanhar a caixa da
+               conversa e da folha com uma folga constante, em vez de crescer
+               junto com a largura e descolar do conteúdo. */
+            inset: -1.9rem -1.4rem;
+            z-index: 0;
+            pointer-events: none;
+            /* Painel de cantos boleados no lugar da elipse. Com a forma
+               retangular a base escura precisa alcançar as bordas, senão o
+               contorno não se lê — por isso a cor de fundo abaixo das luzes. */
+            border-radius: 26px;
+            /* Duas luzes, uma por lado, cada uma no acento da coluna que está
+               atrás dela: verde sob a conversa, azul sob a folha. Deslocadas de
+               propósito — dois clarões no mesmo ponto viraram um só, e o que dá
+               volume é justamente a diagonal entre eles. No meio elas se
+               encontram e o oklab faz a passagem pelo meio-tom certo em vez de
+               cinzar, que é o defeito da mistura em RGB. */
+            background:
+                /* Granulado por cima de tudo. Nesta intensidade o degradê
+                   mostraria banding — a tela tem 256 níveis por canal, e uma
+                   transição longa e suave não tem passos suficientes para ser
+                   contínua. `filter: blur()` não resolve isso: ele amacia as
+                   faixas, mas elas continuam lá. Ruído quebra o degrau, que é
+                   como cinema e impressão sempre trataram o problema. Vem de
+                   um SVG embutido, sem requisição nem arquivo de imagem. */
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23r)' opacity='.55'/%3E%3C/svg%3E"),
+                /* Base chapada, que preenche o painel inteiro até os cantos
+                   arredondados. É ela que dá a forma. */
+                rgba(6,6,8,.55);
+            /* overlay na camada do ruído: ele escurece e clareia conforme a
+               cor de baixo, em vez de jogar um véu cinza por cima. */
+            background-blend-mode: overlay;
+            /* Contorno tênue: sem ele o painel encosta no fundo da página sem
+               transição e a quina arredondada quase some. */
+            border: 1px solid rgba(255,255,255,.05);
+            box-shadow: 0 24px 60px -28px rgba(0,0,0,.6);
+        }
+        /* A cena inteira sobe acima do radial. Sem isto o gradiente cobriria a
+           folha, que é justamente o que ele deveria estar destacando. */
+        .ia-palco > * { position: relative; z-index: 1; }
+
         .ia-chat { position: relative; display: flex; flex-direction: column; gap: .55rem; }
-        /* Sombra radial atrás da conversa: escurece o fundo sob os balões e os
-           descola do chapado, dando profundidade. Fica no ::before para não
-           entrar no fluxo e não mexer na altura da coluna. */
-        /* O sangramento lateral é curto de propósito: com -18% a elipse passava
-           da margem do shell no celular e virava mais uma fonte de arrasto. */
-        .ia-chat::before { content: ''; position: absolute; inset: -24% -5%; border-radius: 50%; pointer-events: none;
-            background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.62), rgba(0,0,0,.34) 45%, transparent 72%);
-            filter: blur(26px); }
-        /* z-index nos filhos em vez de -1 na sombra: com valor negativo ela
-           cairia atrás do fundo da seção e sumiria conforme onde o bloco parar. */
+        /* Havia aqui uma elipse escura atrás dos balões, feita quando o fundo
+           da seção era liso e a conversa precisava de chão próprio. Com o
+           painel do palco, ela virou uma mancha escura sobre uma base já
+           uniforme — duas sombras na mesma área não somam profundidade, só
+           sujam. O painel faz esse papel agora. */
         .ia-bolha, .ia-acao { position: relative; z-index: 1; }
         .ia-bolha { padding: .6rem .7rem; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-card); box-shadow: 0 10px 26px -12px rgba(0,0,0,.75); }
         .ia-quem { display: flex; align-items: center; gap: .35rem; margin-bottom: .35rem; font-size: .56rem; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); }
@@ -132,42 +287,42 @@
            Em blocos inline o texto quebra sozinho e ainda lê como digitação. */
         .ia-fala { font-size: .66rem; line-height: 1.55; color: var(--text-secondary); }
         .ia-fala span { opacity: 0; }
-        .ia-w1 { animation: iaW1 16s ease-in-out infinite; }
-        .ia-w2 { animation: iaW2 16s ease-in-out infinite; }
-        .ia-w3 { animation: iaW3 16s ease-in-out infinite; }
-        .ia-w4 { animation: iaW4 16s ease-in-out infinite; }
-        @keyframes iaW1 { 0%,1% { opacity: 0; } 4%,100% { opacity: 1; } }
-        @keyframes iaW2 { 0%,4% { opacity: 0; } 7%,100% { opacity: 1; } }
-        @keyframes iaW3 { 0%,7% { opacity: 0; } 10%,100% { opacity: 1; } }
-        @keyframes iaW4 { 0%,10% { opacity: 0; } 13%,100% { opacity: 1; } }
+        .ia-w1 { animation: iaW1 24s ease-in-out infinite; }
+        .ia-w2 { animation: iaW2 24s ease-in-out infinite; }
+        .ia-w3 { animation: iaW3 24s ease-in-out infinite; }
+        .ia-w4 { animation: iaW4 24s ease-in-out infinite; }
+        @keyframes iaW1 { 0%,0.67% { opacity: 0; } 2.67%,100% { opacity: 1; } }
+        @keyframes iaW2 { 0%,2.67% { opacity: 0; } 4.67%,100% { opacity: 1; } }
+        @keyframes iaW3 { 0%,4.67% { opacity: 0; } 6.67%,100% { opacity: 1; } }
+        @keyframes iaW4 { 0%,6.67% { opacity: 0; } 8.67%,100% { opacity: 1; } }
         .ia-cursor { display: inline-block; width: 1px; height: .7em; margin-left: 2px; background: var(--accent-mac); vertical-align: -1px; animation: iaPisca 1s steps(1) infinite; }
         @keyframes iaPisca { 50% { opacity: 0; } }
 
         /* O botão e a mão moram no mesmo bloco: assim o dedo cai sobre o botão
            por posição relativa, e não por um palpite de porcentagem na página. */
         .ia-acao { position: relative; align-self: flex-start; }
-        .ia-enviar { display: inline-flex; align-items: center; gap: .4rem; padding: .35rem .8rem; border-radius: 50px; background: var(--accent-mac); color: #06231c; font-family: 'Outfit',sans-serif; font-size: .68rem; font-weight: 700; animation: iaBotao 16s ease-in-out infinite; }
-        @keyframes iaBotao { 0%,20% { filter: none; } 23% { filter: brightness(.82); } 26%,100% { filter: none; } }
+        .ia-enviar { display: inline-flex; align-items: center; gap: .4rem; padding: .35rem .8rem; border-radius: 50px; background: var(--accent-mac); color: #06231c; font-family: 'Outfit',sans-serif; font-size: .68rem; font-weight: 700; animation: iaBotao 24s ease-in-out infinite; }
+        @keyframes iaBotao { 0%,13.33% { filter: none; } 15.33% { filter: brightness(.82); } 17.33%,100% { filter: none; } }
         /* O cursor de mão do navegador, ampliado: o gesto que liga o pedido ao
            documento que sai. Ele entra, clica em Enviar e recua. */
-        .ia-mao { position: absolute; left: 58%; top: 30%; z-index: 2; font-size: 2.4rem; color: #fff; filter: drop-shadow(0 6px 14px rgba(0,0,0,.6)); opacity: 0; animation: iaMao 16s ease-in-out infinite; }
-        .ia-mao::after { content: ''; position: absolute; left: 4%; top: 2%; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--accent-mac); opacity: 0; animation: iaToque 16s ease-out infinite; }
+        .ia-mao { position: absolute; left: 58%; top: 30%; z-index: 2; font-size: 2.4rem; color: #fff; filter: drop-shadow(0 6px 14px rgba(0,0,0,.6)); opacity: 0; animation: iaMao 24s ease-in-out infinite; }
+        .ia-mao::after { content: ''; position: absolute; left: 4%; top: 2%; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--accent-mac); opacity: 0; animation: iaToque 24s ease-out infinite; }
         @keyframes iaMao {
-            0%,14% { opacity: 0; transform: translate(22px,22px) scale(1.06); }
-            19% { opacity: 1; transform: translate(4px,4px) scale(1.03); }
-            23% { opacity: 1; transform: translate(0,0) scale(.84); }
-            27% { opacity: 1; transform: translate(0,0) scale(1); }
-            34% { opacity: 1; transform: translate(0,0) scale(1); }
-            42%,100% { opacity: 0; transform: translate(10px,14px) scale(1); }
+            0%,9.33% { opacity: 0; transform: translate(22px,22px) scale(1.06); }
+            12.67% { opacity: 1; transform: translate(4px,4px) scale(1.03); }
+            15.33% { opacity: 1; transform: translate(0,0) scale(.84); }
+            18% { opacity: 1; transform: translate(0,0) scale(1); }
+            22.67% { opacity: 1; transform: translate(0,0) scale(1); }
+            28%,100% { opacity: 0; transform: translate(10px,14px) scale(1); }
         }
         @keyframes iaToque {
-            0%,22% { opacity: 0; transform: scale(.4); }
-            24% { opacity: .95; transform: scale(.7); }
-            32%,100% { opacity: 0; transform: scale(2.2); }
+            0%,14.67% { opacity: 0; transform: scale(.4); }
+            16% { opacity: .95; transform: scale(.7); }
+            21.33%,100% { opacity: 0; transform: scale(2.2); }
         }
         /* A resposta do Claude só entra depois do clique. */
-        .ia-resposta { opacity: 0; animation: iaResposta 16s ease-in-out infinite; }
-        @keyframes iaResposta { 0%,26% { opacity: 0; transform: translateY(4px); } 32%,100% { opacity: 1; transform: none; } }
+        .ia-resposta { opacity: 0; animation: iaResposta 24s ease-in-out infinite; }
+        @keyframes iaResposta { 0%,17.33% { opacity: 0; transform: translateY(4px); } 21.33%,100% { opacity: 1; transform: none; } }
         .ia-resposta p { font-size: .66rem; line-height: 1.5; color: var(--text-secondary); }
         /* A logo do Claude no lugar de um ícone genérico: é a marca real da
            ferramenta que o curso ensina, e ela já existe no projeto. */
@@ -191,7 +346,11 @@
            o miolo vira flex em coluna com space-between e as três partes
            (cabeçalho, corpo, assinaturas) se espalham pela folha em vez de se
            amontoarem no topo com um vazio embaixo. */
-        .ia-timbrado { --paper: #fbf9f4; --ink: #1a1a1a; --ink-2: #4a4a4a; --ink-3: #787878; --rule-soft: #d8d3c2; --marca: #1a4f9c;
+        /* Papel em marfim: mais claro que o creme anterior (#fbf9f4) e com o
+           azul puxado para baixo, que é o que dá o tom de marfim em vez de
+           bege. O filete acompanha, senão a borda fica cinza sobre papel
+           quente e denuncia que a cor foi trocada só no fundo. */
+        .ia-timbrado { --paper: #fefcf0; --ink: #1a1a1a; --ink-2: #4a4a4a; --ink-3: #787878; --rule-soft: #ded8c4; --marca: #1a4f9c;
             position: relative; width: 100%; max-width: 340px; margin: 1.35rem auto 0; aspect-ratio: 210 / 297;
             display: flex; flex-direction: column; justify-content: space-between; gap: .5rem;
             padding: 1.5rem 1.35rem; background: var(--paper);
@@ -199,10 +358,25 @@
             border: 1px solid var(--rule-soft); color: var(--ink);
             font-family: Georgia,'Times New Roman',Times,serif;
             box-shadow: 0 24px 60px -20px rgba(0,0,0,.55); opacity: 0;
-            animation: iaTimbrado 16s ease-in-out infinite; }
+            animation: iaTimbrado 24s ease-in-out infinite; }
         /* A moldura interna do papel timbrado, igual à do relatório impresso. */
         .ia-timbrado::before { content: ''; position: absolute; inset: .55rem; border: 1px solid var(--rule-soft); pointer-events: none; }
-        @keyframes iaTimbrado { 0%,42% { opacity: 0; transform: translateY(8px); } 48%,100% { opacity: 1; transform: none; } }
+        /* Ciclo de 24s. A construção da cena ocupa os mesmos ~14,7s de antes (todos
+           os percentuais foram reescalados por 2/3 quando o ciclo passou de 16s
+           para 24s), e a cauda que sobrou virou a permanência e a saída:
+
+             14,7s  a peça termina de ser datilografada
+             19,7s  fim dos 5 segundos parada  (82%)
+             21,1s  desapareceu por completo   (88%)
+             24,0s  o laço recomeça
+
+           A saída vai no container: os elementos internos continuam em opacidade
+           1, e a folha inteira leva todos junto ao esmaecer. */
+        @keyframes iaTimbrado {
+            0%,28%    { opacity: 0; transform: translateY(8px); }
+            32%,82%   { opacity: 1; transform: none; }
+            88%,100%  { opacity: 0; transform: translateY(8px); }
+        }
 
         /* Cabeçalho no formato do modelo: marca centralizada, inscrição da OAB
            logo abaixo e um filete fino fechando a faixa. */
@@ -261,19 +435,19 @@
 
         /* Rodapé do modelo: filete fino e o endereço do escritório centralizado,
            com o e-mail sublinhado como no papel original. */
-        .tb-rodape { margin-top: .4rem; padding-top: .3rem; border-top: 1px solid var(--marca); text-align: center; font-size: .4rem; line-height: 1.5; color: var(--ink-3); opacity: 0; animation: tbFecha 16s ease-in-out infinite; }
+        .tb-rodape { margin-top: .4rem; padding-top: .3rem; border-top: 1px solid var(--marca); text-align: center; font-size: .4rem; line-height: 1.5; color: var(--ink-3); opacity: 0; animation: tbFecha 24s ease-in-out infinite; }
         .tb-rodape u { color: var(--marca); }
-        @keyframes tbFecha { 0%,86% { opacity: 0; } 92%,100% { opacity: 1; } }
+        @keyframes tbFecha { 0%,57.33% { opacity: 0; } 61.33%,100% { opacity: 1; } }
 
         /* Um keyframe por elemento em vez de animation-delay: o atraso desloca
            o ciclo inteiro daquele item, e da segunda volta em diante ele entra
            fora de hora, descolado do resto da folha. */
-        .tbc1 { animation: tbc1 16s ease-in-out infinite; }
-        .tbc2 { animation: tbc2 16s ease-in-out infinite; }
-        .tbc3 { animation: tbc3 16s ease-in-out infinite; }
-        @keyframes tbc1 { 0%,34% { opacity: 0; transform: translateY(3px); } 39%,100% { opacity: 1; transform: none; } }
-        @keyframes tbc2 { 0%,39% { opacity: 0; transform: translateY(3px); } 44%,100% { opacity: 1; transform: none; } }
-        @keyframes tbc3 { 0%,44% { opacity: 0; transform: translateY(3px); } 49%,100% { opacity: 1; transform: none; } }
+        .tbc1 { animation: tbc1 24s ease-in-out infinite; }
+        .tbc2 { animation: tbc2 24s ease-in-out infinite; }
+        .tbc3 { animation: tbc3 24s ease-in-out infinite; }
+        @keyframes tbc1 { 0%,22.67% { opacity: 0; transform: translateY(3px); } 26%,100% { opacity: 1; transform: none; } }
+        @keyframes tbc2 { 0%,26% { opacity: 0; transform: translateY(3px); } 29.33%,100% { opacity: 1; transform: none; } }
+        @keyframes tbc3 { 0%,29.33% { opacity: 0; transform: translateY(3px); } 32.67%,100% { opacity: 1; transform: none; } }
         /* Datilografia em tempo real: o texto sai em blocos encadeados, um a
            cada ~0,3s, varrendo a peça de cima a baixo. Não é caractere a
            caractere de propósito — isso exigiria `white-space: nowrap`, que
@@ -282,36 +456,36 @@
            `steps(1)` remove o esmaecimento: o bloco aparece de uma vez, como
            tecla batida, em vez de desbotar para dentro. */
         .k0,.k1,.k2,.k3,.k4,.k5,.k6,.k7,.k8,.k9,.k10,
-        .k11,.k12,.k13,.k14,.k15,.k16,.k17,.k18,.k19,.k20 { opacity: 0; animation-duration: 16s; animation-timing-function: steps(1); animation-iteration-count: infinite; }
+        .k11,.k12,.k13,.k14,.k15,.k16,.k17,.k18,.k19,.k20 { opacity: 0; animation-duration: 24s; animation-timing-function: steps(1); animation-iteration-count: infinite; }
         .k0 { animation-name: k0; }
         /* O número do processo agora entra depois do endereçamento, então o
            passo dele fica entre o k3 e o k4, não no começo da cascata. */
-        @keyframes k0 { 0%,53.5% { opacity: 0; } 54.5%,100% { opacity: 1; } }
+        @keyframes k0 { 0%,35.67% { opacity: 0; } 36.33%,100% { opacity: 1; } }
         .k1 { animation-name: k1; } .k2 { animation-name: k2; } .k3 { animation-name: k3; } .k4 { animation-name: k4; }
         .k5 { animation-name: k5; } .k6 { animation-name: k6; } .k7 { animation-name: k7; } .k8 { animation-name: k8; }
         .k9 { animation-name: k9; } .k10 { animation-name: k10; } .k11 { animation-name: k11; } .k12 { animation-name: k12; }
         .k13 { animation-name: k13; } .k14 { animation-name: k14; } .k15 { animation-name: k15; } .k16 { animation-name: k16; }
         .k17 { animation-name: k17; } .k18 { animation-name: k18; } .k19 { animation-name: k19; } .k20 { animation-name: k20; }
-        @keyframes k1  { 0%,48%   { opacity: 0; } 49%,100%   { opacity: 1; } }
-        @keyframes k2  { 0%,50%   { opacity: 0; } 51%,100%   { opacity: 1; } }
-        @keyframes k3  { 0%,52%   { opacity: 0; } 53%,100%   { opacity: 1; } }
-        @keyframes k4  { 0%,56%   { opacity: 0; } 57%,100%   { opacity: 1; } }
-        @keyframes k5  { 0%,58%   { opacity: 0; } 59%,100%   { opacity: 1; } }
-        @keyframes k6  { 0%,59%   { opacity: 0; } 60%,100%   { opacity: 1; } }
-        @keyframes k7  { 0%,61%   { opacity: 0; } 62%,100%   { opacity: 1; } }
-        @keyframes k8  { 0%,63%   { opacity: 0; } 64%,100%   { opacity: 1; } }
-        @keyframes k9  { 0%,65%   { opacity: 0; } 66%,100%   { opacity: 1; } }
-        @keyframes k10 { 0%,67%   { opacity: 0; } 68%,100%   { opacity: 1; } }
-        @keyframes k11 { 0%,69%   { opacity: 0; } 70%,100%   { opacity: 1; } }
-        @keyframes k12 { 0%,71%   { opacity: 0; } 72%,100%   { opacity: 1; } }
-        @keyframes k13 { 0%,73%   { opacity: 0; } 74%,100%   { opacity: 1; } }
-        @keyframes k14 { 0%,76%   { opacity: 0; } 77%,100%   { opacity: 1; } }
-        @keyframes k15 { 0%,79%   { opacity: 0; } 80%,100%   { opacity: 1; } }
-        @keyframes k16 { 0%,81%   { opacity: 0; } 82%,100%   { opacity: 1; } }
-        @keyframes k17 { 0%,83%   { opacity: 0; } 84%,100%   { opacity: 1; } }
-        @keyframes k18 { 0%,86%   { opacity: 0; } 87%,100%   { opacity: 1; } }
-        @keyframes k19 { 0%,88%   { opacity: 0; } 89%,100%   { opacity: 1; } }
-        @keyframes k20 { 0%,90%   { opacity: 0; } 91%,100%   { opacity: 1; } }
+        @keyframes k1  { 0%,32%   { opacity: 0; } 32.67%,100%   { opacity: 1; } }
+        @keyframes k2  { 0%,33.33%   { opacity: 0; } 34%,100%   { opacity: 1; } }
+        @keyframes k3  { 0%,34.67%   { opacity: 0; } 35.33%,100%   { opacity: 1; } }
+        @keyframes k4  { 0%,37.33%   { opacity: 0; } 38%,100%   { opacity: 1; } }
+        @keyframes k5  { 0%,38.67%   { opacity: 0; } 39.33%,100%   { opacity: 1; } }
+        @keyframes k6  { 0%,39.33%   { opacity: 0; } 40%,100%   { opacity: 1; } }
+        @keyframes k7  { 0%,40.67%   { opacity: 0; } 41.33%,100%   { opacity: 1; } }
+        @keyframes k8  { 0%,42%   { opacity: 0; } 42.67%,100%   { opacity: 1; } }
+        @keyframes k9  { 0%,43.33%   { opacity: 0; } 44%,100%   { opacity: 1; } }
+        @keyframes k10 { 0%,44.67%   { opacity: 0; } 45.33%,100%   { opacity: 1; } }
+        @keyframes k11 { 0%,46%   { opacity: 0; } 46.67%,100%   { opacity: 1; } }
+        @keyframes k12 { 0%,47.33%   { opacity: 0; } 48%,100%   { opacity: 1; } }
+        @keyframes k13 { 0%,48.67%   { opacity: 0; } 49.33%,100%   { opacity: 1; } }
+        @keyframes k14 { 0%,50.67%   { opacity: 0; } 51.33%,100%   { opacity: 1; } }
+        @keyframes k15 { 0%,52.67%   { opacity: 0; } 53.33%,100%   { opacity: 1; } }
+        @keyframes k16 { 0%,54%   { opacity: 0; } 54.67%,100%   { opacity: 1; } }
+        @keyframes k17 { 0%,55.33%   { opacity: 0; } 56%,100%   { opacity: 1; } }
+        @keyframes k18 { 0%,57.33%   { opacity: 0; } 58%,100%   { opacity: 1; } }
+        @keyframes k19 { 0%,58.67%   { opacity: 0; } 59.33%,100%   { opacity: 1; } }
+        @keyframes k20 { 0%,60%   { opacity: 0; } 60.67%,100%   { opacity: 1; } }
         .ia-nota { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-color); color: var(--text-muted); font-size: .78rem; line-height: 1.5; }
 
         .steps-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; }
@@ -516,7 +690,7 @@
                 </div>
                 <aside class="hero-offer" id="inscricao">
                     <div class="offer-brand"><img src="assets/img/pje-claro.png" alt="PJe"><span class="plus">+</span><img src="assets/img/claude-claro.png" alt="Claude"><span class="plus">+</span><img class="offer-brand-icon" src="assets/img/vscode-claro.png" alt="Visual Studio Code"></div>
-                    <p class="offer-caption">Inscrição individual para a próxima turma</p><div class="offer-price">R$ 65</div><p class="offer-payment">Pagamento por Pix, cartão ou boleto</p>
+                    <p class="offer-caption">Inscrição individual para a próxima turma</p><div class="offer-price"><span class="moeda">R$</span><span class="valor">65</span></div><p class="offer-payment">Pagamento por Pix, cartão ou boleto</p>
                     <button class="btn-primary offer-button" id="btn-vaga" type="button">Garantir minha vaga <span class="arrow">→</span></button>
                     <div class="countdown"><span id="prazo-rotulo">Inscrições fecham em</span><div id="prazo-relogio">--d --h --m --s</div></div>
                 </aside>

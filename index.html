@@ -264,6 +264,35 @@
             z-index: 1;
         }
 
+        /* ─── HOLOFOTE NO CURSOR (bloco aditivo — remover não altera nada) ───
+           Os cards deixaram de ser links e ficaram sem qualquer resposta ao
+           mouse: no topo da página, um bloco grande e parado lê como imagem,
+           não como interface. O brilho devolve reação sem devolver navegação.
+
+           Vive no ::before porque o ::after já é a moldura em degradê. Fica
+           abaixo do conteúdo (os filhos têm z-index 1) e é recortado pelo
+           overflow: hidden do card. Nada de layout se mexe: só opacidade e a
+           posição de um gradiente, ambos resolvidos na composição da GPU.
+
+           Sem cursor — celular e tablet — nada acontece, e é o correto: o
+           efeito é resposta ao ponteiro, não decoração. */
+        .platform-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .35s ease;
+            background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%),
+                        var(--brilho, rgba(110,231,200,.16)), transparent 68%);
+        }
+        .platform-card.mac::before { --brilho: rgba(110, 231, 200, 0.18); }
+        .platform-card.win::before { --brilho: rgba(79, 163, 255, 0.18); }
+        @media (hover: hover) {
+            .platform-card:hover::before { opacity: 1; }
+        }
+
         @property --border-angle {
             syntax: '<angle>';
             inherits: false;
@@ -990,6 +1019,38 @@
             border-color: rgba(110, 231, 200, 0.5);
             box-shadow: 0 0 60px rgba(110, 231, 200, 0.3);
         }
+
+        /* ─── HOLOFOTE NO CURSOR (bloco aditivo — remover não altera nada) ───
+           Mesmo efeito dos cards de Mac e Windows, aqui nos dois planos. As
+           regras acima não foram tocadas: estas apenas acrescentam.
+
+           `position: relative` no card porque ele não tinha — sem isso o
+           ::before se ancoraria na página, não no cartão. E os filhos sobem
+           para z-index 1 porque um pseudo-elemento posicionado é pintado
+           acima de conteúdo estático: sem elevá-los, o brilho passaria por
+           cima do texto e dos botões.
+
+           Não precisa de `overflow: hidden`: o border-radius: inherit já
+           recorta o brilho no canto arredondado do próprio cartão. */
+        .plan-card { position: relative; }
+        .plan-card > * { position: relative; z-index: 1; }
+        .plan-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .35s ease;
+            background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%),
+                        var(--brilho, rgba(110,231,200,.14)), transparent 66%);
+        }
+        /* cada cartão brilha no próprio acento: o free é azul, o pago é verde */
+        .plan-card.free::before { --brilho: rgba(79, 163, 255, 0.16); }
+        .plan-card.paid::before { --brilho: rgba(110, 231, 200, 0.16); }
+        @media (hover: hover) {
+            .plan-card:hover::before { opacity: 1; }
+        }
         .plan-tag {
             display: inline-flex;
             align-items: center;
@@ -1659,6 +1720,32 @@
     <script src="assets/js/api.js?v=9"></script>
     <script src="assets/js/telemetria.js?v=2"></script>
     <script src="assets/js/script.js?v=20"></script>
+    <script>
+    /* ─── HOLOFOTE NO CURSOR (bloco aditivo — remover não altera nada) ───
+       Só escreve duas variáveis CSS com a posição do ponteiro dentro do card;
+       quem desenha é o CSS. Nada é lido do layout durante o movimento, então
+       não há reflow: getBoundingClientRect() é chamado uma vez por entrada no
+       card, não a cada pixel percorrido.
+
+       `pointermove` e não `mousemove` para cobrir caneta e mouse pelo mesmo
+       caminho, e `(hover: hover)` para nem registrar o ouvinte em tela de
+       toque, onde o ponteiro não existe. */
+    (function () {
+        'use strict';
+        if (!window.matchMedia || !window.matchMedia('(hover: hover)').matches) return;
+
+        document.querySelectorAll('.platform-card, .plan-card').forEach(function (card) {
+            var caixa = null;
+            card.addEventListener('pointerenter', function () { caixa = card.getBoundingClientRect(); });
+            card.addEventListener('pointermove', function (e) {
+                if (!caixa) caixa = card.getBoundingClientRect();
+                card.style.setProperty('--mx', ((e.clientX - caixa.left) / caixa.width  * 100) + '%');
+                card.style.setProperty('--my', ((e.clientY - caixa.top)  / caixa.height * 100) + '%');
+            });
+            card.addEventListener('pointerleave', function () { caixa = null; });
+        });
+    })();
+    </script>
     <script>
     // Segunda linha do título saindo como se estivesse sendo digitada.
     // O texto já está no HTML: aqui ele é guardado, apagado e reescrito letra
