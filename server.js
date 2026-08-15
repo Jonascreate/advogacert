@@ -527,9 +527,13 @@ function loadPagamentoConfig() {
             linkDia: process.env.MP_LINK_DIA || file.mercadopago?.link_dia ||
                      'https://mpago.la/1MQBvYi',
             // O curso é outro produto, com outro preço: precisa do link dele.
-            // Sem padrão no código porque este link ainda não existe — e um
-            // link errado aqui cobraria o valor de outra coisa.
-            linkCurso: process.env.MP_LINK_CURSO || file.mercadopago?.link_curso || '',
+            // O padrão saiu do vazio agora que o link existe (R$ 65, criado em
+            // 15/08/2026), pelo mesmo motivo dos dois acima: sem ele o botão do
+            // curso cai no WhatsApp em produção enquanto ninguém configurar a
+            // variável no Render. Trocar de link continua possível por
+            // MP_LINK_CURSO, sem publicar de novo.
+            linkCurso: process.env.MP_LINK_CURSO || file.mercadopago?.link_curso ||
+                       'https://mpago.la/26GHcpU',
             accessToken: process.env.MP_ACCESS_TOKEN || file.mercadopago?.access_token || '',
             emailAviso: process.env.MP_EMAIL_AVISO || file.mercadopago?.email_aviso || ''
         },

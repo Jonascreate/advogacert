@@ -287,42 +287,42 @@
            Em blocos inline o texto quebra sozinho e ainda lê como digitação. */
         .ia-fala { font-size: .66rem; line-height: 1.55; color: var(--text-secondary); }
         .ia-fala span { opacity: 0; }
-        .ia-w1 { animation: iaW1 24s ease-in-out infinite; }
-        .ia-w2 { animation: iaW2 24s ease-in-out infinite; }
-        .ia-w3 { animation: iaW3 24s ease-in-out infinite; }
-        .ia-w4 { animation: iaW4 24s ease-in-out infinite; }
-        @keyframes iaW1 { 0%,0.67% { opacity: 0; } 2.67%,100% { opacity: 1; } }
-        @keyframes iaW2 { 0%,2.67% { opacity: 0; } 4.67%,100% { opacity: 1; } }
-        @keyframes iaW3 { 0%,4.67% { opacity: 0; } 6.67%,100% { opacity: 1; } }
-        @keyframes iaW4 { 0%,6.67% { opacity: 0; } 8.67%,100% { opacity: 1; } }
+        .ia-w1 { animation: iaW1 21s ease-in-out infinite; }
+        .ia-w2 { animation: iaW2 21s ease-in-out infinite; }
+        .ia-w3 { animation: iaW3 21s ease-in-out infinite; }
+        .ia-w4 { animation: iaW4 21s ease-in-out infinite; }
+        @keyframes iaW1 { 0%,0.77% { opacity: 0; } 3.05%,100% { opacity: 1; } }
+        @keyframes iaW2 { 0%,3.05% { opacity: 0; } 5.34%,100% { opacity: 1; } }
+        @keyframes iaW3 { 0%,5.34% { opacity: 0; } 7.62%,100% { opacity: 1; } }
+        @keyframes iaW4 { 0%,7.62% { opacity: 0; } 9.91%,100% { opacity: 1; } }
         .ia-cursor { display: inline-block; width: 1px; height: .7em; margin-left: 2px; background: var(--accent-mac); vertical-align: -1px; animation: iaPisca 1s steps(1) infinite; }
         @keyframes iaPisca { 50% { opacity: 0; } }
 
         /* O botão e a mão moram no mesmo bloco: assim o dedo cai sobre o botão
            por posição relativa, e não por um palpite de porcentagem na página. */
         .ia-acao { position: relative; align-self: flex-start; }
-        .ia-enviar { display: inline-flex; align-items: center; gap: .4rem; padding: .35rem .8rem; border-radius: 50px; background: var(--accent-mac); color: #06231c; font-family: 'Outfit',sans-serif; font-size: .68rem; font-weight: 700; animation: iaBotao 24s ease-in-out infinite; }
-        @keyframes iaBotao { 0%,13.33% { filter: none; } 15.33% { filter: brightness(.82); } 17.33%,100% { filter: none; } }
+        .ia-enviar { display: inline-flex; align-items: center; gap: .4rem; padding: .35rem .8rem; border-radius: 50px; background: var(--accent-mac); color: #06231c; font-family: 'Outfit',sans-serif; font-size: .68rem; font-weight: 700; animation: iaBotao 21s ease-in-out infinite; }
+        @keyframes iaBotao { 0%,15.23% { filter: none; } 17.52% { filter: brightness(.82); } 19.81%,100% { filter: none; } }
         /* O cursor de mão do navegador, ampliado: o gesto que liga o pedido ao
            documento que sai. Ele entra, clica em Enviar e recua. */
-        .ia-mao { position: absolute; left: 58%; top: 30%; z-index: 2; font-size: 2.4rem; color: #fff; filter: drop-shadow(0 6px 14px rgba(0,0,0,.6)); opacity: 0; animation: iaMao 24s ease-in-out infinite; }
-        .ia-mao::after { content: ''; position: absolute; left: 4%; top: 2%; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--accent-mac); opacity: 0; animation: iaToque 24s ease-out infinite; }
+        .ia-mao { position: absolute; left: 58%; top: 30%; z-index: 2; font-size: 2.4rem; color: #fff; filter: drop-shadow(0 6px 14px rgba(0,0,0,.6)); opacity: 0; animation: iaMao 21s ease-in-out infinite; }
+        .ia-mao::after { content: ''; position: absolute; left: 4%; top: 2%; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--accent-mac); opacity: 0; animation: iaToque 21s ease-out infinite; }
         @keyframes iaMao {
-            0%,9.33% { opacity: 0; transform: translate(22px,22px) scale(1.06); }
-            12.67% { opacity: 1; transform: translate(4px,4px) scale(1.03); }
-            15.33% { opacity: 1; transform: translate(0,0) scale(.84); }
-            18% { opacity: 1; transform: translate(0,0) scale(1); }
-            22.67% { opacity: 1; transform: translate(0,0) scale(1); }
-            28%,100% { opacity: 0; transform: translate(10px,14px) scale(1); }
+            0%,10.66% { opacity: 0; transform: translate(22px,22px) scale(1.06); }
+            14.48% { opacity: 1; transform: translate(4px,4px) scale(1.03); }
+            17.52% { opacity: 1; transform: translate(0,0) scale(.84); }
+            20.57% { opacity: 1; transform: translate(0,0) scale(1); }
+            25.91% { opacity: 1; transform: translate(0,0) scale(1); }
+            32%,100% { opacity: 0; transform: translate(10px,14px) scale(1); }
         }
         @keyframes iaToque {
-            0%,14.67% { opacity: 0; transform: scale(.4); }
-            16% { opacity: .95; transform: scale(.7); }
-            21.33%,100% { opacity: 0; transform: scale(2.2); }
+            0%,16.77% { opacity: 0; transform: scale(.4); }
+            18.29% { opacity: .95; transform: scale(.7); }
+            24.38%,100% { opacity: 0; transform: scale(2.2); }
         }
         /* A resposta do Claude só entra depois do clique. */
-        .ia-resposta { opacity: 0; animation: iaResposta 24s ease-in-out infinite; }
-        @keyframes iaResposta { 0%,17.33% { opacity: 0; transform: translateY(4px); } 21.33%,100% { opacity: 1; transform: none; } }
+        .ia-resposta { opacity: 0; animation: iaResposta 21s ease-in-out infinite; }
+        @keyframes iaResposta { 0%,19.81% { opacity: 0; transform: translateY(4px); } 24.38%,100% { opacity: 1; transform: none; } }
         .ia-resposta p { font-size: .66rem; line-height: 1.5; color: var(--text-secondary); }
         /* A logo do Claude no lugar de um ícone genérico: é a marca real da
            ferramenta que o curso ensina, e ela já existe no projeto. */
@@ -358,24 +358,34 @@
             border: 1px solid var(--rule-soft); color: var(--ink);
             font-family: Georgia,'Times New Roman',Times,serif;
             box-shadow: 0 24px 60px -20px rgba(0,0,0,.55); opacity: 0;
-            animation: iaTimbrado 24s ease-in-out infinite; }
+            animation: iaTimbrado 21s ease-in-out infinite; }
         /* A moldura interna do papel timbrado, igual à do relatório impresso. */
         .ia-timbrado::before { content: ''; position: absolute; inset: .55rem; border: 1px solid var(--rule-soft); pointer-events: none; }
-        /* Ciclo de 24s. A construção da cena ocupa os mesmos ~14,7s de antes (todos
-           os percentuais foram reescalados por 2/3 quando o ciclo passou de 16s
-           para 24s), e a cauda que sobrou virou a permanência e a saída:
+        /* Ciclo de 21s, com a linha do tempo em segundos:
 
-             14,7s  a peça termina de ser datilografada
-             19,7s  fim dos 5 segundos parada  (82%)
-             21,1s  desapareceu por completo   (88%)
-             24,0s  o laço recomeça
+             14,7s  a peça termina de ser datilografada   (70,1%)
+             19,7s  fim dos 5 segundos parada             (93,9%)
+             21,0s  cena vazia e o laço recomeça          (100%)
 
-           A saída vai no container: os elementos internos continuam em opacidade
-           1, e a folha inteira leva todos junto ao esmaecer. */
+           A permanência de 5 segundos é só da folha. A saída dela e a da
+           conversa acontecem na MESMA janela, e o ciclo acaba junto: sem isso
+           sobrava um vão de quase 3 segundos com a conversa parada na tela
+           depois da folha já ter sumido, esperando o laço reiniciar.
+
+           A saída vai nos containers, não nos elementos internos: eles seguem
+           em opacidade 1 e são levados junto pelo pai ao esmaecer. */
         @keyframes iaTimbrado {
-            0%,28%    { opacity: 0; transform: translateY(8px); }
-            32%,82%   { opacity: 1; transform: none; }
-            88%,100%  { opacity: 0; transform: translateY(8px); }
+            0%,32%          { opacity: 0; transform: translateY(8px); }
+            36.57%,93.9%    { opacity: 1; transform: none; }
+            100%            { opacity: 0; transform: translateY(8px); }
+        }
+        /* A conversa some junto com a folha. No reinício o container volta a
+           opacidade 1 de uma vez, mas nada pisca: as palavras e a resposta
+           estão todas em 0% nesse instante, e só então começam a entrar. */
+        .ia-chat { animation: iaChatSai 21s ease-in-out infinite; }
+        @keyframes iaChatSai {
+            0%,93.9% { opacity: 1; }
+            100%     { opacity: 0; }
         }
 
         /* Cabeçalho no formato do modelo: marca centralizada, inscrição da OAB
@@ -435,19 +445,19 @@
 
         /* Rodapé do modelo: filete fino e o endereço do escritório centralizado,
            com o e-mail sublinhado como no papel original. */
-        .tb-rodape { margin-top: .4rem; padding-top: .3rem; border-top: 1px solid var(--marca); text-align: center; font-size: .4rem; line-height: 1.5; color: var(--ink-3); opacity: 0; animation: tbFecha 24s ease-in-out infinite; }
+        .tb-rodape { margin-top: .4rem; padding-top: .3rem; border-top: 1px solid var(--marca); text-align: center; font-size: .4rem; line-height: 1.5; color: var(--ink-3); opacity: 0; animation: tbFecha 21s ease-in-out infinite; }
         .tb-rodape u { color: var(--marca); }
-        @keyframes tbFecha { 0%,57.33% { opacity: 0; } 61.33%,100% { opacity: 1; } }
+        @keyframes tbFecha { 0%,65.52% { opacity: 0; } 70.09%,100% { opacity: 1; } }
 
         /* Um keyframe por elemento em vez de animation-delay: o atraso desloca
            o ciclo inteiro daquele item, e da segunda volta em diante ele entra
            fora de hora, descolado do resto da folha. */
-        .tbc1 { animation: tbc1 24s ease-in-out infinite; }
-        .tbc2 { animation: tbc2 24s ease-in-out infinite; }
-        .tbc3 { animation: tbc3 24s ease-in-out infinite; }
-        @keyframes tbc1 { 0%,22.67% { opacity: 0; transform: translateY(3px); } 26%,100% { opacity: 1; transform: none; } }
-        @keyframes tbc2 { 0%,26% { opacity: 0; transform: translateY(3px); } 29.33%,100% { opacity: 1; transform: none; } }
-        @keyframes tbc3 { 0%,29.33% { opacity: 0; transform: translateY(3px); } 32.67%,100% { opacity: 1; transform: none; } }
+        .tbc1 { animation: tbc1 21s ease-in-out infinite; }
+        .tbc2 { animation: tbc2 21s ease-in-out infinite; }
+        .tbc3 { animation: tbc3 21s ease-in-out infinite; }
+        @keyframes tbc1 { 0%,25.91% { opacity: 0; transform: translateY(3px); } 29.71%,100% { opacity: 1; transform: none; } }
+        @keyframes tbc2 { 0%,29.71% { opacity: 0; transform: translateY(3px); } 33.52%,100% { opacity: 1; transform: none; } }
+        @keyframes tbc3 { 0%,33.52% { opacity: 0; transform: translateY(3px); } 37.34%,100% { opacity: 1; transform: none; } }
         /* Datilografia em tempo real: o texto sai em blocos encadeados, um a
            cada ~0,3s, varrendo a peça de cima a baixo. Não é caractere a
            caractere de propósito — isso exigiria `white-space: nowrap`, que
@@ -456,36 +466,36 @@
            `steps(1)` remove o esmaecimento: o bloco aparece de uma vez, como
            tecla batida, em vez de desbotar para dentro. */
         .k0,.k1,.k2,.k3,.k4,.k5,.k6,.k7,.k8,.k9,.k10,
-        .k11,.k12,.k13,.k14,.k15,.k16,.k17,.k18,.k19,.k20 { opacity: 0; animation-duration: 24s; animation-timing-function: steps(1); animation-iteration-count: infinite; }
+        .k11,.k12,.k13,.k14,.k15,.k16,.k17,.k18,.k19,.k20 { opacity: 0; animation-duration: 21s; animation-timing-function: steps(1); animation-iteration-count: infinite; }
         .k0 { animation-name: k0; }
         /* O número do processo agora entra depois do endereçamento, então o
            passo dele fica entre o k3 e o k4, não no começo da cascata. */
-        @keyframes k0 { 0%,35.67% { opacity: 0; } 36.33%,100% { opacity: 1; } }
+        @keyframes k0 { 0%,40.77% { opacity: 0; } 41.52%,100% { opacity: 1; } }
         .k1 { animation-name: k1; } .k2 { animation-name: k2; } .k3 { animation-name: k3; } .k4 { animation-name: k4; }
         .k5 { animation-name: k5; } .k6 { animation-name: k6; } .k7 { animation-name: k7; } .k8 { animation-name: k8; }
         .k9 { animation-name: k9; } .k10 { animation-name: k10; } .k11 { animation-name: k11; } .k12 { animation-name: k12; }
         .k13 { animation-name: k13; } .k14 { animation-name: k14; } .k15 { animation-name: k15; } .k16 { animation-name: k16; }
         .k17 { animation-name: k17; } .k18 { animation-name: k18; } .k19 { animation-name: k19; } .k20 { animation-name: k20; }
-        @keyframes k1  { 0%,32%   { opacity: 0; } 32.67%,100%   { opacity: 1; } }
-        @keyframes k2  { 0%,33.33%   { opacity: 0; } 34%,100%   { opacity: 1; } }
-        @keyframes k3  { 0%,34.67%   { opacity: 0; } 35.33%,100%   { opacity: 1; } }
-        @keyframes k4  { 0%,37.33%   { opacity: 0; } 38%,100%   { opacity: 1; } }
-        @keyframes k5  { 0%,38.67%   { opacity: 0; } 39.33%,100%   { opacity: 1; } }
-        @keyframes k6  { 0%,39.33%   { opacity: 0; } 40%,100%   { opacity: 1; } }
-        @keyframes k7  { 0%,40.67%   { opacity: 0; } 41.33%,100%   { opacity: 1; } }
-        @keyframes k8  { 0%,42%   { opacity: 0; } 42.67%,100%   { opacity: 1; } }
-        @keyframes k9  { 0%,43.33%   { opacity: 0; } 44%,100%   { opacity: 1; } }
-        @keyframes k10 { 0%,44.67%   { opacity: 0; } 45.33%,100%   { opacity: 1; } }
-        @keyframes k11 { 0%,46%   { opacity: 0; } 46.67%,100%   { opacity: 1; } }
-        @keyframes k12 { 0%,47.33%   { opacity: 0; } 48%,100%   { opacity: 1; } }
-        @keyframes k13 { 0%,48.67%   { opacity: 0; } 49.33%,100%   { opacity: 1; } }
-        @keyframes k14 { 0%,50.67%   { opacity: 0; } 51.33%,100%   { opacity: 1; } }
-        @keyframes k15 { 0%,52.67%   { opacity: 0; } 53.33%,100%   { opacity: 1; } }
-        @keyframes k16 { 0%,54%   { opacity: 0; } 54.67%,100%   { opacity: 1; } }
-        @keyframes k17 { 0%,55.33%   { opacity: 0; } 56%,100%   { opacity: 1; } }
-        @keyframes k18 { 0%,57.33%   { opacity: 0; } 58%,100%   { opacity: 1; } }
-        @keyframes k19 { 0%,58.67%   { opacity: 0; } 59.33%,100%   { opacity: 1; } }
-        @keyframes k20 { 0%,60%   { opacity: 0; } 60.67%,100%   { opacity: 1; } }
+        @keyframes k1  { 0%,36.57%   { opacity: 0; } 37.34%,100%   { opacity: 1; } }
+        @keyframes k2  { 0%,38.09%   { opacity: 0; } 38.86%,100%   { opacity: 1; } }
+        @keyframes k3  { 0%,39.62%   { opacity: 0; } 40.38%,100%   { opacity: 1; } }
+        @keyframes k4  { 0%,42.66%   { opacity: 0; } 43.43%,100%   { opacity: 1; } }
+        @keyframes k5  { 0%,44.19%   { opacity: 0; } 44.95%,100%   { opacity: 1; } }
+        @keyframes k6  { 0%,44.95%   { opacity: 0; } 45.71%,100%   { opacity: 1; } }
+        @keyframes k7  { 0%,46.48%   { opacity: 0; } 47.23%,100%   { opacity: 1; } }
+        @keyframes k8  { 0%,48%   { opacity: 0; } 48.77%,100%   { opacity: 1; } }
+        @keyframes k9  { 0%,49.52%   { opacity: 0; } 50.29%,100%   { opacity: 1; } }
+        @keyframes k10 { 0%,51.05%   { opacity: 0; } 51.81%,100%   { opacity: 1; } }
+        @keyframes k11 { 0%,52.57%   { opacity: 0; } 53.34%,100%   { opacity: 1; } }
+        @keyframes k12 { 0%,54.09%   { opacity: 0; } 54.86%,100%   { opacity: 1; } }
+        @keyframes k13 { 0%,55.62%   { opacity: 0; } 56.38%,100%   { opacity: 1; } }
+        @keyframes k14 { 0%,57.91%   { opacity: 0; } 58.66%,100%   { opacity: 1; } }
+        @keyframes k15 { 0%,60.19%   { opacity: 0; } 60.95%,100%   { opacity: 1; } }
+        @keyframes k16 { 0%,61.71%   { opacity: 0; } 62.48%,100%   { opacity: 1; } }
+        @keyframes k17 { 0%,63.23%   { opacity: 0; } 64%,100%   { opacity: 1; } }
+        @keyframes k18 { 0%,65.52%   { opacity: 0; } 66.29%,100%   { opacity: 1; } }
+        @keyframes k19 { 0%,67.05%   { opacity: 0; } 67.81%,100%   { opacity: 1; } }
+        @keyframes k20 { 0%,68.57%   { opacity: 0; } 69.34%,100%   { opacity: 1; } }
         .ia-nota { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-color); color: var(--text-muted); font-size: .78rem; line-height: 1.5; }
 
         .steps-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; }
