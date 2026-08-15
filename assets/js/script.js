@@ -88,9 +88,25 @@ document.addEventListener('DOMContentLoaded', function() {
         // Com plano escolhido, volta e abre o pagamento. Sem plano, cai na
         // seção de planos — quem acabou de entrar veio fazer alguma coisa, e
         // largar a pessoa no topo da home a obriga a procurar sozinha.
-        return (sessionStorage.getItem('checkoutPendente') || localStorage.getItem('checkoutPendente'))
-            ? 'index.html?retomar=1'
-            : 'index.html#planos';
+        const pendente = sessionStorage.getItem('checkoutPendente') ||
+            localStorage.getItem('checkoutPendente');
+        if (!pendente) return 'index.html#planos';
+
+        // O curso não mora na index: quem sai de curso.html tem de voltar para
+        // lá, senão cai na home sem entender por que o pagamento não abriu —
+        // e o retomador do curso, que só existe naquela página, nunca roda.
+        //
+        // A origem é comparada contra uma lista fixa em vez de ser usada como
+        // veio: `checkoutPendente` está no localStorage, que a própria pessoa
+        // (ou um script de terceiro) consegue editar, e um endereço qualquer
+        // aqui viraria redirecionamento aberto logo depois do login.
+        let origem = null;
+        try {
+            origem = JSON.parse(pendente).origem;
+        } catch {
+            origem = null;
+        }
+        return (origem === 'curso.html' ? 'curso.html' : 'index.html') + '?retomar=1';
     };
 
     // ==========================================

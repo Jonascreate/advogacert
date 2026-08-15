@@ -10,8 +10,13 @@
     <link rel="stylesheet" href="assets/css/style.css">
     <style>
         .course-page { position: relative; z-index: 1; }
-        .course-shell { width: min(100% - 8rem, 1120px); margin-inline: auto; }
-        .course-hero { min-height: 100vh; display: flex; align-items: center; padding: 10rem 0 5rem; }
+        /* Mesmo container da index: 1100px com 1.5rem de respiro lateral,
+           o que da 1052px uteis e cards de 514px em duas colunas. */
+        .course-shell { width: 100%; max-width: 1100px; margin-inline: auto; padding-inline: 1.5rem; }
+        /* 100vh com conteúdo centralizado sobrava altura depois que os dois
+           botões saíram do hero: o excesso virava vazio entre o card e a faixa
+           de benefícios. 78vh ainda enche a tela sem deixar a folga solta. */
+        .course-hero { min-height: 78vh; display: flex; align-items: center; padding: 8rem 0 3.5rem; }
         .course-hero-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(320px, .7fr); gap: 5rem; align-items: center; }
         .course-eyebrow, .section-badge { display: inline-flex; align-items: center; gap: .55rem; padding: .5rem 1rem; border-radius: 50px; color: var(--accent-mac); background: rgba(110,231,200,.1); border: 1px solid rgba(110,231,200,.3); font-size: .8rem; font-weight: 600; }
         /* Tipografia ancorada na index: h1 2.45rem, h2 de seção 2.1rem,
@@ -25,34 +30,52 @@
         .course-proof { display: flex; flex-wrap: wrap; gap: 1.3rem 2rem; margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--border-color); color: var(--text-muted); font-size: .85rem; }
         .course-proof span { display: inline-flex; align-items: center; gap: .5rem; }
         .course-proof i { color: var(--accent-mac); }
-        .hero-offer { position: relative; overflow: hidden; width: 100%; max-width: 460px; justify-self: end; background: rgba(22,22,24,.92); border: 1px solid var(--border-color); border-radius: 24px; padding: 32px; box-shadow: 0 24px 80px rgba(0,0,0,.35); }
+        /* Este bloco estava todo em px — foi assim que escapou da escala de
+           70% e ficou grande quando ela saiu. Agora em rem, como a index. */
+        .hero-offer { position: relative; overflow: hidden; width: 100%; max-width: 400px; justify-self: end; background: rgba(22,22,24,.92); border: 1px solid var(--border-color); border-radius: 20px; padding: 2.25rem 2rem; box-shadow: 0 24px 80px rgba(0,0,0,.35); }
         .hero-offer::before { content: ''; position: absolute; width: 260px; height: 260px; right: -120px; top: -130px; border-radius: 50%; background: rgba(110,231,200,.16); filter: blur(45px); }
-        .offer-brand { position: relative; display: flex; align-items: center; justify-content: center; gap: 18px; min-height: 130px; border-bottom: 1px solid var(--border-color); }
-        .offer-brand img { max-width: 130px; max-height: 62px; object-fit: contain; }
-        .offer-brand .plus { color: var(--accent-mac); font-family: 'Outfit',sans-serif; font-size: 28px; }
-        .offer-caption { color: var(--text-secondary); margin-top: 24px; font-size: 17px; }
-        .offer-price { font-family: 'Outfit',sans-serif; font-size: 56px; font-weight: 600; line-height: 1; margin-top: 10px; }
-        .offer-payment { color: var(--text-muted); font-size: 15px; margin-top: 8px; }
-        .offer-button { width: 100%; justify-content: center; margin-top: 24px; font-size: 18px; padding: 16px 24px; }
+        /* Três marcas onde antes cabiam duas: com os 18px originais a linha
+           somava ~364px dentro de um card de 336px úteis e estourava. */
+        .offer-brand { position: relative; display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 100px; border-bottom: 1px solid var(--border-color); }
+        /* Os três caem juntos a ~78% do tamanho anterior. object-fit: contain
+           garante que cada um encolhe pelo próprio lado maior, então nenhum
+           deforma e a relação entre eles é a mesma de antes, só menor. */
+        .offer-brand img { max-width: 86px; max-height: 42px; object-fit: contain; }
+        /* PJe e Claude são logotipos deitados e renderizam com ~21-24px de
+           altura; o VS Code é quadrado e, no mesmo teto dos outros, apareceria
+           com quase o dobro. O limite próprio é o que iguala o peso visual. */
+        .offer-brand-icon { max-height: 31px; }
+        .offer-brand .plus { color: var(--text-muted); font-family: 'Outfit',sans-serif; font-size: 1.1rem; font-weight: 300; }
+        .offer-caption { color: var(--text-secondary); margin-top: 1.5rem; font-size: 1rem; }
+        .offer-price { font-family: 'JetBrains Mono',monospace; font-size: 2.1rem; font-weight: 700; line-height: 1; margin-top: .6rem; }
+        .offer-payment { color: var(--text-muted); font-size: .92rem; margin-top: .5rem; }
+        .offer-button { width: 100%; justify-content: center; margin-top: 1.5rem; }
         .countdown { margin-top: 1.4rem; padding-top: 1.2rem; border-top: 1px solid var(--border-color); text-align: center; }
-        .countdown span { display: block; color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: .08em; }
-        #prazo-relogio { color: var(--accent-mac); font-family: 'JetBrains Mono',monospace; font-size: 17px; margin-top: 8px; }
+        .countdown span { display: block; color: var(--text-muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; }
+        #prazo-relogio { color: var(--accent-mac); font-family: 'JetBrains Mono',monospace; font-size: 1rem; margin-top: .5rem; }
 
         .benefit-strip { border-block: 1px solid var(--border-color); background: var(--bg-secondary); }
+        /* Só a seção logo abaixo da faixa: as 6rem gerais somavam com a borda
+           da faixa e abriam um buraco em tela grande. As demais seções seguem
+           com o respiro original. */
+        .benefit-strip + .course-section { padding-top: 2.4rem; }
         .benefit-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
-        .benefit { min-height: 120px; padding: 1.7rem; display: flex; align-items: center; gap: 1rem; border-right: 1px solid var(--border-color); }
+        /* Vertical enxuto de propósito: o padding sozinho não encolhia a faixa,
+           porque o min-height é que definia a altura. Mexer só num dos dois não
+           muda nada na tela. Laterais preservadas em 1.7rem. */
+        .benefit { min-height: 88px; padding: 1.05rem 1.7rem; display: flex; align-items: center; gap: 1rem; border-right: 1px solid var(--border-color); }
         .benefit:last-child { border-right: 0; }
         .benefit i { color: var(--accent-mac); font-size: .95rem; }
         .benefit strong { display: block; font-size: .95rem; }
         .benefit small { display: block; color: var(--text-muted); line-height: 1.45; margin-top: .3rem; }
 
-        .course-section { padding: 7rem 0; }
+        .course-section { padding: 3.5rem 0; }
         .course-section.alt { background: var(--bg-secondary); }
         .section-heading { max-width: 720px; text-align: center; margin: 0 auto 4rem; }
         .section-heading h2 { font-family: 'Outfit',sans-serif; font-size: 2.1rem; font-weight: 600; line-height: 1.12; margin: 1.15rem 0; }
         .section-heading p { color: var(--text-secondary); font-size: 1.08rem; line-height: 1.7; }
-        .module-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 2rem; }
-        .module-card { position: relative; overflow: hidden; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 2.5rem; transition: .4s ease; }
+        .module-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 1.5rem; }
+        .module-card { position: relative; overflow: hidden; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 2.25rem 2rem; transition: .4s ease; }
         .module-card:hover { transform: translateY(-6px); border-color: rgba(110,231,200,.4); box-shadow: 0 20px 50px rgba(110,231,200,.08); }
         .module-number { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 11px; background: rgba(110,231,200,.1); border: 1px solid rgba(110,231,200,.2); color: var(--accent-mac); font-family: 'JetBrains Mono',monospace; font-size: .95rem; }
         .module-card h3 { font-family: 'Outfit',sans-serif; font-size: 1.4rem; font-weight: 600; margin: 1.5rem 0 .75rem; }
@@ -61,12 +84,334 @@
         .module-list li { display: flex; gap: .7rem; padding: .8rem 0; color: var(--text-secondary); border-top: 1px solid var(--border-color); line-height: 1.45; }
         .module-list i { color: var(--accent-mac); margin-top: .2rem; }
 
+        /* Bloco da pesquisa de jurisprudência: o texto virou cabeçalho da
+           seção, e a simulação ocupa a largura inteira embaixo dele. Tudo em
+           HTML/CSS, sem imagem externa, para não pesar o carregamento. */
+        /* As duas letras percorrem os acentos da marca em tempos diferentes,
+           então a cor "anda" de uma para a outra em vez de piscarem juntas.
+           inline-block é o que permite animar cada letra isoladamente. */
+        .ia-letras span { display: inline-block; font-weight: 700; animation: iaCor 2.4s ease-in-out infinite; }
+        .ia-letras span:last-child { animation-delay: .3s; }
+        /* Quatro paradas em vez de duas: com só verde e azul nos extremos, a
+           maior parte do ciclo era transição e a cor parecia parada. O brilho
+           acompanha a cor para o movimento ser percebido também no escuro. */
+        @keyframes iaCor {
+            0%,100% { color: var(--accent-mac); text-shadow: 0 0 14px rgba(110,231,200,.55); }
+            33% { color: var(--accent-win); text-shadow: 0 0 14px rgba(79,163,255,.55); }
+            66% { color: #ffffff; text-shadow: 0 0 16px rgba(255,255,255,.5); }
+        }
+        /* A cena inteira: à esquerda a pessoa pedindo a peça, à direita a folha
+           que sai pronta. Sem card em volta — o papel é o objeto, e a moldura
+           escura que existia aqui competia com ele. O limite de largura existe
+           porque agora ela ocupa a seção toda: solta nos 1100px do shell, a
+           conversa e a folha ficariam longe demais uma da outra. */
+        .ia-palco { max-width: 760px; margin-inline: auto; display: grid; grid-template-columns: minmax(0,.92fr) minmax(0,1fr); gap: 2rem; align-items: center; }
+        .ia-palco .ia-nota { grid-column: 1 / -1; }
+
+        .ia-chat { position: relative; display: flex; flex-direction: column; gap: .55rem; }
+        /* Sombra radial atrás da conversa: escurece o fundo sob os balões e os
+           descola do chapado, dando profundidade. Fica no ::before para não
+           entrar no fluxo e não mexer na altura da coluna. */
+        .ia-chat::before { content: ''; position: absolute; inset: -24% -18%; border-radius: 50%; pointer-events: none;
+            background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.62), rgba(0,0,0,.34) 45%, transparent 72%);
+            filter: blur(26px); }
+        /* z-index nos filhos em vez de -1 na sombra: com valor negativo ela
+           cairia atrás do fundo da seção e sumiria conforme onde o bloco parar. */
+        .ia-bolha, .ia-acao { position: relative; z-index: 1; }
+        .ia-bolha { padding: .6rem .7rem; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-card); box-shadow: 0 10px 26px -12px rgba(0,0,0,.75); }
+        .ia-quem { display: flex; align-items: center; gap: .35rem; margin-bottom: .35rem; font-size: .56rem; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); }
+        .ia-quem i { color: var(--accent-mac); }
+        /* width:0 no repouso e um keyframe por linha: é a largura que abre e
+           dá a digitação. Com animation-delay o ciclo da linha se deslocaria e,
+           da segunda volta em diante, ela digitaria fora de hora. */
+        /* O pedido aparece em blocos de palavras, não caractere a caractere.
+           Datilografar por largura exigiria `nowrap`, e aí a frase seria
+           cortada na margem do balão — foi o que estragou o texto da peça.
+           Em blocos inline o texto quebra sozinho e ainda lê como digitação. */
+        .ia-fala { font-size: .66rem; line-height: 1.55; color: var(--text-secondary); }
+        .ia-fala span { opacity: 0; }
+        .ia-w1 { animation: iaW1 16s ease-in-out infinite; }
+        .ia-w2 { animation: iaW2 16s ease-in-out infinite; }
+        .ia-w3 { animation: iaW3 16s ease-in-out infinite; }
+        .ia-w4 { animation: iaW4 16s ease-in-out infinite; }
+        @keyframes iaW1 { 0%,1% { opacity: 0; } 4%,100% { opacity: 1; } }
+        @keyframes iaW2 { 0%,4% { opacity: 0; } 7%,100% { opacity: 1; } }
+        @keyframes iaW3 { 0%,7% { opacity: 0; } 10%,100% { opacity: 1; } }
+        @keyframes iaW4 { 0%,10% { opacity: 0; } 13%,100% { opacity: 1; } }
+        .ia-cursor { display: inline-block; width: 1px; height: .7em; margin-left: 2px; background: var(--accent-mac); vertical-align: -1px; animation: iaPisca 1s steps(1) infinite; }
+        @keyframes iaPisca { 50% { opacity: 0; } }
+
+        /* O botão e a mão moram no mesmo bloco: assim o dedo cai sobre o botão
+           por posição relativa, e não por um palpite de porcentagem na página. */
+        .ia-acao { position: relative; align-self: flex-start; }
+        .ia-enviar { display: inline-flex; align-items: center; gap: .4rem; padding: .35rem .8rem; border-radius: 50px; background: var(--accent-mac); color: #06231c; font-family: 'Outfit',sans-serif; font-size: .68rem; font-weight: 700; animation: iaBotao 16s ease-in-out infinite; }
+        @keyframes iaBotao { 0%,20% { filter: none; } 23% { filter: brightness(.82); } 26%,100% { filter: none; } }
+        /* O cursor de mão do navegador, ampliado: o gesto que liga o pedido ao
+           documento que sai. Ele entra, clica em Enviar e recua. */
+        .ia-mao { position: absolute; left: 58%; top: 30%; z-index: 2; font-size: 2.4rem; color: #fff; filter: drop-shadow(0 6px 14px rgba(0,0,0,.6)); opacity: 0; animation: iaMao 16s ease-in-out infinite; }
+        .ia-mao::after { content: ''; position: absolute; left: 4%; top: 2%; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--accent-mac); opacity: 0; animation: iaToque 16s ease-out infinite; }
+        @keyframes iaMao {
+            0%,14% { opacity: 0; transform: translate(22px,22px) scale(1.06); }
+            19% { opacity: 1; transform: translate(4px,4px) scale(1.03); }
+            23% { opacity: 1; transform: translate(0,0) scale(.84); }
+            27% { opacity: 1; transform: translate(0,0) scale(1); }
+            34% { opacity: 1; transform: translate(0,0) scale(1); }
+            42%,100% { opacity: 0; transform: translate(10px,14px) scale(1); }
+        }
+        @keyframes iaToque {
+            0%,22% { opacity: 0; transform: scale(.4); }
+            24% { opacity: .95; transform: scale(.7); }
+            32%,100% { opacity: 0; transform: scale(2.2); }
+        }
+        /* A resposta do Claude só entra depois do clique. */
+        .ia-resposta { opacity: 0; animation: iaResposta 16s ease-in-out infinite; }
+        @keyframes iaResposta { 0%,26% { opacity: 0; transform: translateY(4px); } 32%,100% { opacity: 1; transform: none; } }
+        .ia-resposta p { font-size: .66rem; line-height: 1.5; color: var(--text-secondary); }
+        /* A logo do Claude no lugar de um ícone genérico: é a marca real da
+           ferramenta que o curso ensina, e ela já existe no projeto. */
+        .ia-quem img { height: 11px; width: auto; object-fit: contain; }
+
+        /* A jurisprudência encontrada mora na conversa, não na peça: é o retorno
+           da IA sobre o que leu. Peso 400 e cor secundária de propósito — em
+           negrito a lista competia com a resposta e pesava o balão. */
+        .ia-juris { list-style: none; display: grid; gap: .3rem; margin-top: .55rem; padding-top: .5rem; border-top: 1px solid var(--border-color); }
+        .ia-juris li { display: flex; gap: .4rem; font-size: .6rem; font-weight: 400; line-height: 1.45; color: var(--text-muted); opacity: 0; }
+        .ia-juris i { margin-top: .2rem; font-size: .5rem; color: var(--accent-win); }
+        .ia-juris b { font-weight: 600; color: var(--text-secondary); }
+
+        /* Fase 2: o parecer saindo no timbrado. O desenho é o mesmo da folha
+           que o painel manda para a impressora (assets/js/admin/cadastros.js,
+           ESTILO_FOLHA): papel creme, serifa, moldura interna, marca
+           centralizada, filete duplo sob o cabeçalho e assinaturas no rodapé.
+           Aqui em proporção A4 retrato de verdade — aspect-ratio 210/297.
+
+           É o A4 que resolve a distribuição: como a altura passa a ser fixa,
+           o miolo vira flex em coluna com space-between e as três partes
+           (cabeçalho, corpo, assinaturas) se espalham pela folha em vez de se
+           amontoarem no topo com um vazio embaixo. */
+        .ia-timbrado { --paper: #fbf9f4; --ink: #1a1a1a; --ink-2: #4a4a4a; --ink-3: #787878; --rule-soft: #d8d3c2; --marca: #1a4f9c;
+            position: relative; width: 100%; max-width: 340px; margin: 1.35rem auto 0; aspect-ratio: 210 / 297;
+            display: flex; flex-direction: column; justify-content: space-between; gap: .5rem;
+            padding: 1.5rem 1.35rem; background: var(--paper);
+            background-image: repeating-linear-gradient(0deg,rgba(0,0,0,.012) 0 1px,transparent 1px 38px),repeating-linear-gradient(90deg,rgba(0,0,0,.012) 0 1px,transparent 1px 38px);
+            border: 1px solid var(--rule-soft); color: var(--ink);
+            font-family: Georgia,'Times New Roman',Times,serif;
+            box-shadow: 0 24px 60px -20px rgba(0,0,0,.55); opacity: 0;
+            animation: iaTimbrado 16s ease-in-out infinite; }
+        /* A moldura interna do papel timbrado, igual à do relatório impresso. */
+        .ia-timbrado::before { content: ''; position: absolute; inset: .55rem; border: 1px solid var(--rule-soft); pointer-events: none; }
+        @keyframes iaTimbrado { 0%,42% { opacity: 0; transform: translateY(8px); } 48%,100% { opacity: 1; transform: none; } }
+
+        /* Cabeçalho no formato do modelo: marca centralizada, inscrição da OAB
+           logo abaixo e um filete fino fechando a faixa. */
+        .tb-cabecalho { text-align: center; padding-bottom: .45rem; border-bottom: 1px solid var(--marca); }
+        /* Mesma técnica do cabeçalho e do rodapé do site (.logo-mask): o PNG
+           entra como máscara e a cor vem do fundo. Sem a máscara não daria — o
+           arquivo tem o "ADV" em branco, desenhado para fundo escuro, e sumiria
+           no papel creme. O azul cheio substitui o degradê mint→azul, que no
+           papel claro ficava lavado. */
+        .tb-logo { height: 46px; aspect-ratio: 768 / 332; margin: 0 auto;
+            background: linear-gradient(135deg, #2f7fd4, #0a3d7a);
+            -webkit-mask-image: url('assets/img/logo.png'); mask-image: url('assets/img/logo.png');
+            -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+            -webkit-mask-position: center; mask-position: center;
+            -webkit-mask-size: contain; mask-size: contain; }
+        /* Faixa de contato do timbrado: telefone, endereço, e-mail e inscrição
+           numa linha só. Quebra sozinha na folha estreita, e o ponto separador
+           some na quebra porque é borda do item, não caractere digitado. */
+        .tb-contatos { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .1rem .5rem; margin-top: .2rem; font-size: .38rem; letter-spacing: .04em; color: var(--ink); }
+        .tb-contatos span { display: inline-flex; align-items: center; gap: .22rem; }
+        .tb-contatos span + span { padding-left: .5rem; border-left: 1px solid var(--rule-soft); }
+        .tb-contatos i { font-size: .32rem; opacity: .8; }
+
+        .tb-corpo { display: flex; flex-direction: column; flex: 1; }
+        /* Revelação linha a linha em vez de datilografia por largura. A
+           datilografia exigia `white-space: nowrap` com `overflow: hidden`, e
+           numa folha de 340px isso cortava o texto que passasse da margem —
+           some justamente o fim das frases. Deixando quebrar, o parágrafo pode
+           ser justificado com os destaques em negrito, como no modelo. */
+        .tb-linha { font-size: .43rem; line-height: 1.4; color: var(--ink-2); text-align: justify; }
+        .tb-linha b { color: var(--ink); }
+        /* Endereçamento: maiúsculas e negrito, como na primeira lauda. */
+        .tb-linha.destaque { font-size: .46rem; font-weight: 700; color: var(--ink); text-transform: uppercase; letter-spacing: .01em; line-height: 1.35; }
+        /* O vão entre o endereçamento e a qualificação da parte é marca
+           registrada da peça — sem ele o texto não parece uma petição. O teto
+           existe porque, solto, ele engolia a folha: sobrava muito espaço
+           vertical e o flex jogava tudo nesse buraco. */
+        .tb-vao { flex: 1; min-height: .7rem; max-height: 2.6rem; }
+        /* Número do processo entre o endereçamento e a qualificação da parte,
+           alinhado à direita, como a referência dos autos na lauda. */
+        .tb-processo { align-self: flex-start; margin-bottom: .9rem; font-size: .44rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--ink); }
+        /* O nome corre dentro do parágrafo, não numa linha própria: isolado e
+           centralizado ele lia como título da peça, e não como a parte sendo
+           qualificada. Maiúsculas e negrito bastam para destacá-lo. */
+        .tb-nome { font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--ink); }
+        /* Fecho da peça: pedido, data e subscrição, cada um centralizado como
+           na lauda impressa. A linha da assinatura é uma borda, não um traço
+           digitado — assim ela acompanha a largura do nome. */
+        .tb-linha.fecho { text-align: center; margin-top: .3rem; }
+        .tb-linha.data { text-align: center; font-style: italic; color: var(--ink-3); }
+        .tb-assina { margin: .45rem auto 0; padding-top: .16rem; width: 62%; border-top: 1px solid var(--ink); text-align: center; font-size: .42rem; font-weight: 700; color: var(--ink); }
+        /* A faixa com o nome do recurso: só contorno, sem chapado preto. A
+           animação vai no container, não num span interno — com o texto
+           animado por dentro, a moldura aparecia antes da sua vez. */
+        .tb-faixa { margin: .4rem 0; padding: .16rem 0; border: 1px solid var(--ink); color: var(--ink); text-align: center; font-size: .5rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+
+        /* Rodapé do modelo: filete fino e o endereço do escritório centralizado,
+           com o e-mail sublinhado como no papel original. */
+        .tb-rodape { margin-top: .4rem; padding-top: .3rem; border-top: 1px solid var(--marca); text-align: center; font-size: .4rem; line-height: 1.5; color: var(--ink-3); opacity: 0; animation: tbFecha 16s ease-in-out infinite; }
+        .tb-rodape u { color: var(--marca); }
+        @keyframes tbFecha { 0%,86% { opacity: 0; } 92%,100% { opacity: 1; } }
+
+        /* Um keyframe por elemento em vez de animation-delay: o atraso desloca
+           o ciclo inteiro daquele item, e da segunda volta em diante ele entra
+           fora de hora, descolado do resto da folha. */
+        .tbc1 { animation: tbc1 16s ease-in-out infinite; }
+        .tbc2 { animation: tbc2 16s ease-in-out infinite; }
+        .tbc3 { animation: tbc3 16s ease-in-out infinite; }
+        @keyframes tbc1 { 0%,34% { opacity: 0; transform: translateY(3px); } 39%,100% { opacity: 1; transform: none; } }
+        @keyframes tbc2 { 0%,39% { opacity: 0; transform: translateY(3px); } 44%,100% { opacity: 1; transform: none; } }
+        @keyframes tbc3 { 0%,44% { opacity: 0; transform: translateY(3px); } 49%,100% { opacity: 1; transform: none; } }
+        /* Datilografia em tempo real: o texto sai em blocos encadeados, um a
+           cada ~0,3s, varrendo a peça de cima a baixo. Não é caractere a
+           caractere de propósito — isso exigiria `white-space: nowrap`, que
+           impede a quebra de linha e corta a frase na margem da folha. Em
+           blocos inline o parágrafo continua justificado e quebrando sozinho.
+           `steps(1)` remove o esmaecimento: o bloco aparece de uma vez, como
+           tecla batida, em vez de desbotar para dentro. */
+        .k0,.k1,.k2,.k3,.k4,.k5,.k6,.k7,.k8,.k9,.k10,
+        .k11,.k12,.k13,.k14,.k15,.k16,.k17,.k18,.k19,.k20 { opacity: 0; animation-duration: 16s; animation-timing-function: steps(1); animation-iteration-count: infinite; }
+        .k0 { animation-name: k0; }
+        /* O número do processo agora entra depois do endereçamento, então o
+           passo dele fica entre o k3 e o k4, não no começo da cascata. */
+        @keyframes k0 { 0%,53.5% { opacity: 0; } 54.5%,100% { opacity: 1; } }
+        .k1 { animation-name: k1; } .k2 { animation-name: k2; } .k3 { animation-name: k3; } .k4 { animation-name: k4; }
+        .k5 { animation-name: k5; } .k6 { animation-name: k6; } .k7 { animation-name: k7; } .k8 { animation-name: k8; }
+        .k9 { animation-name: k9; } .k10 { animation-name: k10; } .k11 { animation-name: k11; } .k12 { animation-name: k12; }
+        .k13 { animation-name: k13; } .k14 { animation-name: k14; } .k15 { animation-name: k15; } .k16 { animation-name: k16; }
+        .k17 { animation-name: k17; } .k18 { animation-name: k18; } .k19 { animation-name: k19; } .k20 { animation-name: k20; }
+        @keyframes k1  { 0%,48%   { opacity: 0; } 49%,100%   { opacity: 1; } }
+        @keyframes k2  { 0%,50%   { opacity: 0; } 51%,100%   { opacity: 1; } }
+        @keyframes k3  { 0%,52%   { opacity: 0; } 53%,100%   { opacity: 1; } }
+        @keyframes k4  { 0%,56%   { opacity: 0; } 57%,100%   { opacity: 1; } }
+        @keyframes k5  { 0%,58%   { opacity: 0; } 59%,100%   { opacity: 1; } }
+        @keyframes k6  { 0%,59%   { opacity: 0; } 60%,100%   { opacity: 1; } }
+        @keyframes k7  { 0%,61%   { opacity: 0; } 62%,100%   { opacity: 1; } }
+        @keyframes k8  { 0%,63%   { opacity: 0; } 64%,100%   { opacity: 1; } }
+        @keyframes k9  { 0%,65%   { opacity: 0; } 66%,100%   { opacity: 1; } }
+        @keyframes k10 { 0%,67%   { opacity: 0; } 68%,100%   { opacity: 1; } }
+        @keyframes k11 { 0%,69%   { opacity: 0; } 70%,100%   { opacity: 1; } }
+        @keyframes k12 { 0%,71%   { opacity: 0; } 72%,100%   { opacity: 1; } }
+        @keyframes k13 { 0%,73%   { opacity: 0; } 74%,100%   { opacity: 1; } }
+        @keyframes k14 { 0%,76%   { opacity: 0; } 77%,100%   { opacity: 1; } }
+        @keyframes k15 { 0%,79%   { opacity: 0; } 80%,100%   { opacity: 1; } }
+        @keyframes k16 { 0%,81%   { opacity: 0; } 82%,100%   { opacity: 1; } }
+        @keyframes k17 { 0%,83%   { opacity: 0; } 84%,100%   { opacity: 1; } }
+        @keyframes k18 { 0%,86%   { opacity: 0; } 87%,100%   { opacity: 1; } }
+        @keyframes k19 { 0%,88%   { opacity: 0; } 89%,100%   { opacity: 1; } }
+        @keyframes k20 { 0%,90%   { opacity: 0; } 91%,100%   { opacity: 1; } }
+        .ia-nota { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-color); color: var(--text-muted); font-size: .78rem; line-height: 1.5; }
+
         .steps-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; }
-        .step-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 2.2rem; }
+        .step-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 2.25rem 2rem; }
         .step-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 11px; color: var(--accent-mac); background: rgba(110,231,200,.1); font-size: 1.2rem; }
         .step-card h3 { font-family: 'Outfit',sans-serif; font-size: 1.4rem; font-weight: 600; margin: 1.5rem 0 .75rem; }
         .step-card p { color: var(--text-secondary); line-height: 1.65; }
         .step-card a { display: inline-flex; gap: .4rem; align-items: center; color: var(--accent-mac); text-decoration: none; font-size: .9rem; margin-top: 1.25rem; }
+
+        .videos-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; margin-bottom: 2rem; }
+        .video-card { position: relative; display: flex; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; transition: .4s ease; }
+        .video-card:hover { transform: translateY(-6px); border-color: rgba(110,231,200,.4); box-shadow: 0 20px 50px rgba(110,231,200,.08); }
+        .video-legenda { flex: 1; display: flex; flex-direction: column; padding: 1.75rem 1.5rem; }
+        /* Par de logos do card da IDE, no mesmo formato do anúncio do
+           curso na index: as duas marcas separadas por um "+". */
+        /* Selo de logos na borda de baixo do card: bottom 0 encosta no
+           limite e o translateY(50%) joga exatamente metade para fora. */
+        .video-logos { position: absolute; bottom: 0; left: 50%; transform: translate(-50%, 50%); z-index: 2; display: flex; align-items: center; gap: .4rem; padding: .4rem .65rem; border-radius: 50px; background: var(--bg-card); border: 1px solid var(--border-color); box-shadow: 0 6px 18px rgba(0,0,0,.35); }
+        .video-logos img { max-height: 38px; max-width: 90px; object-fit: contain; }
+        .video-logos span { color: var(--text-muted); font-family: 'Outfit',sans-serif; font-size: .95rem; font-weight: 300; }
+
+        /* Painel do Advogado do PJe, replicado em HTML/CSS no segundo card.
+           A barra azul e as abas seguem a tela real do sistema. */
+        .pje-janela { border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-secondary); overflow: hidden; margin: 1rem 0 1.4rem; }
+        .pje-topo { display: flex; align-items: center; gap: .4rem; padding: .45rem .6rem; background: #1668a5; color: #fff; }
+        .pje-topo i { font-size: .6rem; opacity: .9; }
+        .pje-marca { font-family: 'Outfit',sans-serif; font-size: .7rem; font-weight: 700; letter-spacing: -.02em; }
+        .pje-titulo { font-size: .58rem; opacity: .95; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pje-topo .pje-user { margin-left: auto; }
+        .pje-abas { display: flex; gap: .8rem; padding: .4rem .6rem 0; border-bottom: 1px solid var(--border-color); font-size: .55rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .03em; }
+        .pje-abas span { padding-bottom: .35rem; white-space: nowrap; }
+        .pje-abas .ativa { color: var(--accent-win); border-bottom: 2px solid var(--accent-win); }
+        .pje-busca { display: flex; align-items: center; gap: .35rem; margin: .5rem .6rem; padding: .3rem .45rem; border: 1px solid var(--border-color); border-radius: 5px; font-size: .55rem; color: var(--text-muted); }
+        .pje-busca i { font-size: .5rem; color: var(--accent-win); }
+        .pje-lista { list-style: none; padding: 0 .35rem .5rem; }
+        .pje-lista li { display: flex; align-items: center; gap: .4rem; padding: .28rem .3rem; border-radius: 4px; font-size: .56rem; color: var(--text-muted); line-height: 1.25; animation: pjeFoco 7.2s ease-in-out infinite; }
+        .pje-lista li b { margin-left: auto; font-family: 'JetBrains Mono',monospace; font-size: .58rem; color: var(--text-secondary); }
+        @keyframes pjeFoco { 0%,72%,100% { background: transparent; color: var(--text-muted); } 10%,60% { background: rgba(79,163,255,.13); color: var(--text-secondary); } }
+        .pje-nota { padding: .45rem .7rem; border-top: 1px solid var(--border-color); font-size: .58rem; color: var(--text-muted); }
+
+        /* Janela da IDE do primeiro card: ilustração da pasta do processo
+           aberta no editor, com a IA lendo os arquivos. HTML e CSS puros. */
+        .ide-janela { border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-secondary); overflow: hidden; margin: 1rem 0 1.4rem; }
+        .ide-topo { display: flex; align-items: center; gap: .35rem; padding: .5rem .7rem; border-bottom: 1px solid var(--border-color); }
+        .ide-bolha { width: 7px; height: 7px; border-radius: 50%; background: var(--border-color); }
+        .ide-caminho { margin-left: .4rem; font-family: 'JetBrains Mono',monospace; font-size: .6rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ide-corpo { display: grid; grid-template-columns: 1fr 1fr; }
+        .ide-arvore { padding: .6rem .5rem; border-right: 1px solid var(--border-color); }
+        .ide-pasta { display: flex; align-items: center; gap: .3rem; font-size: .6rem; color: var(--text-secondary); margin-bottom: .35rem; }
+        .ide-pasta i { color: var(--accent-win); }
+        .ide-arvore ul { list-style: none; }
+        .ide-arvore li { display: flex; align-items: center; gap: .3rem; padding: .18rem .25rem; border-radius: 4px; font-size: .58rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: ideLendo 6s ease-in-out infinite; }
+        .ide-arvore li i { color: var(--accent-mac); opacity: .55; }
+        @keyframes ideLendo { 0%,70%,100% { background: transparent; color: var(--text-muted); } 12%,58% { background: rgba(110,231,200,.12); color: var(--text-secondary); } }
+        .ide-painel { padding: .6rem .55rem; display: flex; flex-direction: column; gap: .3rem; }
+        .ide-ia { display: flex; align-items: center; gap: .3rem; font-size: .6rem; color: var(--accent-mac); margin-bottom: .1rem; }
+        .ide-ia::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--accent-mac); animation: miniPulso 1.6s ease-in-out infinite; }
+        /* Texto real sendo redigido pela IA, em vez de barras vazias. O
+           steps() faz o avanço em degraus, como digitação de verdade. */
+        .ide-texto { font-family: 'JetBrains Mono',monospace; font-size: .5rem; line-height: 1.5; color: var(--text-secondary); white-space: nowrap; overflow: hidden; animation: ideEscreve 5.4s steps(24) infinite; }
+        .ide-texto.titulo { color: var(--accent-mac); }
+        .ide-texto.lei { color: var(--accent-win); }
+        @keyframes ideEscreve { 0% { width: 0; } 32%,100% { width: 100%; } }
+        /* Peças que completam o editor: abas, terminal de saída e barra
+           de status. Alturas pensadas para igualar o painel do card 3. */
+        .ide-abas { display: flex; gap: 1px; border-bottom: 1px solid var(--border-color); background: var(--border-color); }
+        .ide-abas span { flex: 1; padding: .3rem .4rem; background: var(--bg-secondary); font-family: 'JetBrains Mono',monospace; font-size: .52rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ide-abas .ativa { background: var(--bg-card); color: var(--accent-mac); border-top: 2px solid var(--accent-mac); padding-top: calc(.3rem - 2px); }
+        .ide-sub { padding-left: .55rem; opacity: .75; }
+        .ide-saida { padding: .45rem .55rem; border-top: 1px solid var(--border-color); font-family: 'JetBrains Mono',monospace; font-size: .52rem; line-height: 1.6; color: var(--text-muted); }
+        .ide-saida b { color: var(--accent-mac); font-weight: 400; }
+        .ide-saida div { white-space: nowrap; overflow: hidden; animation: ideDigita 5.4s steps(28) infinite; }
+        @keyframes ideDigita { 0% { width: 0; } 30%,100% { width: 100%; } }
+        .ide-status { display: flex; align-items: center; gap: .45rem; padding: .3rem .6rem; border-top: 1px solid var(--border-color); background: rgba(110,231,200,.07); font-size: .5rem; color: var(--text-muted); }
+        .ide-status .dir { margin-left: auto; color: var(--accent-mac); }
+        .ide-nota { padding: .45rem .7rem; border-top: 1px solid var(--border-color); font-size: .58rem; color: var(--text-muted); }
+
+        /* Painel em miniatura do terceiro card: ilustração animada, feita
+           em SVG inline. Série única na cor de destaque — sem legenda,
+           porque o título do painel já diz o que é. O bloco de
+           prefers-reduced-motion no fim do arquivo desliga o movimento. */
+        .mini-dash { border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-secondary); padding: .9rem; margin: 1rem 0 1.4rem; }
+        .mini-dash-topo { display: flex; align-items: center; gap: .5rem; font-size: .72rem; color: var(--text-muted); }
+        .mini-dash-topo strong { font-family: 'Outfit',sans-serif; font-size: .8rem; font-weight: 600; color: var(--text-primary); }
+        .mini-vivo { margin-left: auto; display: inline-flex; align-items: center; gap: .3rem; color: var(--accent-mac); font-size: .65rem; }
+        .mini-vivo::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent-mac); animation: miniPulso 1.6s ease-in-out infinite; }
+        @keyframes miniPulso { 50% { opacity: .25; } }
+        .mini-kpis { display: flex; gap: .5rem; margin: .7rem 0; }
+        .mini-kpi { flex: 1; padding: .5rem .6rem; border: 1px solid var(--border-color); border-radius: 8px; }
+        .mini-kpi strong { display: block; font-family: 'JetBrains Mono',monospace; font-size: 1rem; font-weight: 700; color: var(--accent-mac); line-height: 1; }
+        .mini-kpi span { display: block; margin-top: .25rem; font-size: .62rem; color: var(--text-muted); line-height: 1.3; }
+        .mini-grafico { display: block; width: 100%; height: auto; }
+        .mini-grade { stroke: var(--border-color); stroke-width: 1; }
+        .mini-barra { fill: var(--accent-mac); transform-box: fill-box; transform-origin: bottom; animation: miniBarra 3.2s ease-in-out infinite; }
+        @keyframes miniBarra { 0%,100% { transform: scaleY(.82); } 50% { transform: scaleY(1); } }
+        .mini-linha { fill: none; stroke: var(--accent-win); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 260; animation: miniTraco 4s ease-in-out infinite; }
+        @keyframes miniTraco { 0% { stroke-dashoffset: 260; } 45%,100% { stroke-dashoffset: 0; } }
+        .mini-rotulo { fill: var(--text-muted); font-size: 8px; font-family: 'Inter',sans-serif; text-anchor: middle; }
+        .mini-nota { margin-top: .6rem; font-size: .62rem; color: var(--text-muted); }
+
+        .video-legenda h3 { font-family: 'Outfit',sans-serif; font-size: 1.4rem; font-weight: 600; margin-bottom: .6rem; }
+        .video-legenda p { color: var(--text-secondary); line-height: 1.65; }
 
         .decision-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
         .decision-copy h2 { font-family: 'Outfit',sans-serif; font-size: 2.1rem; font-weight: 600; line-height: 1.1; }
@@ -76,25 +421,31 @@
         .decision-item i { color: var(--accent-mac); margin-top: .25rem; }
         .decision-item strong { display: block; }
         .decision-item span { color: var(--text-muted); font-size: .9rem; line-height: 1.5; }
-        .decision-offer { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; padding: 2.5rem; }
+        .decision-offer { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 2.25rem 2rem; }
         .decision-offer h3 { font-family: 'Outfit',sans-serif; font-size: 1.4rem; font-weight: 600; }
         .decision-offer ul { list-style: none; margin: 1.5rem 0; }
         .decision-offer li { display: flex; gap: .7rem; color: var(--text-secondary); padding: .65rem 0; }
         .decision-offer li i { color: var(--accent-mac); }
         .final-cta { padding: 6.5rem 0; text-align: center; }
-        .final-cta-inner { max-width: 850px; margin: auto; padding: 4rem; border: 1px solid var(--border-color); border-radius: 24px; background: var(--bg-secondary); }
+        .final-cta-inner { max-width: 850px; margin: auto; padding: 2.75rem; border: 1px solid var(--border-color); border-radius: 20px; background: var(--bg-secondary); }
         .final-cta h2 { font-family: 'Outfit',sans-serif; font-size: 2.1rem; font-weight: 600; line-height: 1.12; }
         .final-cta p { color: var(--text-secondary); margin: 1.2rem auto 2rem; font-size: 1.05rem; }
         .mobile-purchase { display: none; }
         button.btn-primary { font-family: 'Inter',sans-serif; }
 
+        /* Rodapé mais baixo, só nesta página. O style.css usa 4rem de
+           padding e 40px de logo, e é compartilhado com a index — por isso
+           a redução fica aqui, e não lá. */
+        footer { padding: 2.5rem 1.5rem; }
+        .footer-logo-mask { height: 30px; }
+
         @media (max-width: 1024px) {
-            .course-shell { width: min(100% - 3rem, 900px); }
+            .course-shell { max-width: 900px; }
             .course-hero-grid, .decision-grid { grid-template-columns: 1fr; gap: 3rem; }
             .course-hero-copy { text-align: center; }
             .course-lead { margin-inline: auto; }
             .course-actions, .course-proof { justify-content: center; }
-            .hero-offer { width: min(100%,520px); margin-inline: auto; }
+            .hero-offer { width: min(100%,400px); margin-inline: auto; }
             .benefit-grid { grid-template-columns: repeat(2,1fr); }
             .benefit:nth-child(2) { border-right: 0; }
             .benefit:nth-child(-n+2) { border-bottom: 1px solid var(--border-color); }
@@ -103,7 +454,7 @@
             .decision-items { max-width: 620px; margin-inline: auto; text-align: left; }
         }
         @media (max-width: 768px) {
-            .course-shell { width: min(100% - 3rem, 600px); }
+            .course-shell { max-width: 600px; }
             .course-hero { min-height: auto; padding: 8rem 0 4rem; }
             /* mesmos valores do breakpoint 768px da index */
             .course-hero h1 { font-size: 2rem; }
@@ -112,23 +463,26 @@
             .course-actions { flex-direction: column; }
             .course-actions a { justify-content: center; width: 100%; }
             .course-proof { display: grid; grid-template-columns: 1fr; justify-items: center; }
+            /* Conversa em cima, folha embaixo: lado a lado nesta largura o A4
+               ficaria estreito demais para o texto do parecer ser lido. */
+            .ia-palco { grid-template-columns: 1fr; }
             .benefit-grid, .module-grid { grid-template-columns: 1fr; }
             .benefit { min-height: 98px; border-right: 0; border-bottom: 1px solid var(--border-color); }
             .benefit:last-child { border-bottom: 0; }
-            .course-section { padding: 5rem 0; }
+            .course-section { padding: 2.8rem 0; }
             .section-heading { margin-bottom: 2.7rem; }
             .module-card, .step-card, .decision-offer { padding: 1.6rem; }
             .final-cta { padding: 4rem 0; }
             .final-cta-inner { padding: 2.5rem 1.5rem; }
-            footer { padding: 3rem 1.5rem 6.5rem; }
-            .footer-links { flex-wrap: wrap; justify-content: center; gap: 1rem 1.5rem; }
+            footer { padding: 2rem 1.5rem 6rem; }
+            .footer-content { gap: 1rem; }
             .mobile-purchase { display: block; position: fixed; z-index: 110; left: .75rem; right: .75rem; bottom: .75rem; }
             .mobile-purchase button { width: 100%; justify-content: center; }
         }
         @media (max-width: 420px) {
-            .course-shell { width: min(100% - 2rem, 600px); }
-            .offer-brand img { max-width: 94px; }
-            .hero-offer { padding: 24px; }
+            .course-shell { max-width: 600px; padding-inline: 1rem; }
+            .offer-brand img { max-width: 74px; }
+            .hero-offer { padding: 1.75rem 1.5rem; }
         }
         @media (prefers-reduced-motion: reduce) { *,*::before,*::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }
     </style>
@@ -137,7 +491,7 @@
     <div class="blush-container" aria-hidden="true"><div class="blush blush-1" id="blush1"></div><div class="blush blush-2" id="blush2"></div><div class="blush blush-3" id="blush3"></div></div>
     <header>
         <a href="index.html" class="logo"><div class="logo-icon"><div class="logo-mask" role="img" aria-label="AdvogaCert"></div></div></a>
-        <nav><a href="index.html">Início</a><a href="#programa">Conteúdo</a><a href="contato.html" class="nav-btn">Contato</a></nav>
+        <nav><a href="index.html">Início</a></nav>
     </header>
 
     <main class="course-page">
@@ -147,11 +501,10 @@
                     <span class="course-eyebrow"><i class="fa-solid fa-graduation-cap"></i> Curso online ao vivo</span>
                     <h1>PJe sem travar e <span class="gradient-text">IA trabalhando</span> no seu escritório</h1>
                     <p class="course-lead">Treinamento prático para advogados que querem dominar o processo eletrônico e usar inteligência artificial com segurança na rotina jurídica.</p>
-                    <div class="course-actions"><a class="btn-primary" href="#inscricao">Garantir minha vaga <span class="arrow">→</span></a><a class="btn-secondary" href="#programa">Conhecer o conteúdo <i class="fa-solid fa-chevron-down"></i></a></div>
                     <div class="course-proof"><span><i class="fa-solid fa-video"></i> Aula ao vivo</span><span><i class="fa-solid fa-circle-play"></i> Gravação disponível</span><span><i class="fa-solid fa-certificate"></i> Certificado incluso</span></div>
                 </div>
                 <aside class="hero-offer" id="inscricao">
-                    <div class="offer-brand"><img src="assets/img/pje-claro.png" alt="PJe"><span class="plus">+</span><img src="assets/img/claude-claro.png" alt="Claude"></div>
+                    <div class="offer-brand"><img src="assets/img/pje-claro.png" alt="PJe"><span class="plus">+</span><img src="assets/img/claude-claro.png" alt="Claude"><span class="plus">+</span><img class="offer-brand-icon" src="assets/img/vscode-claro.png" alt="Visual Studio Code"></div>
                     <p class="offer-caption">Inscrição individual para a próxima turma</p><div class="offer-price">R$ 65</div><p class="offer-payment">Pagamento por Pix, cartão ou boleto</p>
                     <button class="btn-primary offer-button" id="btn-vaga" type="button">Garantir minha vaga <span class="arrow">→</span></button>
                     <div class="countdown"><span id="prazo-rotulo">Inscrições fecham em</span><div id="prazo-relogio">--d --h --m --s</div></div>
@@ -167,35 +520,173 @@
         </div></section>
 
         <section class="course-section" id="programa"><div class="course-shell">
-            <div class="section-heading"><span class="section-badge"><i class="fa-solid fa-list-check"></i> Programa do treinamento</span><h2>Do erro no PJe ao uso seguro da <span class="gradient-text">inteligência artificial</span></h2><p>Dois módulos complementares, construídos para problemas reais da advocacia.</p></div>
-            <div class="module-grid">
-                <article class="module-card"><div class="module-number">01</div><h3>PJe: do acesso ao protocolo</h3><p>Entenda e resolva os pontos que mais interrompem o trabalho no processo eletrônico.</p><ul class="module-list"><li><i class="fa-solid fa-check"></i> Certificados A1, A3 e em nuvem</li><li><i class="fa-solid fa-check"></i> PJe Office, Shodō e erros de Java</li><li><i class="fa-solid fa-check"></i> Cadastro, habilitação e procurações</li><li><i class="fa-solid fa-check"></i> Petição inicial e intercorrente</li><li><i class="fa-solid fa-check"></i> Anexos, assinatura e comprovantes</li><li><i class="fa-solid fa-check"></i> Intimações, prazos e audiências</li></ul></article>
-                <article class="module-card"><div class="module-number">02</div><h3>IA aplicada à advocacia</h3><p>Transforme a inteligência artificial em um método produtivo, conferível e seguro.</p><ul class="module-list"><li><i class="fa-solid fa-check"></i> Comandos claros e eficientes</li><li><i class="fa-solid fa-check"></i> Resumo e análise de processos</li><li><i class="fa-solid fa-check"></i> Petições, contratos e e-mails</li><li><i class="fa-solid fa-check"></i> Revisão de cláusulas e riscos</li><li><i class="fa-solid fa-check"></i> Uso dos seus próprios modelos</li><li><i class="fa-solid fa-check"></i> Sigilo profissional, LGPD e conferência</li></ul></article>
+
+            <div class="section-heading">
+                <span class="section-badge"><i class="fa-solid fa-scale-balanced"></i> Jurisprudência</span>
+                <h2>A <span class="ia-letras"><span>I</span><span>A</span></span> pesquisa a <span class="gradient-text">jurisprudência</span> antes de responder</h2>
+                <p>Ela não responde de memória. Primeiro consulta os tribunais, lê os acórdãos e confere se a tese continua valendo — e só então escreve. Você acompanha cada etapa na tela e recebe as fontes junto da resposta, para conferir uma por uma.</p>
             </div>
+
+                <div class="ia-palco" role="img" aria-label="Simulação: o advogado pede ao Claude uma petição de Recurso Especial, clica em enviar e a peça sai pronta no papel timbrado do escritório, com a fonte da jurisprudência citada">
+                    <div class="ia-chat" aria-hidden="true">
+                        <div class="ia-bolha">
+                            <div class="ia-quem"><i class="fa-solid fa-user"></i> Advogado</div>
+                            <p class="ia-fala"><span class="ia-w1">Redija uma petição de</span> <span class="ia-w2">recurso especial</span> <span class="ia-w3">com jurisprudência atual</span> <span class="ia-w4">sobre o tema.</span><span class="ia-cursor"></span></p>
+                        </div>
+
+                        <div class="ia-acao">
+                            <span class="ia-enviar">Enviar <i class="fa-solid fa-paper-plane"></i></span>
+                            <i class="fa-solid fa-hand-pointer ia-mao"></i>
+                        </div>
+
+                        <div class="ia-bolha ia-resposta">
+                            <div class="ia-quem"><img src="assets/img/claude-claro.png" alt=""> Claude</div>
+                            <p>Pesquisei o STJ e redigi no seu timbrado.</p>
+                            <ul class="ia-juris">
+                                <li class="tbc1"><i class="fa-solid fa-gavel"></i><span><b>Súmula 211/STJ</b> — exige o prequestionamento da matéria</span></li>
+                                <li class="tbc2"><i class="fa-solid fa-gavel"></i><span><b>Súmula 7/STJ</b> — veda o reexame de prova no especial</span></li>
+                                <li class="tbc3"><i class="fa-solid fa-gavel"></i><span><b>Súmula 83/STJ</b> — divergência superada pelo próprio STJ</span></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="ia-timbrado">
+                        <div class="tb-cabecalho">
+                            <div class="tb-logo"></div>
+                            <div class="tb-contatos">
+                                <span><i class="fa-solid fa-phone"></i> (00) 0000-0000</span>
+                                <span><i class="fa-solid fa-location-dot"></i> Rua xxxxxx, 00</span>
+                                <span><i class="fa-solid fa-envelope"></i> contato@adv.br</span>
+                                <span><i class="fa-solid fa-id-card"></i> OAB/UF 00.000</span>
+                            </div>
+                        </div>
+
+                        <div class="tb-corpo">
+                            <p class="tb-linha destaque"><span class="k1">Excelentíssimo Senhor Doutor</span> <span class="k2">Desembargador Presidente do Egrégio</span> <span class="k3">Tribunal de Justiça do Estado de ....................</span></p>
+
+                            <div class="tb-vao"></div>
+
+                            <div class="tb-processo k0">Processo n. 0000000-00.2026.8.09.0051</div>
+
+                            <p class="tb-linha"><span class="k4"><b class="tb-nome">Paulo Lambertine</b>,</span> <span class="k5">brasileiro, solteiro, empresário, portador da cédula de identidade RG nº 0.000.000 SSP/GO</span> <span class="k6">e inscrito no CPF/MF sob o nº 000.000.000-00,</span> <span class="k7">residente e domiciliado na Rua xxxxxx, nº 00, nesta Capital,</span> <span class="k8">nos autos da <b>Apelação Cível nº 000000000000000000</b>,</span> <span class="k9">vem, com o devido acatamento forense, ante a honrosa presença de Vossa Excelência,</span> <span class="k10">por intermédio de sua patrona subscritora <i>(procuração em anexo)</i>,</span> <span class="k11">alicerçado no <b>art. 105, inc. III, alíneas “a” e “c”, da Constituição Federal</b>,</span> <span class="k12">bem como com supedâneo <b>no art. 26 e segs. da Lei nº 8.038/90 (LR)</b> c/c art. 255 do Regimento Interno do Superior Tribunal de Justiça,</span> <span class="k13">onde vem, <i>tempestivamente</i>, <b>interpor</b> o presente</span></p>
+
+                            <div class="tb-faixa k14">Recurso Especial</div>
+
+                            <p class="tb-linha"><span class="k15">em razão do v. acórdão prolatado,</span> <span class="k16">consoante as razões de direito e documentos acostados nas laudas subsequentes,</span> <span class="k17">requerendo o regular processamento e a remessa dos autos ao Colendo Superior Tribunal de Justiça.</span></p>
+
+                            <p class="tb-linha fecho"><span class="k18">Nestes termos,<br>pede deferimento.</span></p>
+                            <p class="tb-linha data"><span class="k19">Goiânia, 15 de agosto de 2026.</span></p>
+
+                            <div class="tb-assina k20">Advogada subscritora — OAB/UF 00.000</div>
+                        </div>
+
+                        <div class="tb-rodape">Rua xxxxxx, 00 — sala 00 — 00000-000<br>Tel/Fax (00) 0000-0000 — <u>advogado@adv.br</u></div>
+                    </div>
+
+                    <p class="ia-nota">Exemplo ilustrativo: a IA consulta os tribunais, reúne as fontes e redige a peça no timbrado do escritório.</p>
+                </div>
         </div></section>
 
         <section class="course-section alt" id="como-funciona"><div class="course-shell">
             <div class="section-heading"><span class="section-badge"><i class="fa-solid fa-circle-info"></i> Como funciona</span><h2>Simples para assistir.<br><span class="gradient-text">Prático para aplicar.</span></h2><p>Você recebe as orientações, participa ao vivo e conta com ajuda caso tenha dificuldade técnica.</p></div>
-            <div class="steps-grid">
-                <article class="step-card"><div class="step-icon"><i class="fa-brands fa-microsoft"></i></div><h3>Aula pelo Microsoft Teams</h3><p>O link é enviado antes da aula e pode ser aberto diretamente pelo navegador.</p><a href="https://www.microsoft.com/pt-br/microsoft-teams/download-app" target="_blank" rel="noopener">Baixar Teams <i class="fa-solid fa-arrow-up-right-from-square"></i></a></article>
-                <article class="step-card"><div class="step-icon"><i class="fa-solid fa-headset"></i></div><h3>Suporte para acessar</h3><p>Se algum programa ou certificado dificultar o acesso, nossa equipe orienta você.</p><a href="https://anydesk.com/pt/downloads" target="_blank" rel="noopener">Baixar AnyDesk <i class="fa-solid fa-arrow-up-right-from-square"></i></a></article>
-                <article class="step-card"><div class="step-icon"><i class="fa-solid fa-shield-halved"></i></div><h3>Pagamento seguro</h3><p>A inscrição é finalizada no ambiente do Mercado Pago e sua vaga é confirmada após o pagamento.</p><a href="#inscricao">Fazer inscrição <i class="fa-solid fa-arrow-right"></i></a></article>
+            <div class="videos-grid">
+                <article class="video-card">
+                    <div class="video-legenda">
+                        <h3><i class="fa-solid fa-code" style="color:var(--accent-mac);margin-right:.5rem"></i>A IDE e a <span class="gradient-text">pasta de processos</span></h3>
+                        <div class="ide-janela" role="img" aria-label="Ilustração do editor com a pasta do processo aberta: os arquivos da ação à esquerda e o Claude Opus lendo e redigindo à direita."><div class="ide-topo"><span class="ide-bolha"></span><span class="ide-bolha"></span><span class="ide-bolha"></span><span class="ide-caminho">~/processos/0801234-56.2026</span></div><div class="ide-abas"><span class="ativa">peticao-inicial.pdf</span><span>resolucao.md</span><span>+</span></div><div class="ide-corpo"><div class="ide-arvore"><div class="ide-pasta"><i class="fa-solid fa-folder-open"></i>0801234-56</div><ul><li class="" style="animation-delay:0.0s"><i class="fa-regular fa-file-lines"></i>peticao-inicial.pdf</li><li class="" style="animation-delay:1.2s"><i class="fa-regular fa-file-lines"></i>contestacao.pdf</li><li class="" style="animation-delay:2.4s"><i class="fa-regular fa-file-lines"></i>provas/</li><li class="ide-sub" style="animation-delay:3.6s"><i class="fa-regular fa-file-lines"></i>doc-01.pdf</li><li class="ide-sub" style="animation-delay:4.8s"><i class="fa-regular fa-file-lines"></i>doc-02.pdf</li><li class="" style="animation-delay:6.0s"><i class="fa-regular fa-file-lines"></i>sentenca.pdf</li></ul></div><div class="ide-painel"><span class="ide-ia">Claude Opus</span><span class="ide-texto titulo" style="animation-delay:0.00s">## Resolução</span><span class="ide-texto " style="animation-delay:0.45s">Do indeferimento</span><span class="ide-texto " style="animation-delay:0.90s">da prova pericial:</span><span class="ide-texto " style="animation-delay:1.35s">cabe agravo de</span><span class="ide-texto " style="animation-delay:1.80s">instrumento.</span><span class="ide-texto lei" style="animation-delay:2.25s">art. 1.015, p.ú.</span><span class="ide-texto lei" style="animation-delay:2.70s">CPC/2015</span></div></div><div class="ide-saida"><div><b>&gt;</b> lendo 6 arquivos da pasta...</div><div><b>&gt;</b> tese identificada: prova pericial</div><div><b>&gt;</b> minuta pronta em resolucao.md</div></div><div class="ide-status"><i class="fa-solid fa-code-branch"></i>processo-0801234<span class="dir">Claude Opus</span></div><div class="ide-nota">Exemplo ilustrativo: a IA lê a pasta e redige a resolução.</div></div><p>Automatize processos com IA na nuvem dentro de uma só plataforma: abra a pasta do processo na IDE, como se faz no VS Code, e deixe o Claude Opus estudar os documentos e apresentar a resolução do caso.</p>
+                    </div>
+                </article>
+                <article class="video-card">
+                    <div class="video-logos"><img src="img/Visual%20Studio%20Code%20(VS%20Code).png" alt="Visual Studio Code" loading="lazy"><span>+</span><img src="assets/img/claude-claro.png" alt="Claude" loading="lazy"><span>+</span><img src="assets/img/pje-claro.png" alt="PJe — Processo Judicial Eletrônico" loading="lazy"></div>
+                    <div class="video-legenda">
+                        <h3><i class="fa-solid fa-file-signature" style="color:var(--accent-mac);margin-right:.5rem"></i>A interface do <span class="gradient-text">PJe</span> na prática</h3>
+                        <div class="pje-janela" role="img" aria-label="Ilustração do Painel do Advogado no PJe: abas de expedientes, acervo e petições, com a lista de caixas e a quantidade de processos em cada uma."><div class="pje-topo"><i class="fa-solid fa-bars"></i><span class="pje-marca">PJe</span><span class="pje-titulo">Painel do Advogado</span><i class="fa-solid fa-circle-user pje-user"></i></div><div class="pje-abas"><span class="ativa">Expedientes</span><span>Acervo</span><span>Petições</span></div><div class="pje-busca"><i class="fa-solid fa-magnifying-glass"></i>Pesquise por número de processo</div><ul class="pje-lista"><li style="animation-delay:0.0s">Pendentes de ciência ou de resposta<b>42</b></li><li style="animation-delay:1.8s">Apenas pendentes de ciência<b>0</b></li><li style="animation-delay:3.6s">Cujo prazo findou nos últimos 10 dias<b>1</b></li><li style="animation-delay:5.4s">Sem prazo<b>42</b></li></ul><div class="pje-nota">Exemplo ilustrativo da tela de expedientes.</div></div><p>Aprenda a se habilitar no processo, fazer o peticionamento inicial e conduzir a habilitação, direto na tela do PJe.</p>
+                    </div>
+                </article>
+                <article class="video-card">
+                    <div class="video-legenda">
+                        <h3><i class="fa-solid fa-gauge-high" style="color:var(--accent-mac);margin-right:.5rem"></i><span class="gradient-text">Dashboard</span> do escritório com IA</h3>
+                        <div class="mini-dash" role="img" aria-label="Ilustração de um painel de escritório: 128 processos ativos, 12 prazos na semana, volume de petições subindo de março a agosto e prazos cumpridos em alta."><div class="mini-dash-topo"><strong>Painel do escritório</strong><span class="mini-vivo">ao vivo</span></div><div class="mini-kpis"><div class="mini-kpi"><strong>128</strong><span>processos ativos</span></div><div class="mini-kpi"><strong>12</strong><span>prazos na semana</span></div></div><svg class="mini-grafico" viewBox="0 0 240 78" aria-hidden="true"><line class="mini-grade" x1="0" y1="62" x2="240" y2="62"/><line class="mini-grade" x1="0" y1="40" x2="240" y2="40" opacity=".5"/><line class="mini-grade" x1="0" y1="18" x2="240" y2="18" opacity=".5"/><path class="mini-barra" d="M12,62 L12,46.5 Q12,42.5 16,42.5 L34,42.5 Q38,42.5 38,46.5 L38,62 Z" style="animation-delay:0.0s"/><text class="mini-rotulo" x="25" y="74">mar</text><path class="mini-barra" d="M50,62 L50,36.1 Q50,32.1 54,32.1 L72,32.1 Q76,32.1 76,36.1 L76,62 Z" style="animation-delay:0.3s"/><text class="mini-rotulo" x="63" y="74">abr</text><path class="mini-barra" d="M88,62 L88,42.4 Q88,38.4 92,38.4 L110,38.4 Q114,38.4 114,42.4 L114,62 Z" style="animation-delay:0.5s"/><text class="mini-rotulo" x="101" y="74">mai</text><path class="mini-barra" d="M126,62 L126,26.9 Q126,22.9 130,22.9 L148,22.9 Q152,22.9 152,26.9 L152,62 Z" style="animation-delay:0.8s"/><text class="mini-rotulo" x="139" y="74">jun</text><path class="mini-barra" d="M164,62 L164,32.1 Q164,28.1 168,28.1 L186,28.1 Q190,28.1 190,32.1 L190,62 Z" style="animation-delay:1.0s"/><text class="mini-rotulo" x="177" y="74">jul</text><path class="mini-barra" d="M202,62 L202,22.3 Q202,18.3 206,18.3 L224,18.3 Q228,18.3 228,22.3 L228,62 Z" style="animation-delay:1.3s"/><text class="mini-rotulo" x="215" y="74">ago</text></svg><svg class="mini-grafico" viewBox="0 0 240 24" aria-hidden="true" style="margin-top:.4rem"><polyline class="mini-linha" points="0,13.6 40,11.2 80,12.3 120,8.8 160,9.4 200,6.6 240,5.6"/></svg><p class="mini-nota">Exemplo ilustrativo. Petições protocoladas por mês e prazos cumpridos.</p></div><p>Aprenda a operar o painel do escritório em um servidor com inteligência artificial, acompanhando todos os casos em um só lugar.</p>
+                    </div>
+                </article>
             </div>
         </div></section>
 
-        <section class="course-section"><div class="course-shell decision-grid">
-            <div class="decision-copy"><span class="section-badge"><i class="fa-solid fa-scale-balanced"></i> Feito para a rotina jurídica</span><h2>Menos tempo resolvendo erros. <span class="gradient-text">Mais tempo advogando.</span></h2><p>O conteúdo une conhecimento técnico e aplicação prática para você ganhar autonomia sem abrir mão da segurança.</p><div class="decision-items"><div class="decision-item"><i class="fa-solid fa-check-circle"></i><div><strong>Conteúdo direto</strong><span>Sem teoria solta: foco no que aparece no trabalho.</span></div></div><div class="decision-item"><i class="fa-solid fa-check-circle"></i><div><strong>Aplicação acompanhada</strong><span>Pergunte durante o encontro e reveja pela gravação.</span></div></div><div class="decision-item"><i class="fa-solid fa-check-circle"></i><div><strong>Uso responsável de IA</strong><span>Cuidados com sigilo, fontes, conferência e LGPD.</span></div></div></div></div>
-            <aside class="decision-offer"><h3>Sua inscrição inclui</h3><ul><li><i class="fa-solid fa-check"></i> Módulo completo de PJe</li><li><i class="fa-solid fa-check"></i> Módulo de IA para advocacia</li><li><i class="fa-solid fa-check"></i> Participação ao vivo</li><li><i class="fa-solid fa-check"></i> Acesso à gravação</li><li><i class="fa-solid fa-check"></i> Certificado de participação</li><li><i class="fa-solid fa-check"></i> Suporte técnico para acesso</li></ul><a class="btn-primary offer-button" href="#inscricao">Quero participar <span class="arrow">→</span></a></aside>
-        </div></section>
 
-        <section class="final-cta"><div class="course-shell"><div class="final-cta-inner"><span class="section-badge"><i class="fa-solid fa-bolt"></i> Próxima turma</span><h2>Prepare seu escritório para uma rotina jurídica mais simples.</h2><p>Garanta sua participação no curso de PJe e inteligência artificial.</p><a class="btn-primary" href="#inscricao">Ver inscrição <span class="arrow">→</span></a></div></div></section>
     </main>
 
-    <footer><div class="footer-content"><div class="footer-logo-mask" role="img" aria-label="AdvogaCert"></div><div class="footer-links"><a href="index.html">Início</a><a href="contato.html">Falar com suporte</a></div><div class="footer-copy">© 2026 AdvogaCert. Todos os direitos reservados.</div></div></footer>
+    <footer><div class="footer-content"><div class="footer-logo-mask" role="img" aria-label="AdvogaCert"></div><div class="footer-copy">© 2026 AdvogaCert. Todos os direitos reservados.</div></div></footer>
     <div class="mobile-purchase"><button class="btn-primary" id="btn-vaga-mobile" type="button">Garantir vaga por R$ 65 <span class="arrow">→</span></button></div>
-    <script src="assets/js/api.js?v=9"></script><script src="assets/js/telemetria.js?v=2"></script><script src="assets/js/script.js?v=19"></script>
+    <script src="assets/js/api.js?v=9"></script><script src="assets/js/telemetria.js?v=2"></script><script src="assets/js/script.js?v=20"></script>
     <script>
-    (function(){'use strict';var DEADLINE='2026-08-17T20:00:00-03:00';var WHATSAPP='https://wa.me/5561986241570?text='+encodeURIComponent('Quero garantir minha vaga no curso de PJe e IA (R$ 65)');var botao=document.getElementById('btn-vaga');var mobile=document.getElementById('btn-vaga-mobile');var rotulo=document.getElementById('prazo-rotulo');var relogio=document.getElementById('prazo-relogio');var prazo=new Date(DEADLINE).getTime();function dois(n){return String(n).padStart(2,'0')}function atualizarPrazo(){var falta=prazo-Date.now();if(falta<=0){rotulo.textContent='Inscrições encerradas';relogio.textContent='00d 00h 00m 00s';botao.disabled=true;if(mobile)mobile.disabled=true;return}var s=Math.floor(falta/1000);relogio.textContent=dois(Math.floor(s/86400))+'d '+dois(Math.floor(s%86400/3600))+'h '+dois(Math.floor(s%3600/60))+'m '+dois(s%60)+'s'}atualizarPrazo();setInterval(atualizarPrazo,1000);function comprar(){if(botao.disabled)return;var texto=botao.innerHTML;botao.textContent='Abrindo pagamento...';fetch(window.apiUrl('/pagamento/link?plano=curso')).then(function(r){return r.json()}).then(function(d){if(d&&d.success&&d.url){if(window.telemetriaEvento)window.telemetriaEvento('checkout_iniciado',{plano:'curso',dados:{valor:Number(d.valor)||65}});location.href=d.url;return}botao.innerHTML=texto;window.open(WHATSAPP,'_blank','noopener')}).catch(function(){botao.innerHTML=texto;window.open(WHATSAPP,'_blank','noopener')})}botao.addEventListener('click',comprar);if(mobile)mobile.addEventListener('click',comprar)})();
+    (function(){'use strict';var DEADLINE='2026-08-17T20:00:00-03:00';var WHATSAPP='https://wa.me/5561986241570?text='+encodeURIComponent('Quero garantir minha vaga no curso de PJe e IA (R$ 65)');var botao=document.getElementById('btn-vaga');var mobile=document.getElementById('btn-vaga-mobile');var rotulo=document.getElementById('prazo-rotulo');var relogio=document.getElementById('prazo-relogio');var prazo=new Date(DEADLINE).getTime();function dois(n){return String(n).padStart(2,'0')}function atualizarPrazo(){var falta=prazo-Date.now();if(falta<=0){rotulo.textContent='Inscrições encerradas';relogio.textContent='00d 00h 00m 00s';botao.disabled=true;if(mobile)mobile.disabled=true;return}var s=Math.floor(falta/1000);relogio.textContent=dois(Math.floor(s/86400))+'d '+dois(Math.floor(s%86400/3600))+'h '+dois(Math.floor(s%3600/60))+'m '+dois(s%60)+'s'}atualizarPrazo();setInterval(atualizarPrazo,1000);
+    var VALOR=65;
+    var RETOMADA_TTL=10*60*1000;
+
+    function usuarioLogado(){try{return JSON.parse(sessionStorage.getItem('user'))}catch(e){return null}}
+
+    // Manda para o Mercado Pago, que é quem pede cartão ou Pix. Enquanto o
+    // link do curso não estiver configurado (MP_LINK_CURSO), o servidor
+    // recusa e a pessoa cai no WhatsApp em vez de num botão morto.
+    function irPagar(){
+        var texto=botao.innerHTML;
+        botao.textContent='Abrindo pagamento...';
+        fetch(window.apiUrl('/pagamento/link?plano=curso')).then(function(r){return r.json()}).then(function(d){
+            if(d&&d.success&&d.url){
+                if(window.telemetriaEvento)window.telemetriaEvento('checkout_iniciado',{plano:'curso',dados:{valor:Number(d.valor)||VALOR}});
+                location.href=d.url;
+                return;
+            }
+            botao.innerHTML=texto;
+            window.open(WHATSAPP,'_blank','noopener');
+        }).catch(function(){
+            botao.innerHTML=texto;
+            window.open(WHATSAPP,'_blank','noopener');
+        });
+    }
+
+    // Mesmo caminho dos planos da index: sem cadastro não há pagamento, senão
+    // a venda cai no Mercado Pago sem ninguém no painel para atender. A escolha
+    // fica guardada nos dois storages porque navegador móvel costuma descartar
+    // o sessionStorage ao passar pelo login social.
+    function comprar(){
+        if(botao.disabled)return;
+        if(!usuarioLogado()){
+            var pendente=JSON.stringify({plano:'curso',valor:VALOR,origem:'curso.html',em:Date.now()});
+            sessionStorage.setItem('checkoutPendente',pendente);
+            localStorage.setItem('checkoutPendente',pendente);
+            location.href='login.html?checkout=1';
+            return;
+        }
+        irPagar();
+    }
+
+    botao.addEventListener('click',comprar);
+    if(mobile)mobile.addEventListener('click',comprar);
+
+    // Volta do login: o pagamento abre sozinho, mas só com a marca ?retomar=1
+    // posta pelo redirecionamento. Sem exigir a marca, o modal saltaria em
+    // qualquer visita de quem já tem pendência guardada.
+    (function retomar(){
+        var params=new URLSearchParams(location.search);
+        if(params.get('retomar')!=='1')return;
+        params.delete('retomar');
+        var q=params.toString();
+        history.replaceState({},'',location.pathname+(q?'?'+q:''));
+
+        var bruto=sessionStorage.getItem('checkoutPendente')||localStorage.getItem('checkoutPendente');
+        if(!bruto)return;
+        try{
+            var p=JSON.parse(bruto);
+            if(p.plano!=='curso')return;
+            if(!p.em||Date.now()-p.em>=RETOMADA_TTL)return;
+            if(!usuarioLogado())return;
+            sessionStorage.removeItem('checkoutPendente');
+            localStorage.removeItem('checkoutPendente');
+            irPagar();
+        }catch(e){}
+    })();
+    })();
     </script>
 </body>
 </html>
