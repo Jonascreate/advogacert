@@ -112,7 +112,9 @@
         /* Sombra radial atrás da conversa: escurece o fundo sob os balões e os
            descola do chapado, dando profundidade. Fica no ::before para não
            entrar no fluxo e não mexer na altura da coluna. */
-        .ia-chat::before { content: ''; position: absolute; inset: -24% -18%; border-radius: 50%; pointer-events: none;
+        /* O sangramento lateral é curto de propósito: com -18% a elipse passava
+           da margem do shell no celular e virava mais uma fonte de arrasto. */
+        .ia-chat::before { content: ''; position: absolute; inset: -24% -5%; border-radius: 50%; pointer-events: none;
             background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.62), rgba(0,0,0,.34) 45%, transparent 72%);
             filter: blur(26px); }
         /* z-index nos filhos em vez de -1 na sombra: com valor negativo ela
@@ -210,7 +212,7 @@
            arquivo tem o "ADV" em branco, desenhado para fundo escuro, e sumiria
            no papel creme. O azul cheio substitui o degradê mint→azul, que no
            papel claro ficava lavado. */
-        .tb-logo { height: 46px; aspect-ratio: 768 / 332; margin: 0 auto;
+        .tb-logo { height: 38px; aspect-ratio: 768 / 332; margin: 0 auto;
             background: linear-gradient(135deg, #2f7fd4, #0a3d7a);
             -webkit-mask-image: url('assets/img/logo.png'); mask-image: url('assets/img/logo.png');
             -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
@@ -319,8 +321,15 @@
         .step-card p { color: var(--text-secondary); line-height: 1.65; }
         .step-card a { display: inline-flex; gap: .4rem; align-items: center; color: var(--accent-mac); text-decoration: none; font-size: .9rem; margin-top: 1.25rem; }
 
-        .videos-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; margin-bottom: 2rem; }
-        .video-card { position: relative; display: flex; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; transition: .4s ease; }
+        /* minmax(0,1fr) e não 1fr: `1fr` equivale a minmax(auto,1fr), e a coluna
+           então nunca encolhe abaixo do conteúdo. Estas janelas têm várias
+           linhas com white-space:nowrap, de modo que o mínimo delas é largo —
+           a grade passava da largura da tela e a página inteira ganhava arrasto
+           lateral em vez de ficar travada. O mesmo motivo exige min-width:0 nos
+           filhos flex, que também têm mínimo automático. */
+        .videos-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .video-card { position: relative; min-width: 0; display: flex; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; transition: .4s ease; }
+        .video-legenda { min-width: 0; }
         .video-card:hover { transform: translateY(-6px); border-color: rgba(110,231,200,.4); box-shadow: 0 20px 50px rgba(110,231,200,.08); }
         .video-legenda { flex: 1; display: flex; flex-direction: column; padding: 1.75rem 1.5rem; }
         /* Par de logos do card da IDE, no mesmo formato do anúncio do
@@ -356,7 +365,7 @@
         .ide-topo { display: flex; align-items: center; gap: .35rem; padding: .5rem .7rem; border-bottom: 1px solid var(--border-color); }
         .ide-bolha { width: 7px; height: 7px; border-radius: 50%; background: var(--border-color); }
         .ide-caminho { margin-left: .4rem; font-family: 'JetBrains Mono',monospace; font-size: .6rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .ide-corpo { display: grid; grid-template-columns: 1fr 1fr; }
+        .ide-corpo { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
         .ide-arvore { padding: .6rem .5rem; border-right: 1px solid var(--border-color); }
         .ide-pasta { display: flex; align-items: center; gap: .3rem; font-size: .6rem; color: var(--text-secondary); margin-bottom: .35rem; }
         .ide-pasta i { color: var(--accent-win); }
@@ -441,6 +450,7 @@
 
         @media (max-width: 1024px) {
             .course-shell { max-width: 900px; }
+            .videos-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
             .course-hero-grid, .decision-grid { grid-template-columns: 1fr; gap: 3rem; }
             .course-hero-copy { text-align: center; }
             .course-lead { margin-inline: auto; }
@@ -455,6 +465,7 @@
         }
         @media (max-width: 768px) {
             .course-shell { max-width: 600px; }
+            .videos-grid { grid-template-columns: minmax(0,1fr); }
             .course-hero { min-height: auto; padding: 8rem 0 4rem; }
             /* mesmos valores do breakpoint 768px da index */
             .course-hero h1 { font-size: 2rem; }
