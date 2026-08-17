@@ -716,7 +716,12 @@ const MIME_TYPES = {
 // que é o que se quer rodando na sua máquina.
 const COLECOES = [
     'usuarios', 'assinaturas', 'chamados', 'logins', 'agendamentos',
-    'verificacoes_oab', 'auditoria'
+    'verificacoes_oab', 'auditoria',
+    // Curso: turma é o encontro (data, hora, capacidade) e inscrição é a
+    // pessoa dentro dele. Separado de `agendamentos` porque aquele modelo é
+    // exclusivo — um horário some da lista com um único agendamento —, e a
+    // turma é coletiva: só some na vaga que fecha a capacidade.
+    'turmas_curso', 'inscricoes_curso'
 ];
 
 // BANCO_LOCAL=1 força o arquivo usuarios.json mesmo com chave do Supabase
@@ -1181,6 +1186,105 @@ const FUSO_BR = -3;
 function instanteBR(dia, hora) {
     const [a, m, d] = dia.split('-').map(Number);
     return new Date(Date.UTC(a, m - 1, d, hora - FUSO_BR, 0, 0));
+}
+
+// ============================================================
+// [CURSO] TURMAS E VAGAS
+// ============================================================
+// Toda a regra de lotação vive aqui, no servidor. A página do curso não
+// decide nada: ela desenha o que /curso/turmas devolver. Se a conta ficasse
+// no navegador, bastaria abrir o console para comprar o sexto lugar de uma
+// sala de cinco.
+
+// Quanto tempo uma inscrição pendente segura a vaga. Existe porque a pessoa
+// vai ao Mercado Pago e pode nunca voltar: sem prazo, cada desistência
+// mataria um lugar para sempre. Trinta minutos é folgado para pagar por Pix
+// ou cartão e curto o bastante para a turma não ficar travada à toa.
+const CURSO_PENDENTE_MIN = 30;
+
+/**
+ * Vagas que ainda restam numa turma.
+ *
+ * Contam para lotar as inscrições `confirmada` e as `pendente` recentes.
+ * A pendente vencida é simplesmente ignorada na contagem — não é preciso
+ * rotina agendada para limpá-la, e por isso ela nunca "some" do banco: fica
+ * como registro de quem chegou até o checkout e não pagou.
+ */
+function vagasRestantes(db, turma) {
+    const limite = Date.now() - CURSO_PENDENTE_MIN * 60000;
+    const ocupadas = (db.inscricoes_curso || []).filter(i => {
+        if (i.turma_id !== turma.id) return false;
+        if (i.status === 'confirmada') return true;
+        if (i.status !== 'pendente') return false;
+        return new Date(i.criado_em).getTime() > limite;
+    }).length;
+
+    return Math.max(0, (Number(turma.capacidade) || 0) - ocupadas);
+}
+
+/**
+ * As turmas que o site pode oferecer: abertas, no futuro e com vaga.
+ * Já vêm com as partes de data separadas, para o calendário montar o cartão
+ * sem ter de fatiar texto no navegador — mesmo critério da agenda de suporte.
+ */
+function turmasAbertas(db) {
+    const agora = Date.now();
+    return (db.turmas_curso || [])
+        .filter(t => t.status === 'aberta' && new Date(t.inicio).getTime() > agora)
+        .sort((a, b) => new Date(a.inicio) - new Date(b.inicio))
+        .map(t => {
+            const d = new Date(t.inicio);
+            const opc = { timeZone: 'America/Sao_Paulo' };
+            return {
+                id: t.id,
+                inicio: t.inicio,
+                capacidade: Number(t.capacidade) || 0,
+                vagas: vagasRestantes(db, t),
+                semana: d.toLocaleDateString('pt-BR', { ...opc, weekday: 'short' }).replace('.', '').toUpperCase(),
+                numero: d.toLocaleDateString('pt-BR', { ...opc, day: '2-digit' }),
+                mes: d.toLocaleDateString('pt-BR', { ...opc, month: 'short' }).replace('.', ''),
+                hora: d.toLocaleTimeString('pt-BR', { ...opc, hour: '2-digit', minute: '2-digit' })
+            };
+        })
+        .filter(t => t.vagas > 0);
+}
+
+/**
+ * Confirma a vaga de quem pagou o curso.
+ *
+ * Devolve a inscrição confirmada, ou null se o pagamento não for de curso.
+ * Quem chama é o webhook do Mercado Pago: sem este desvio, os R$ 65 do curso
+ * passariam por planoPeloValor() e virariam uma assinatura de plano — cobrança
+ * classificada errada no faturamento e atendimento liberado sem venda.
+ */
+function confirmarInscricaoCurso(db, user, valorPago, pagamentoId) {
+    // Sem dono identificado não dá para saber qual vaga confirmar. Acontece
+    // quando o e-mail do Mercado Pago não é o mesmo do cadastro no site.
+    if (!user) return null;
+
+    const pendentes = (db.inscricoes_curso || [])
+        .filter(i => i.usuario_id === user.id && i.status === 'pendente')
+        .sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em));
+
+    if (!pendentes.length) return null;
+
+    // O valor precisa bater com o do curso: se a pessoa tem inscrição pendente
+    // E assinou um plano no mesmo dia, confirmar a vaga com o pagamento do
+    // plano daria curso de graça.
+    if (Number(valorPago) !== Number(CURSO_VALOR)) return null;
+
+    const inscricao = pendentes[0];
+    inscricao.status = 'confirmada';
+    inscricao.pagamento_id = pagamentoId || null;
+    inscricao.confirmado_em = new Date().toISOString();
+
+    auditar(db, {
+        ator: 'gateway',
+        acao: 'curso_inscricao_confirmada',
+        alvo: user.id,
+        detalhe: `Turma ${inscricao.turma_id} — R$ ${valorPago} — pagamento ${pagamentoId || 'sem id'}`
+    });
+    return inscricao;
 }
 
 /** Os dias que a pessoa pode escolher, em 'YYYY-MM-DD'. */
@@ -1801,6 +1905,308 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // ============ CURSO: GET /curso/turmas ============
+    // As turmas abertas que ainda têm vaga. É o que monta o calendário da
+    // página do curso — e a página não decide nada sobre lotação: ela mostra
+    // o que esta rota devolver. A conta de vaga vive só aqui, no servidor,
+    // porque é ela que impede vender o sexto lugar de uma sala de cinco.
+    if (method === 'GET' && url.split('?')[0] === '/curso/turmas') {
+        const db = loadJsonDb();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, turmas: turmasAbertas(db) }));
+        return;
+    }
+
+    // ============ CURSO: POST /curso/inscrever ============
+    // Reserva a vaga ANTES de mandar para o Mercado Pago, com status
+    // `pendente`. Sem essa reserva, duas pessoas clicando no mesmo minuto
+    // comprariam o mesmo último lugar e uma delas descobriria depois de pagar.
+    //
+    // A pendente vence sozinha em 30 minutos (ver vagasRestantes): quem
+    // desiste no checkout devolve a vaga sem precisar de rotina de limpeza.
+    if (method === 'POST' && url === '/curso/inscrever') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            const responder = (status, payload) => {
+                res.writeHead(status, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(payload));
+            };
+
+            try {
+                const entrada = JSON.parse(body || '{}');
+                const turmaId = Number(entrada.turma_id);
+                const usuarioId = Number(entrada.usuario_id);
+                const db = loadJsonDb();
+
+                const turma = (db.turmas_curso || []).find(t => t.id === turmaId);
+                if (!turma) return responder(404, { success: false, error: 'Turma não encontrada.' });
+                if (turma.status !== 'aberta') {
+                    return responder(409, { success: false, error: 'Esta turma não está mais aberta.' });
+                }
+                if (new Date(turma.inicio).getTime() <= Date.now()) {
+                    return responder(409, { success: false, error: 'Esta turma já começou.' });
+                }
+
+                // O usuário precisa existir: a inscrição sem dono não serve
+                // para nada no painel, e é justamente o problema que o curso
+                // tinha antes — venda sem ninguém identificado do outro lado.
+                const user = (db.usuarios || []).find(u => u.id === usuarioId);
+                if (!user) {
+                    return responder(401, { success: false, error: 'Faça o cadastro antes de escolher a turma.' });
+                }
+
+                // Já inscrito nesta turma? Devolve a mesma inscrição em vez de
+                // criar outra — clicar duas vezes não pode consumir duas vagas.
+                const jaTem = (db.inscricoes_curso || []).find(i =>
+                    i.turma_id === turmaId && i.usuario_id === usuarioId && i.status !== 'cancelada');
+                if (jaTem) {
+                    return responder(200, {
+                        success: true, inscricao_id: jaTem.id, turma_id: turmaId,
+                        url: MP.linkCurso, valor: CURSO_VALOR, ja_inscrito: true
+                    });
+                }
+
+                if (vagasRestantes(db, turma) <= 0) {
+                    return responder(409, {
+                        success: false,
+                        error: 'Esta turma acabou de lotar. Escolha outra data.'
+                    });
+                }
+
+                db.inscricoes_curso = db.inscricoes_curso || [];
+                const inscricao = {
+                    id: proximoId(db.inscricoes_curso),
+                    turma_id: turmaId,
+                    usuario_id: user.id,
+                    nome: user.nome || null,
+                    email: user.email || null,
+                    telefone: user.telefone || null,
+                    oab: user.oab || null,
+                    status: 'pendente',
+                    valor: CURSO_VALOR,
+                    pagamento_id: null,
+                    criado_em: new Date().toISOString(),
+                    confirmado_em: null
+                };
+                db.inscricoes_curso.push(inscricao);
+
+                auditar(db, {
+                    ator: 'cliente',
+                    acao: 'curso_inscricao_iniciada',
+                    alvo: user.id,
+                    detalhe: `Turma ${turmaId} — ${turma.inicio} — R$ ${CURSO_VALOR}`,
+                    ip: ipDoPedido(req)
+                });
+                saveJsonDb(db);
+                console.log(`🎓 Inscrição no curso: ${user.email || user.telefone} — turma ${turmaId}`);
+
+                responder(200, {
+                    success: true,
+                    inscricao_id: inscricao.id,
+                    turma_id: turmaId,
+                    url: MP.linkCurso,
+                    valor: CURSO_VALOR
+                });
+            } catch (err) {
+                console.error('Erro ao inscrever no curso:', err.message);
+                responder(400, { success: false, error: 'Não foi possível reservar a vaga.' });
+            }
+        });
+        return;
+    }
+
+    // ============ PAINEL: GET /admin/curso ============
+    // Turmas com a contagem de vagas e a lista de inscritos de cada uma.
+    // Vem tudo junto de propósito: a pergunta do painel nunca é "quem se
+    // inscreveu" solto, é sempre "como está cada turma".
+    if (method === 'GET' && url.split('?')[0] === '/admin/curso') {
+        if (!sessaoAdmin(req)) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'Sessão expirada' }));
+            return;
+        }
+
+        const db = loadJsonDb();
+        const inscricoes = db.inscricoes_curso || [];
+
+        const turmas = (db.turmas_curso || [])
+            .slice()
+            .sort((a, b) => new Date(a.inicio) - new Date(b.inicio))
+            .map(t => {
+                const daTurma = inscricoes.filter(i => i.turma_id === t.id);
+                const confirmadas = daTurma.filter(i => i.status === 'confirmada').length;
+                const pendentes = daTurma.filter(i => i.status === 'pendente').length;
+                return {
+                    id: t.id,
+                    inicio: t.inicio,
+                    capacidade: Number(t.capacidade) || 0,
+                    status: t.status,
+                    observacao: t.observacao || '',
+                    confirmadas,
+                    pendentes,
+                    // a vaga que o site ainda oferece: pendente vencida não conta
+                    vagas: vagasRestantes(db, t),
+                    passada: new Date(t.inicio).getTime() <= Date.now(),
+                    inscritos: daTurma
+                        .slice()
+                        .sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em))
+                        .map(i => ({
+                            id: i.id,
+                            nome: i.nome || '',
+                            email: i.email || '',
+                            telefone: i.telefone || '',
+                            oab: i.oab || '',
+                            status: i.status,
+                            valor: i.valor,
+                            pagamento_id: i.pagamento_id || '',
+                            criado_em: i.criado_em,
+                            confirmado_em: i.confirmado_em || null
+                        }))
+                };
+            });
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, turmas, valor: CURSO_VALOR }));
+        return;
+    }
+
+    // ============ PAINEL: POST /admin/curso/inscricao ============
+    // Confirmação e cancelamento na mão. Existe porque a confirmação
+    // automática depende de o e-mail do Mercado Pago ser o mesmo do cadastro —
+    // quando não for, a vaga fica pendente e alguém precisa decidir.
+    if (method === 'POST' && url === '/admin/curso/inscricao') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            const responder = (status, payload) => {
+                res.writeHead(status, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(payload));
+            };
+            if (!sessaoAdmin(req)) return responder(401, { success: false, error: 'Sessão expirada' });
+
+            try {
+                const entrada = JSON.parse(body || '{}');
+                const id = Number(entrada.id);
+                const novo = String(entrada.status || '').trim();
+
+                if (!['confirmada', 'cancelada', 'pendente'].includes(novo)) {
+                    return responder(400, { success: false, error: 'Situação inválida.' });
+                }
+
+                const db = loadJsonDb();
+                const insc = (db.inscricoes_curso || []).find(i => i.id === id);
+                if (!insc) return responder(404, { success: false, error: 'Inscrição não encontrada.' });
+
+                // Confirmar além da capacidade é possível de propósito: às
+                // vezes a pessoa pagou e você quer acomodá-la mesmo assim. Mas
+                // o painel avisa, para não acontecer por distração.
+                let aviso = null;
+                if (novo === 'confirmada' && insc.status !== 'confirmada') {
+                    const turma = (db.turmas_curso || []).find(t => t.id === insc.turma_id);
+                    if (turma && vagasRestantes(db, turma) <= 0) {
+                        aviso = `A turma ${turma.id} já está cheia (${turma.capacidade} lugares). Confirmada assim mesmo.`;
+                    }
+                }
+
+                const antes = insc.status;
+                insc.status = novo;
+                insc.confirmado_em = novo === 'confirmada' ? new Date().toISOString() : null;
+
+                auditar(db, {
+                    ator: 'painel',
+                    acao: 'curso_inscricao_' + novo,
+                    alvo: insc.usuario_id,
+                    detalhe: `Inscrição ${insc.id} — turma ${insc.turma_id} — de "${antes}" para "${novo}"`,
+                    ip: ipDoPedido(req)
+                });
+                saveJsonDb(db);
+
+                responder(200, { success: true, id: insc.id, status: insc.status, aviso });
+            } catch (err) {
+                console.error('Erro ao mudar inscrição do curso:', err.message);
+                responder(400, { success: false, error: 'Não foi possível alterar a inscrição.' });
+            }
+        });
+        return;
+    }
+
+    // ============ PAINEL: POST /admin/curso/turma ============
+    // Cria turma nova ou abre/fecha uma existente. Fechar não apaga: a turma
+    // some do site mas os inscritos continuam registrados.
+    if (method === 'POST' && url === '/admin/curso/turma') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            const responder = (status, payload) => {
+                res.writeHead(status, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(payload));
+            };
+            if (!sessaoAdmin(req)) return responder(401, { success: false, error: 'Sessão expirada' });
+
+            try {
+                const entrada = JSON.parse(body || '{}');
+                const db = loadJsonDb();
+                db.turmas_curso = db.turmas_curso || [];
+
+                // com id → muda o status de uma turma que já existe
+                if (entrada.id) {
+                    const turma = db.turmas_curso.find(t => t.id === Number(entrada.id));
+                    if (!turma) return responder(404, { success: false, error: 'Turma não encontrada.' });
+
+                    if (entrada.status) {
+                        if (!['aberta', 'fechada'].includes(entrada.status)) {
+                            return responder(400, { success: false, error: 'Situação inválida.' });
+                        }
+                        turma.status = entrada.status;
+                    }
+                    if (entrada.capacidade != null) {
+                        turma.capacidade = Math.max(1, Number(entrada.capacidade) || 1);
+                    }
+                    if (entrada.observacao != null) turma.observacao = String(entrada.observacao).slice(0, 300);
+
+                    auditar(db, {
+                        ator: 'painel', acao: 'curso_turma_alterada', alvo: turma.id,
+                        detalhe: `${turma.inicio} — ${turma.status} — ${turma.capacidade} lugares`,
+                        ip: ipDoPedido(req)
+                    });
+                    saveJsonDb(db);
+                    return responder(200, { success: true, turma });
+                }
+
+                // sem id → turma nova. O horário chega em ISO do navegador,
+                // que já resolve o fuso: o campo do formulário é local e o
+                // toISOString() do JS converte para UTC antes de enviar.
+                const inicio = new Date(entrada.inicio);
+                if (isNaN(inicio)) return responder(400, { success: false, error: 'Data e hora inválidas.' });
+
+                const duracaoH = Number(entrada.duracao_horas) || 2;
+                const turma = {
+                    id: proximoId(db.turmas_curso),
+                    inicio: inicio.toISOString(),
+                    fim: new Date(inicio.getTime() + duracaoH * 3600000).toISOString(),
+                    capacidade: Math.max(1, Number(entrada.capacidade) || 5),
+                    status: 'aberta',
+                    observacao: String(entrada.observacao || '').slice(0, 300) || null,
+                    criado_em: new Date().toISOString()
+                };
+                db.turmas_curso.push(turma);
+
+                auditar(db, {
+                    ator: 'painel', acao: 'curso_turma_criada', alvo: turma.id,
+                    detalhe: `${turma.inicio} — ${turma.capacidade} lugares`,
+                    ip: ipDoPedido(req)
+                });
+                saveJsonDb(db);
+                responder(200, { success: true, turma });
+            } catch (err) {
+                console.error('Erro ao salvar turma do curso:', err.message);
+                responder(400, { success: false, error: 'Não foi possível salvar a turma.' });
+            }
+        });
+        return;
+    }
+
     // ============ PAGAMENTO: POST /pagamento/iniciar ============
     // Registra quem efetivamente saiu do site para pagar. O login por código
     // ou Google já criou a pessoa em `usuarios`; este evento liga a pessoa ao
@@ -2212,6 +2618,16 @@ const server = http.createServer((req, res) => {
                 if (!valorConfirmado) {
                     console.warn(`⚠️  Pagamento ${eventoId} gravado sem confirmar valor na API ` +
                                  `(assumindo R$${valorPago}). Configure MP_ACCESS_TOKEN.`);
+                }
+
+                // O curso não é plano: confirma a vaga e encerra aqui. Sem este
+                // desvio os R$ 65 passariam por planoPeloValor() e nasceria uma
+                // assinatura que ninguém contratou.
+                const inscricaoCurso = confirmarInscricaoCurso(db, user, valorPago, eventoId);
+                if (inscricaoCurso) {
+                    saveJsonDb(db);
+                    console.log(`🎓 Vaga confirmada no curso: ${user.email || user.id} — turma ${inscricaoCurso.turma_id}`);
+                    return;
                 }
 
                 db.assinaturas.push({

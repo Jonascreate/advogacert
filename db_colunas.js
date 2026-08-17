@@ -50,6 +50,17 @@ const COLUNAS = {
     ],
     logins: [
         'id', 'usuario_id', 'metodo', 'ip', 'criado_em'
+    ],
+    turmas_curso: [
+        'id', 'inicio', 'fim', 'capacidade', 'status', 'observacao', 'criado_em'
+    ],
+    // nome, email, telefone e oab sao copiados do cadastro no momento da
+    // inscricao: a lista de presenca de uma turma passada precisa continuar
+    // mostrando com quem se falou na epoca, mesmo que a pessoa troque o
+    // e-mail depois.
+    inscricoes_curso: [
+        'id', 'turma_id', 'usuario_id', 'nome', 'email', 'telefone', 'oab',
+        'status', 'valor', 'pagamento_id', 'criado_em', 'confirmado_em'
     ]
 };
 

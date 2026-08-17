@@ -167,6 +167,22 @@
                 metodo: 'POST',
                 corpo: { usuario_id: usuario_id, descricao: descricao }
             });
+        },
+
+        // ---------------- curso ----------------
+        curso: function () {
+            return pedir('/admin/curso');
+        },
+
+        mudarInscricaoCurso: function (id, status) {
+            return pedir('/admin/curso/inscricao', {
+                metodo: 'POST',
+                corpo: { id: id, status: status }
+            });
+        },
+
+        salvarTurmaCurso: function (dados) {
+            return pedir('/admin/curso/turma', { metodo: 'POST', corpo: dados });
         }
     };
 })(window);

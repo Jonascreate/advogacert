@@ -92,6 +92,7 @@
         { id: 'chamados',     rotulo: 'Chamados' },
         { id: 'indicadores',  rotulo: 'Indicadores' },
         { id: 'visitantes',   rotulo: 'Visitantes e conversões' },
+        { id: 'curso',        rotulo: 'Inscrições do curso' },
         { id: 'sistema',      rotulo: 'Servidor e banco' },
         { id: 'cadastros-tab', rotulo: 'Cadastros e agenda' }
     ];
@@ -206,6 +207,7 @@
         global.AdminFilaChamados.montar(document.getElementById('aba-chamados'));
         global.AdminIndicadores.montar(document.getElementById('aba-indicadores'));
         global.AdminVisitantes.montar(document.getElementById('aba-visitantes'));
+        global.AdminCurso.montar(document.getElementById('aba-curso'));
         global.AdminCadastros.montar({
             resumo: document.getElementById('resumo'),
             pessoas: document.getElementById('aba-cadastros-pessoas'),
@@ -261,7 +263,8 @@
                     atualizarTempoReal(),
                     global.AdminCadastros.recarregar(),
                     global.AdminIndicadores.recarregar(),
-                    global.AdminVisitantes.recarregar()
+                    global.AdminVisitantes.recarregar(),
+                    global.AdminCurso.recarregar()
                 ]).then(function () {
                     marcarHora();
                 }).catch(function () {

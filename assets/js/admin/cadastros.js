@@ -815,6 +815,17 @@
         abrirImpressao: abrirImpressao
     };
 
+    // A folha de impressão fica exposta para as outras abas usarem. Sem isto,
+    // cada relatório novo copiaria os ~70 estilos do papel timbrado e eles
+    // divergiriam com o tempo — dois relatórios do mesmo painel saindo com
+    // cara diferente é o tipo de coisa que ninguém nota até imprimir os dois.
+    global.AdminFolha = {
+        esc: esc,
+        carimbos: carimbos,
+        montar: montarFolha,
+        abrir: abrirImpressao
+    };
+
     global.AdminCadastros = {
         montar: function (nos) {
             alvoResumo = nos.resumo;
