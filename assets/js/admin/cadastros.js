@@ -114,19 +114,6 @@
         //     : null;
         var botaoChamado = null;
 
-        var campoObs = el('input.obs-input', {
-            type: 'text',
-            placeholder: 'Nota…',
-            valor: p.observacao || ''
-        });
-        campoObs.addEventListener('blur', function () {
-            var novo = campoObs.value.trim();
-            if (novo === (p.observacao || '')) return;
-            global.AdminApi.observacao(p.id, novo).then(function (r) {
-                if (r && r.success) p.observacao = novo;
-            });
-        });
-
         return el('tr', {}, [
             td('Pessoa', el('div', {}, [
                 el('div.forte', { texto: p.nome || p.email || '—' }),
@@ -137,7 +124,6 @@
             td('Renovação', botaoRenov),
             td('Chamados', String(p.chamados_total)),
             td('Último login', el('span.mono.fraco', { texto: D.fmtData(p.ultimo_login) })),
-            td('Observação', campoObs),
             td('', botaoChamado || document.createTextNode('')),
             td('', botaoPlano)
         ]);
@@ -199,7 +185,7 @@
             if (novo) { novo.focus(); novo.setSelectionRange(novo.value.length, novo.value.length); }
         });
 
-        var titulos = ['Pessoa', 'WhatsApp', 'Plano', 'Renovação', 'Chamados', 'Último login', 'Observação', '', ''];
+        var titulos = ['Pessoa', 'WhatsApp', 'Plano', 'Renovação', 'Chamados', 'Último login', '', ''];
 
         D.trocar(alvoPessoas, [
             el('div.bloco-topo', {}, el('div', {}, [

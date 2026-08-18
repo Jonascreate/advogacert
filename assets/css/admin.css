@@ -721,14 +721,6 @@ tr.abandonado td { background: rgba(255, 176, 32, 0.05); }
 }
 .acao-ok:hover { border-color: var(--accent-mac); color: var(--accent-mac); }
 .acao-nao:hover { border-color: #ff6b5e; color: #ff6b5e; }
-.obs-input {
-    width: 160px; box-sizing: border-box;
-    padding: 0.4rem 0.6rem;
-    background: var(--bg-card); border: 1px solid var(--border-color);
-    border-radius: 8px; color: var(--text-primary);
-    font-family: inherit; font-size: 0.8rem;
-}
-.obs-input:focus { outline: none; border-color: var(--accent-mac); }
 .mini {
     margin-left: 0.5rem; padding: 0.15rem 0.5rem;
     border: 1px solid var(--border-color); border-radius: 6px;
@@ -1063,25 +1055,25 @@ tr.linha-atendida:hover > td {
        estica toda a linha até o card mais alto dela */
     align-items: start;
 }
+/* Card com superfície, como .verif-card e .triagem-card. Só a borda, sem
+   fundo, deixava o indicador como um contorno vazio sobre a foto — e o
+   rótulo em pílula punha uma segunda linha dentro da primeira. */
 .ind-item {
+    background: rgba(22, 22, 24, 0.35);
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    padding: 0.6rem 1.15rem;
+    padding: 0.75rem 1.15rem;
     display: flex; align-items: center;
-    gap: 0.6rem;
+    gap: 0.75rem;
 }
 .ind-rot {
-    /* mesmo modelo chiclete dos ícones dos cards do topo: pílula fina e
-       larga, não um rótulo solto. Nunca quebra linha nem estoura o card —
-       encolhe com reticências se faltar espaço de verdade. */
+    /* Rótulo solto: a moldura do card já separa um indicador do outro. Sem a
+       pílula, sobra largura — o texto quebra em duas linhas em vez de sumir
+       nas reticências, que era o que mais atrapalhava a leitura. */
     flex: 1 1 auto; min-width: 0;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-color);
-    border-radius: 100px;
-    padding: 0.28rem 0.75rem;
-    font-size: 0.68rem; text-transform: uppercase;
-    letter-spacing: 0.05em; color: var(--text-muted);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 0.72rem; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--text-secondary);
+    line-height: 1.35;
 }
 .ind-val {
     flex-shrink: 0;
@@ -1506,6 +1498,7 @@ tr.linha-atendida:hover > td {
    painel manter. */
 .turma-nova {
     margin-bottom: 1.25rem; padding: 0.9rem 1.15rem;
+    background: rgba(22, 22, 24, 0.35);
     border: 1px solid var(--border-color); border-radius: 12px;
 }
 .turma-nova > strong { font-size: 0.85rem; }
@@ -1531,7 +1524,11 @@ tr.linha-atendida:hover > td {
 }
 
 .turmas-grid { display: grid; gap: 0.9rem; }
+/* Mesma superfície dos outros cartões do painel. Sem fundo, o cartão da
+   turma somava suas linhas às da lista de inscritos e a aba inteira virava
+   um emaranhado de contornos vazios. */
 .turma-card {
+    background: rgba(22, 22, 24, 0.35);
     border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden;
 }
 /* Turma passada ou fechada não some da lista — vira histórico. O apagado
@@ -1540,17 +1537,21 @@ tr.linha-atendida:hover > td {
 .turma-topo {
     display: flex; align-items: flex-start; justify-content: space-between;
     flex-wrap: wrap; gap: 0.75rem;
-    padding: 0.75rem 1.15rem;
+    padding: 0.8rem 1.15rem;
     border-bottom: 1px solid var(--border-color);
-    background: rgba(255,255,255,0.03);
+    background: rgba(255,255,255,0.05);
 }
-.turma-data { font-size: 0.9rem; text-transform: capitalize; }
-.turma-nota { margin-top: 0.2rem; font-size: 0.74rem; color: var(--text-muted); }
+.turma-data { font-size: 0.95rem; text-transform: capitalize; }
+.turma-nota { margin-top: 0.25rem; font-size: 0.78rem; color: var(--text-secondary); }
 .turma-direita { display: flex; align-items: center; gap: 0.6rem; }
+/* O verde aqui era o da marca antiga; o --accent-mac desta página virou o
+   âmbar da paleta da foto, então fundo e texto brigavam. Os dois saem do
+   mesmo token agora. */
 .turma-vagas {
     padding: 0.25rem 0.7rem; border-radius: 100px;
-    border: 1px solid rgba(110,231,200,0.35); background: rgba(110,231,200,0.10);
-    color: var(--accent-mac); font-size: 0.72rem; font-weight: 700;
+    border: 1px solid oklch(var(--acento-quente) / 0.35);
+    background: oklch(var(--acento-quente) / 0.12);
+    color: var(--accent-mac); font-size: 0.75rem; font-weight: 700;
     white-space: nowrap;
 }
 .turma-vagas.lotada {
@@ -1561,24 +1562,26 @@ tr.linha-atendida:hover > td {
 .insc-linha {
     display: flex; align-items: center; justify-content: space-between;
     flex-wrap: wrap; gap: 0.6rem;
-    padding: 0.6rem 1.15rem; border-bottom: 1px solid var(--border-color);
+    /* Divisor mais fraco que a borda do cartão: separa uma pessoa da outra
+       sem competir com a moldura da turma. */
+    padding: 0.7rem 1.15rem; border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 .insc-linha:last-child { border-bottom: 0; }
-.insc-quem { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
-.insc-quem strong { font-size: 0.85rem; }
-.insc-contato { font-size: 0.72rem; color: var(--text-muted); }
+.insc-quem { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.insc-quem strong { font-size: 0.9rem; }
+.insc-contato { font-size: 0.78rem; color: var(--text-secondary); }
 .insc-situacao { display: flex; align-items: center; gap: 0.5rem; }
-.insc-quando { font-size: 0.7rem; color: var(--text-muted); }
+.insc-quando { font-size: 0.75rem; color: var(--text-muted); }
 .insc-acoes { display: flex; gap: 0.4rem; }
 .acao.mini { padding: 0.28rem 0.6rem; font-size: 0.72rem; }
 .acao.mini.discreta { color: var(--text-muted); }
 .acao.mini.discreta:hover { border-color: #ff6b5e; color: #ff6b5e; }
 
 .selo-curso {
-    padding: 0.18rem 0.55rem; border-radius: 100px;
-    font-size: 0.68rem; font-weight: 700; white-space: nowrap;
+    padding: 0.2rem 0.6rem; border-radius: 100px;
+    font-size: 0.72rem; font-weight: 700; white-space: nowrap;
 }
-.selo-curso.ok      { background: rgba(110,231,200,0.12); color: var(--accent-mac); }
-.selo-curso.alerta  { background: rgba(255,176,32,0.12);  color: #ffb020; }
-.selo-curso.neutro  { background: rgba(255,255,255,0.06); color: var(--text-muted); }
+.selo-curso.ok      { background: oklch(var(--acento-quente) / 0.16); color: var(--accent-mac); }
+.selo-curso.alerta  { background: rgba(255,176,32,0.16);  color: #ffb020; }
+.selo-curso.neutro  { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
 .vazio.mini { padding: 1.1rem 1rem; font-size: 0.8rem; }

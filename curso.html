@@ -155,6 +155,15 @@
         }
         .offer-payment { color: var(--text-muted); font-size: .92rem; margin-top: .5rem; }
         .offer-button { width: 100%; justify-content: center; margin-top: 1.5rem; }
+        /* Aviso de inscrições suspensas. Só aparece quando alguém clica em
+           garantir a vaga — ver INSCRICOES_SUSPENSAS no script do rodapé. */
+        .offer-indisponivel {
+            display: none; margin-top: 1rem; padding: .85rem 1rem;
+            border: 1px solid rgba(255,176,32,.4); border-radius: 10px;
+            background: rgba(255,176,32,.1); color: #ffb020;
+            font-size: .92rem; line-height: 1.45; text-align: center;
+        }
+        .offer-indisponivel.visivel { display: block; }
         .countdown { margin-top: 1.4rem; padding-top: 1.2rem; border-top: 1px solid var(--border-color); text-align: center; }
         .countdown span { display: block; color: var(--text-muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; }
         #prazo-relogio { color: var(--accent-mac); font-family: 'JetBrains Mono',monospace; font-size: 1rem; margin-top: .5rem; }
@@ -702,6 +711,7 @@
                     <div class="offer-brand"><img src="assets/img/pje-claro.png" alt="PJe"><span class="plus">+</span><img src="assets/img/claude-claro.png" alt="Claude"><span class="plus">+</span><img class="offer-brand-icon" src="assets/img/vscode-claro.png" alt="Visual Studio Code"></div>
                     <p class="offer-caption">Inscrição individual para a próxima turma</p><div class="offer-price"><span class="moeda">R$</span><span class="valor">65</span></div><p class="offer-payment">Pagamento por Pix, cartão ou boleto</p>
                     <button class="btn-primary offer-button" id="btn-vaga" type="button">Garantir minha vaga <span class="arrow">→</span></button>
+                    <p class="offer-indisponivel" id="aviso-indisponivel" role="status">Serviço temporariamente indisponível. Em breve estaremos no ar.</p>
                     <div class="countdown"><span id="prazo-rotulo">Inscrições fecham em</span><div id="prazo-relogio">--d --h --m --s</div></div>
                 </aside>
             </div>
@@ -814,9 +824,36 @@
     <div class="mobile-purchase"><button class="btn-primary" id="btn-vaga-mobile" type="button">Garantir vaga por R$ 65 <span class="arrow">→</span></button></div>
     <script src="assets/js/api.js?v=9"></script><script src="assets/js/telemetria.js?v=2"></script><script src="assets/js/script.js?v=20"></script>
     <script>
-    (function(){'use strict';var DEADLINE='2026-08-17T20:00:00-03:00';var WHATSAPP='https://wa.me/5561986241570?text='+encodeURIComponent('Quero garantir minha vaga no curso de PJe e IA (R$ 65)');var botao=document.getElementById('btn-vaga');var mobile=document.getElementById('btn-vaga-mobile');var rotulo=document.getElementById('prazo-rotulo');var relogio=document.getElementById('prazo-relogio');var prazo=new Date(DEADLINE).getTime();function dois(n){return String(n).padStart(2,'0')}function atualizarPrazo(){var falta=prazo-Date.now();if(falta<=0){rotulo.textContent='Inscrições encerradas';relogio.textContent='00d 00h 00m 00s';botao.disabled=true;if(mobile)mobile.disabled=true;return}var s=Math.floor(falta/1000);relogio.textContent=dois(Math.floor(s/86400))+'d '+dois(Math.floor(s%86400/3600))+'h '+dois(Math.floor(s%3600/60))+'m '+dois(s%60)+'s'}atualizarPrazo();setInterval(atualizarPrazo,1000);
+    (function(){'use strict';
+    /* Inscrições suspensas: o site continua no ar e a página segue explicando
+       o curso, mas ninguém fecha compra. É a diferença entre divulgar e ficar
+       obrigado a honrar a vaga de quem tropeçou aqui por acaso.
+       Para reabrir, é esta linha e mais nenhuma: false. */
+    var INSCRICOES_SUSPENSAS=true;
+    var DEADLINE='2026-08-17T20:00:00-03:00';var WHATSAPP='https://wa.me/5561986241570?text='+encodeURIComponent('Quero garantir minha vaga no curso de PJe e IA (R$ 65)');var botao=document.getElementById('btn-vaga');var mobile=document.getElementById('btn-vaga-mobile');var rotulo=document.getElementById('prazo-rotulo');var relogio=document.getElementById('prazo-relogio');var prazo=new Date(DEADLINE).getTime();function dois(n){return String(n).padStart(2,'0')}function atualizarPrazo(){var falta=prazo-Date.now();if(falta<=0){rotulo.textContent='Inscrições encerradas';relogio.textContent='00d 00h 00m 00s';botao.disabled=true;if(mobile)mobile.disabled=true;return}var s=Math.floor(falta/1000);relogio.textContent=dois(Math.floor(s/86400))+'d '+dois(Math.floor(s%86400/3600))+'h '+dois(Math.floor(s%3600/60))+'m '+dois(s%60)+'s'}
+    /* Suspenso ganha do relógio. O contador vencido desabilitava o botão, e
+       botão desabilitado não dispara clique — o aviso nunca aparecia. Além
+       disso, relógio correndo ao lado de "indisponível" diz duas coisas
+       contrárias na mesma tela. */
+    if(INSCRICOES_SUSPENSAS){
+        rotulo.textContent='Inscrições temporariamente suspensas';
+        relogio.style.display='none';
+    }else{
+        atualizarPrazo();setInterval(atualizarPrazo,1000);
+    }
+
     var VALOR=65;
     var RETOMADA_TTL=10*60*1000;
+
+    var aviso=document.getElementById('aviso-indisponivel');
+
+    /* O botão do rodapé fixo do celular fica longe do cartão da oferta: sem
+       rolar até o aviso, o clique pareceria não ter feito nada. */
+    function avisarIndisponivel(){
+        if(!aviso)return;
+        aviso.classList.add('visivel');
+        aviso.scrollIntoView({behavior:'smooth',block:'center'});
+    }
 
     function usuarioLogado(){try{return JSON.parse(sessionStorage.getItem('user'))}catch(e){return null}}
 
@@ -824,6 +861,9 @@
     // link do curso não estiver configurado (MP_LINK_CURSO), o servidor
     // recusa e a pessoa cai no WhatsApp em vez de num botão morto.
     function irPagar(){
+        // Também aqui, e não só no clique: quem volta do login com a compra
+        // pendente cai direto neste caminho (ver retomar(), no fim).
+        if(INSCRICOES_SUSPENSAS){avisarIndisponivel();return;}
         var texto=botao.innerHTML;
         botao.textContent='Abrindo pagamento...';
         fetch(window.apiUrl('/pagamento/link?plano=curso')).then(function(r){return r.json()}).then(function(d){
@@ -846,6 +886,8 @@
     // o sessionStorage ao passar pelo login social.
     function comprar(){
         if(botao.disabled)return;
+        // Antes do login: quem não vai poder comprar não precisa criar conta.
+        if(INSCRICOES_SUSPENSAS){avisarIndisponivel();return;}
         if(!usuarioLogado()){
             var pendente=JSON.stringify({plano:'curso',valor:VALOR,origem:'curso.html',em:Date.now()});
             sessionStorage.setItem('checkoutPendente',pendente);
