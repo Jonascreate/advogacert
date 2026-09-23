@@ -252,6 +252,18 @@
         }
         /* a chamada: a primeira frase sai em linha própria, maior e em cor
            cheia — é ela que precisa ser lida de longe */
+        /* O MESMO DEGRADÊ do "suporte contínuo" lá dos planos: do verde cana
+           ao azul, cortado no formato das letras.
+           As três linhas de baixo é que fazem isso: o background-clip: text
+           recorta o degradê no desenho do texto, e o text-fill-color
+           transparente apaga a cor sólida que ficaria por cima dele. Sem a
+           segunda, o degradê existe mas não aparece. */
+        .destaque-cana {
+            background: linear-gradient(135deg, var(--accent-mac), var(--accent-win));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
         .hero-desc-chamada {
             display: block;
             /* só a chamada fica em caixa alta; o resto do parágrafo segue
@@ -3505,10 +3517,9 @@
     <!-- Mac e Windows empilhados à esquerda, o anúncio do curso ao lado -->
     <section class="platform-section" id="plataformas">
         <p class="hero-desc">
-            <strong class="hero-desc-chamada">Não consegue acessar os tribunais? Protocolar petição?<br>Chama o suporte!</strong>
-            Verificamos o funcionamento do certificado digital em computadores Windows e Mac,
-            com acesso a todos os sistemas do Brasil.
-            Escolha no final do site o card de <span class="hero-desc-free">suporte grátis</span> ou de <span class="hero-desc-paid">suporte premium</span>.
+            <!-- o degradê marca um trecho só: dois ou três acesos na mesma
+                 frase brigam entre si e nenhum puxa o olho -->
+            <strong class="hero-desc-chamada">Não consegue acessar os tribunais? <span class="destaque-cana">Protocolar petição?</span><br>Chama o suporte!</strong>
         </p>
         <div class="platform-duo">
         <div class="platform-grid">
