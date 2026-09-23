@@ -19,7 +19,7 @@
     <!-- CSS Principal -->
     <link rel="stylesheet" href="assets/css/style.css">
     <!-- Barra de menu do novo-site2 -->
-    <link rel="stylesheet" href="assets/css/bloco-00-header.css?v=5">
+    <link rel="stylesheet" href="assets/css/bloco-00-header.css?v=6">
     <!-- as abas suspensas da barra; depende das variáveis do header acima -->
     <link rel="stylesheet" href="assets/css/bloco-00-nav-menus.css?v=1">
     <link rel="stylesheet" href="assets/css/bloco-02-cards.css?v=7">
@@ -1592,9 +1592,69 @@
             align-self: end;
             width: 100%;
         }
+        /* ─── CELULAR E TABLET: A ORDEM MUDA ───
+           No computador a entrada tem duas colunas, e cada uma carrega uma
+           esteira: a das mídias mora no .hero-texto (esquerda) e a dos
+           tribunais no .hero-sistemas-wrap (direita), junto com a tag do
+           curso. Empilhando essas duas caixas numa coluna só, a tag do
+           curso caía ENTRE as duas esteiras.
+
+           Aqui elas se desfazem como caixa: `display: contents` apaga o
+           quadro do elemento e promove os filhos dele a itens diretos do
+           .platform-hero. Com todos no mesmo nível, o `order` põe cada um
+           no lugar certo — é isso que permite a tag do curso subir para
+           logo abaixo do cabeçalho e as duas esteiras ficarem juntas, sem
+           mexer numa vírgula do HTML. */
         @media (max-width: 900px) {
-            .platform-hero { grid-template-columns: minmax(0, 1fr); }
-            .hero-sistemas-wrap { grid-column: 1; grid-row: 2; margin-top: 2rem; }
+            .platform-hero {
+                display: flex;
+                flex-direction: column;
+                gap: 0;
+            }
+            .hero-texto,
+            .hero-sistemas-wrap { display: contents; }
+
+            /* 1) o título e as logos do Mac/Windows abrem a página */
+            .platform-hero h1 { order: 1; }
+            .hero-logos { order: 2; }
+            /* 2) a tag do curso, logo depois deles */
+            .platform-hero .hero-curso-tag { order: 3; }
+            /* 3) as duas esteiras, uma debaixo da outra */
+            .platform-hero .hero-midias-bloco { order: 4; }
+            .platform-hero .hero-sistemas-texto { order: 5; margin-top: 1.5rem; }
+            .hero-sistemas-wrap .belt-reverse { order: 6; }
+
+            /* OS RESPIROS, e por que o seletor tem .platform-hero na frente.
+               As margens do computador (57,6px embaixo do card e 35,2px em
+               cima da esteira) moram MAIS ABAIXO neste arquivo. Com a mesma
+               especificidade, quem vem depois ganha — e as duas somadas
+               abriam um vão de 93px entre o card e a esteira no celular.
+               O .platform-hero na frente sobe a especificidade e resolve
+               sem precisar mover blocos de lugar. */
+            .platform-hero .hero-curso-tag {
+                margin: 1.5rem 0 0;
+                /* no celular os dois quadros empilham e a altura vem do
+                   conteúdo; a trava de 7.75rem é coisa do computador, onde
+                   eles crescem para o lado */
+                min-height: 0;
+            }
+            .platform-hero .hero-midias-bloco { margin-top: 2rem; }
+
+            /* sem a caixa, estas medidas não têm mais dono: as esteiras
+               passam a ocupar a largura da coluna.
+               O min-width: 0 é obrigatório e não é zelo: item de flex nasce
+               com min-width: auto, ou seja, não encolhe abaixo do próprio
+               conteúdo — e o conteúdo aqui é o track, que tem width:
+               max-content. Sem esta linha a esteira dos tribunais saía com
+               1908px, esticava a página inteira e tudo aparecia cortado na
+               borda direita. */
+            .hero-curso-tag,
+            .hero-midias-bloco,
+            .hero-sistemas-wrap .belt {
+                min-width: 0;
+                width: 100%;
+                max-width: none;
+            }
         }
         /* bloco dos tribunais compacto: janela, frase, logos, nomes e aviso menores */
         /* a caixa cresce, as logos continuam no mesmo tamanho: cabem mais na faixa */

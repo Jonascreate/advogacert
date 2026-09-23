@@ -474,10 +474,12 @@ body.menu-travado {
    ========================================================================== */
 
 /* --- Tablet e notebook pequeno (até 991px) ---
-   Os links do meio e o selo saem; entra o hambúrguer. */
+   Os links do meio saem; entra o hambúrguer.
+   O selo "Suporte aberto agora" FICA: ele é o caminho mais curto para o
+   WhatsApp, e o celular é justamente de onde a pessoa chama. Antes ele
+   saía junto com os links, e no celular não havia como chamar pela barra. */
 @media (max-width: 991px) {
-  .menu-link-wrap,
-  .nav-status {
+  .menu-link-wrap {
     display: none;
   }
 
@@ -492,5 +494,25 @@ body.menu-travado {
      proporção: 32 -> 37px, os mesmos ~16% a mais */
   .brand-logo {
     height: 48px;
+  }
+
+  /* O SELO VIRA SÓ O SÍMBOLO.
+     Com a frase inteira, logo + selo + hambúrguer não cabem em 390px: o
+     selo espremia o logo e a barra estourava. Some o texto, fica o ícone
+     do WhatsApp — que já é o que a pessoa procura — e a pílula encolhe
+     para um botão redondo. */
+  .nav-status-text {
+    display: none;
+  }
+
+  .nav-status {
+    padding: 0;
+    width: 42px;
+    height: 42px;
+    justify-content: center;
+  }
+
+  .nav-status-whats {
+    font-size: 1.25rem;
   }
 }
