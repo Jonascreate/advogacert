@@ -1,0 +1,89 @@
+/* ==========================================================================
+   EFEITO: REVELAR AO ROLAR
+   --------------------------------------------------------------------------
+   ► UMA NOVA CATEGORIA DE ARQUIVO, para não bagunçar:
+
+       bloco-NN-nome.css .... é UMA seção da página (o hero, os serviços...)
+       efeito-nome.css ...... é um EFEITO que VÁRIAS seções usam
+
+   Este aqui é do segundo tipo. Ele não desenha nada: só faz o conteúdo
+   de uma seção aparecer quando a pessoa rola até ela.
+
+   --------------------------------------------------------------------------
+   COMO SE USA (só duas marcas no HTML, nada de classe):
+
+     <section data-scroll="load">        ← a seção que vigia a rolagem
+        <h2 scroll-item="show">...</h2>  ← o que vai aparecer, um por vez
+        <p  scroll-item="show">...</p>
+     </section>
+
+   Quem NÃO tem scroll-item="show" simplesmente já está lá, parado.
+   Assim dá para escolher o que se move e o que fica firme.
+
+   --------------------------------------------------------------------------
+   OS NÚMEROS SÃO OS DO SITE DE REFERÊNCIA, lidos de dentro dele:
+
+     começa a 50px abaixo do lugar e invisível
+     leva 0,8s para chegar
+     cada irmão espera 0,2s a mais que o anterior (o "efeito escada")
+     a curva é a "power2.out": arranca rápido e freia macio no fim
+     dispara quando o topo da seção alcança 80% da altura da tela
+     acontece UMA vez só e nunca mais — rolando de volta, não se desfaz
+   ========================================================================== */
+
+
+/* --- 1) O ESTADO DE ANTES -------------------------------------------------
+   Todo item marcado começa apagado e 50px mais embaixo.
+
+   Repare no seletor: ele é escrito com colchetes porque procura por
+   ATRIBUTO do HTML, e não por classe. [scroll-item="show"] quer dizer
+   "todo elemento que tenha scroll-item valendo show".                    */
+[data-scroll="load"] [scroll-item="show"] {
+  opacity: 0;
+  transform: translateY(50px);
+
+  /* cubic-bezier(.215,.61,.355,1) é o desenho da curva "power2.out":
+     o movimento começa veloz e vai freando, como um objeto pesado
+     sendo pousado. É o que dá a sensação de peso e calma.
+     O atraso de cada item quem põe é o JavaScript. */
+  transition: opacity 0.8s cubic-bezier(0.215, 0.61, 0.355, 1),
+              transform 0.8s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+
+/* --- 2) O ESTADO DE DEPOIS ------------------------------------------------
+   O JavaScript põe a classe .revelado na SEÇÃO quando ela chega na tela.
+   Aí todos os itens dela vão para o lugar, cada um no seu tempo.         */
+[data-scroll="load"].revelado [scroll-item="show"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+
+/* --- 3) A REDE DE SEGURANÇA -----------------------------------------------
+   Se o JavaScript não rodar (deu erro, o navegador é antigo, alguém
+   desligou), os itens ficariam invisíveis para sempre e a página
+   apareceria vazia. Isso seria pior do que não ter efeito nenhum.
+
+   A classe .js é posta no <html> pelo próprio JavaScript, na primeira
+   linha dele. Então a regra do item 1 só vale QUANDO o JavaScript
+   estiver vivo. Sem ele, nada some.
+
+   :not(.js) = "quando o html NÃO tiver a classe js".                     */
+html:not(.js) [data-scroll="load"] [scroll-item="show"] {
+  opacity: 1;
+  transform: none;
+}
+
+
+/* --- 4) QUEM PEDIU PARA NÃO TER MOVIMENTO --------------------------------
+   O base.css já desliga as animações de quem configurou o computador
+   para reduzir movimento. Mas aqui isso não basta: sem transição, o item
+   ficaria congelado no estado de antes, ou seja, invisível.
+   Esta regra garante que ele apareça, só que sem se mexer.               */
+@media (prefers-reduced-motion: reduce) {
+  [data-scroll="load"] [scroll-item="show"] {
+    opacity: 1;
+    transform: none;
+  }
+}

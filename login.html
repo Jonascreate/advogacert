@@ -13,7 +13,122 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
     <!-- CSS Principal -->
     <link rel="stylesheet" href="assets/css/style.css">
+    <!-- Barra de menu do novo-site2: a mesma da index -->
+    <link rel="stylesheet" href="assets/css/bloco-00-header.css?v=5">
     <style>
+        /* ─── O FUNDO DA TELA ───
+           A cena noturna ocupa a janela inteira, presa (fixed): ao rolar, o
+           conteúdo anda e o fundo fica. O cover corta o que sobrar em vez de
+           esticar a imagem.
+           O #0a0a0b atrás dela é o mesmo preto do site: é o que aparece
+           enquanto o arquivo (1,5 MB) carrega, e nas telas muito largas.
+           A camada escura logo abaixo (body::before) é o que garante a
+           leitura: sem ela, o texto claro do cartão cai em cima da parte
+           iluminada da imagem. */
+        body {
+            background: #0a0a0b url('img/img_tela_login.png') center center / cover no-repeat fixed;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            /* mais fechado à esquerda, onde mora o texto da vitrine, e mais
+               aberto à direita, onde a cena tem o que mostrar */
+            background: linear-gradient(90deg, rgba(10, 10, 11, 0.88) 0%, rgba(10, 10, 11, 0.6) 45%, rgba(10, 10, 11, 0.35) 100%);
+        }
+        /* as manchas coloridas que seguem o mouse saem daqui: sobre a foto
+           elas viram borrão. O HTML delas fica, é o script.js que as move. */
+        .blush-container { display: none; }
+
+        /* ─── A BARRA DO TOPO, IGUAL À DA INDEX ───
+           Antes esta página usava o <header> do style.css, que ocupa a
+           largura inteira da janela: a logo colava na borda esquerda e os
+           links na direita. A index usa o bloco-00, preso a um container de
+           1100px — a mesma moldura do conteúdo.
+           O que vem abaixo é o recorte que a index define inline: a fonte
+           Inter Display, as variáveis da barra e o container. Aqui elas já
+           entram nos valores ESCUROS, porque esta página é escura. */
+        @font-face { font-family: 'Inter Display'; src: url('assets/fonts/InterDisplay-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
+        @font-face { font-family: 'Inter Display'; src: url('assets/fonts/InterDisplay-Medium.ttf') format('truetype'); font-weight: 500; font-display: swap; }
+        @font-face { font-family: 'Inter Display'; src: url('assets/fonts/InterDisplay-SemiBold.ttf') format('truetype'); font-weight: 600; font-display: swap; }
+
+        .header {
+            --cor-fundo: #0a0a0b;
+            --cor-fundo-claro: #161618;
+            --cor-fundo-vidro: rgba(10, 10, 11, 0.78);
+            --cor-texto: #f5f5f5;
+            --cor-linha: rgba(255, 255, 255, 0.12);
+            --texto-m: 1rem;
+            --texto-p: 0.875rem;
+            --linha-texto: 1.3;
+            --peso-semi: 600;
+            --gap-xxs: 1rem;
+            --gap-xs: 1.25rem;
+            --gap-s: 1.5rem;
+            --gap-2xl: 5rem;
+            --raio-p: 10px;
+            --raio-pilula: 999px;
+            /* a mesma altura da index: logo de 64px com respiro em volta */
+            --altura-nav: 92px;
+            font-family: 'Inter Display', 'Inter', -apple-system, 'Segoe UI', Arial, sans-serif;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+        /* a moldura de 1100px: é ela que tira a barra da borda da janela */
+        .header .container {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+        .header a { text-decoration: none; color: inherit; }
+        .header .brand-logo { display: block; max-width: 100%; }
+        /* a logo do arquivo é preta, desenhada para fundo claro: no escuro
+           ela precisa ser invertida, como a index faz no tema escuro */
+        .header .brand-logo { filter: invert(1); }
+        /* os links: a index tem painéis suspensos; aqui são <a> simples, no
+           mesmo corpo e no mesmo espaçamento */
+        .header .nav-simples {
+            display: flex;
+            align-items: center;
+            gap: 1.75rem;
+        }
+        .header .nav-simples a {
+            color: var(--cor-texto);
+            font-size: var(--texto-p);
+            font-weight: 500;
+            opacity: 0.85;
+            transition: opacity 0.2s ease;
+        }
+        .header .nav-simples a:hover { opacity: 1; }
+        /* a seta de voltar: bola vazada, o mesmo acabamento do bot que
+           flutua no canto — contorno fino e o traço na cor de apoio */
+        .header .nav-voltar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--cor-linha);
+            border-radius: var(--raio-pilula);
+            color: var(--cor-texto);
+            opacity: 0.75;
+            font-size: 0.95rem;
+            transition: opacity 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+        }
+        .header .nav-voltar:hover {
+            opacity: 1;
+            border-color: var(--cor-texto);
+            /* a seta recua um passo, no sentido para onde ela leva */
+            transform: translateX(-2px);
+        }
+        @media (max-width: 560px) {
+            .header .nav-simples { gap: 1rem; }
+            .header .nav-voltar { width: 36px; height: 36px; font-size: 0.85rem; }
+        }
+
         .login-page {
             min-height: 100vh;
             display: flex;
@@ -96,7 +211,9 @@
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
-            max-width: 620px;
+            /* 620 -> 460: com o cartão largo e os campos baixos, a placa de
+               vidro saía achatada, mais deitada que em pé. */
+            max-width: 460px;
             width: 100%;
             margin: 0 auto;
             background: var(--bg-secondary);
@@ -391,8 +508,10 @@
                 font-size: 1.1rem;
             }
             .login-container {
-                max-width: 720px;
-                padding: 3rem 3.5rem;
+                /* telas muito largas: o cartão cresce um pouco, mas continua
+                   mais alto que largo (era 720px e deitava) */
+                max-width: 520px;
+                padding: 3rem 3rem;
                 transform: scale(1);
             }
             .login-container h2 {
@@ -519,6 +638,105 @@
             .login-container { padding: 1.75rem; }
             .login-container h2 { font-size: 1.6rem; }
         }
+
+        /* ─── O CARTÃO EM VIDRO ───
+           Fica no fim do arquivo de propósito: assim vence as regras do
+           cartão lá de cima sem precisar apagá-las.
+           A receita do vidro tem três partes, e as três são necessárias:
+             1. fundo quase transparente — é o que deixa a cena passar;
+             2. backdrop-filter: blur — borra O QUE ESTÁ ATRÁS do cartão,
+                não o conteúdo dele. Sem isto o texto disputa com as folhas
+                da imagem e nada se lê;
+             3. borda clara de 1px — é ela que dá a aresta da placa de vidro.
+           O -webkit- acompanha porque Safari e iOS ainda pedem o prefixo. */
+        .login-container {
+            /* 0.07 -> 0.03: quase só o desfoque segura a leitura agora.
+               O blur caiu junto (18 -> 12): com o fundo mais transparente,
+               desfoque demais devolve a aparência de vidro leitoso. */
+            background: rgba(255, 255, 255, 0.03);
+            -webkit-backdrop-filter: blur(12px) saturate(130%);
+            backdrop-filter: blur(12px) saturate(130%);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 24px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+        }
+        /* os campos e o botão do Google acompanham: caixa opaca sobre vidro
+           quebra o efeito — parece adesivo colado na placa */
+        .login-container .form-group input,
+        .login-container .entrada-btn,
+        .login-container .social-login-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.16);
+        }
+        .login-container .form-group input:focus {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: var(--accent-mac, #6ee7c8);
+        }
+        .login-container .entrada-btn:hover,
+        .login-container .social-login-btn:hover {
+            background: rgba(255, 255, 255, 0.14);
+        }
+        /* O VERDE DO BOTÃO, mais fechado.
+           Era o verde-menta da marca (#21b98f -> #6ee7c8), claro demais
+           sobre o vidro: o botão parecia apagado e o texto escuro dentro
+           dele pedia esforço. Este é o mesmo verde, dois tons abaixo, com
+           o texto em branco. */
+        .login-container .login-btn {
+            /* verde cana: o verde puxado para o amarelo, da folha nova da
+               cana. Ele combina com a cena porque é da mesma família das
+               folhas do fundo, mas quente — destaca do azul-esverdeado da
+               imagem em vez de se perder nele.
+               O texto vai escuro: sobre um verde claro assim, branco fica
+               com contraste baixo demais para ler. */
+            background: linear-gradient(135deg, #6ba32f, #a6ce4e);
+            color: #11240b;
+        }
+        .login-container .login-btn:hover {
+            box-shadow: 0 14px 30px rgba(107, 163, 47, 0.35);
+        }
+        /* no vidro, o cinza do rodapé do cartão some: os textos de apoio
+           sobem um tom */
+        .login-container .otp-hint,
+        .login-container .form-hint { color: rgba(255, 255, 255, 0.62); }
+
+        /* ─── BOLINHAS FLUTUANTES, no acabamento da index ───
+           As duas nascem do script.js, que é compartilhado por todas as
+           páginas. Aqui o WhatsApp sai (a mesma regra que a index usa) e
+           sobra o bot.
+
+           O bot da index é uma bola VAZADA: fundo transparente, contorno
+           fino, o robô na cor de apoio e o azul do LinkedIn acendendo no
+           hover. Os valores abaixo são os do tema escuro da index, porque
+           esta página é escura — no claro o contorno quase preto sumiria.
+           Os !important acompanham os da index: o script.js escreve o
+           estilo da bolinha direto no elemento, e sem eles o inline vence. */
+        body > a[href^="https://wa.me/"] { display: none !important; }
+
+        #chat-bot-btn {
+            background: transparent !important;
+            border: 1px solid rgba(255, 255, 255, 0.18) !important;
+            color: #a0a0a5 !important;
+            transition: color 0.25s ease, border-color 0.25s ease,
+                        background-color 0.25s ease !important;
+        }
+        #chat-bot-btn:hover {
+            color: #4fa3ff !important;
+            border-color: #4fa3ff !important;
+            background: rgba(79, 163, 255, 0.14) !important;
+        }
+        #chat-bot-btn i {
+            display: inline-block;
+            animation: botFlutua 2.4s ease-in-out infinite;
+            color: inherit;
+        }
+        @keyframes botFlutua {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        /* quem pediu menos movimento no sistema vê o robô parado */
+        @media (prefers-reduced-motion: reduce) {
+            #chat-bot-btn i { animation: none; }
+        }
     </style>
 </head>
 <body>
@@ -529,17 +747,29 @@
         <div class="blush blush-3" id="blush3"></div>
     </div>
 
-    <header>
-        <a href="index.html" class="logo">
-            <div class="logo-icon">
-                <div class="logo-mask" role="img" aria-label="AdvogaCert"></div>
+    <!-- Barra de menu: a mesma estrutura da index (bloco 00).
+         Estilos: assets/css/bloco-00-header.css | Script: o .js de mesmo nome,
+         que só põe a classe .rolou quando a página desce. -->
+    <section class="header">
+        <div class="navbar" role="banner">
+            <div class="container">
+                <div class="navbar-wrapper">
+                    <a href="index.html" class="brand-logo-wrap" aria-label="AdvogaCert — página inicial">
+                        <img src="assets/img/logo-escuro.png" alt="AdvogaCert" class="brand-logo">
+                    </a>
+
+                    <!-- No lugar dos links, só a volta: esta é uma tela de
+                         uma tarefa só. O texto do aria-label é o que o leitor
+                         de tela anuncia, já que o botão é só a seta. -->
+                    <nav class="nav-simples" aria-label="Menu">
+                        <a href="index.html" class="nav-voltar" aria-label="Voltar para a página inicial" title="Voltar">
+                            <i class="fa-solid fa-reply" aria-hidden="true"></i>
+                        </a>
+                    </nav>
+                </div>
             </div>
-        </a>
-        <nav>
-            <a href="index.html">Início</a>
-            <a href="contato.html">Contato</a>
-        </nav>
-    </header>
+        </div>
+    </section>
 
     <section class="login-page">
         <div class="login-split">
@@ -556,7 +786,6 @@
 
             <div class="login-container">
                 <h2>Entrar</h2>
-                <p class="login-subtitle">Duas formas, as duas sem senha para lembrar</p>
 
                 <!-- A entrada comum oferece Google ou código por e-mail. Quem
                      chega pelos planos pagos abre o registerForm abaixo para
@@ -660,6 +889,8 @@
         <p class="footer-copy">© 2026 AdvogaCert. Todos os direitos reservados.</p>
     </footer>
 
+    <!-- a barra ganha fundo ao rolar (a classe .rolou) -->
+    <script src="assets/js/bloco-00-header.js?v=1"></script>
     <script src="assets/js/api.js?v=9"></script>
     <script src="assets/js/telemetria.js?v=2"></script>
 

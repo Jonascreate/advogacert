@@ -5,3 +5,21 @@ secrets_config.json
 pagamento_config.json
 otp_config.json
 usuarios.json
+
+# Backups e dumps do banco. NAO sao segredo de chave, sao DADOS DE CLIENTE:
+# os arquivos daqui trazem e-mail, telefone e numero de OAB de gente real, e
+# o repositorio e publico. Ficaram de fora do controle de versao de vez.
+supabase-backup-*.json
+usuarios.backup-*.json
+*.backup-*.json
+
+# Log do servidor local: registra o que passou pelas rotas, inclusive dado
+# de quem entrou.
+servidor_local*.log
+servidor_local*.err.log
+
+# Copia de trabalho de outro site e provas de conceito: peso morto no repo.
+Advoga_scroll/
+prototipo-*.html
+preview-*.html
+codigo_dashboard_para_gpt.txt

@@ -1,0 +1,97 @@
+/* ==========================================================================
+   EFEITO: TEXTO ROLANDO LETRA POR LETRA
+   --------------------------------------------------------------------------
+   Arquivo de EFEITO (não é uma seção). Ver a regra no efeito-revelar.css.
+
+   No site de referência isto é UMA interação só, usada em três lugares
+   diferentes: nos links do menu, nos links do rodapé e nos botões. Por
+   isso ela mora aqui, solta, e não dentro de nenhum bloco.
+
+   --------------------------------------------------------------------------
+   COMO SE USA:
+
+     <a href="#" data-texto-rolando>
+        <span class="texto-rolando">
+           <span class="texto-rolando-linha">Ver como funciona</span>
+           <span class="texto-rolando-linha" aria-hidden="true">Ver como funciona</span>
+        </span>
+     </a>
+
+   O texto é escrito DUAS vezes, igual. Não é erro de digitação: a janela
+   só mostra a altura de uma linha, então a segunda cópia fica escondida
+   logo abaixo. No hover as duas sobem juntas — mas letra por letra, com
+   0,03s de diferença entre uma e a próxima.
+
+   --------------------------------------------------------------------------
+   OS NÚMEROS SÃO OS DA REFERÊNCIA:
+     0,25s para cada letra subir
+     0,03s de atraso de uma letra para a seguinte
+     sobe exatamente 100% da própria altura
+   ========================================================================== */
+
+
+/* --- 1) A JANELA ----------------------------------------------------------
+   overflow: hidden é o que corta a segunda cópia. Sem isto, as duas
+   apareceriam empilhadas e o texto sairia repetido na tela.
+
+   A altura vem de line-height, e não de um número fixo em pixels: assim
+   o efeito funciona igual num botão de 16px e num título de 42px, sem
+   ninguém precisar recalcular nada.                                      */
+.texto-rolando {
+  display: block;
+  overflow: hidden;
+  /* 1em × a altura de linha herdada = exatamente uma linha */
+  height: 1.3em;
+  line-height: 1.3;
+}
+
+.texto-rolando-linha {
+  display: block;
+  height: 1.3em;
+  line-height: 1.3;
+  white-space: nowrap;   /* "Ver como funciona" não pode quebrar em duas */
+}
+
+/* A segunda cópia não pode ser selecionada com o mouse: sem isto, ao
+   arrastar para selecionar, o texto sai duplicado ao colar. */
+.texto-rolando-linha + .texto-rolando-linha {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+
+/* --- 2) CADA LETRA --------------------------------------------------------
+   Os <span> de letra são criados pelo JavaScript.
+
+   inline-block é obrigatório: letra comum (inline) não aceita ser movida
+   com transform — o navegador simplesmente ignora o comando.            */
+.texto-rolando-letra {
+  display: inline-block;
+  transition: transform 0.25s ease;
+}
+
+/* O espaço entre palavras também vira um <span>, e um espaço sozinho
+   dentro de um inline-block some. Esta linha o segura no lugar. */
+.texto-rolando-espaco {
+  white-space: pre;
+}
+
+
+/* --- 3) O DESTINO ---------------------------------------------------------
+   A classe .rolando é posta pelo JavaScript no hover. Ele também dá a
+   cada letra o seu atraso — e ao SAIR o mouse, dá os atrasos na ordem
+   inversa, para o efeito voltar de trás para frente, como na referência. */
+[data-texto-rolando].rolando .texto-rolando-letra {
+  transform: translateY(-100%);
+}
+
+
+/* --- 4) SEM JAVASCRIPT, OU SEM MOVIMENTO ---------------------------------
+   Se o JS não rodar, as letras nunca são criadas e o texto fica parado —
+   o que está certo: sem efeito, mas legível. Aqui só garantimos que a
+   segunda cópia continue escondida.                                      */
+@media (prefers-reduced-motion: reduce) {
+  .texto-rolando-letra {
+    transition: none;
+  }
+}

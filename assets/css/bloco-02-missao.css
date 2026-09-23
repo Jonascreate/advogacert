@@ -1,0 +1,712 @@
+/* ==========================================================================
+   BLOCO 02  —  MISSÃO
+   --------------------------------------------------------------------------
+   Aqui é só o DESENHO. Os movimentos moram fora:
+     efeito-revelar.css/.js ......... o conteúdo sobe e aparece ao rolar
+     efeito-texto-rolando.css/.js ... o texto do botão rola no hover
+   E o play/pause do vídeo está no bloco-02-missao.js.
+
+   COMO ESTE BLOCO É MONTADO (desenho em texto):
+
+   section#missao [data-scroll="load"]
+     └ .container
+        └ .missao-grade ................... DUAS COLUNAS
+           │
+           ├ .missao-visual ............... ESQUERDA: o visual
+           │   ├ .missao-video-caixa ...... o vídeo em laço
+           │   │    └ botão de play/pause no canto
+           │   ├ .missao-foto-caixa ....... a foto, empurrada para baixo
+           │   │    ├ .missao-selo._02 .... selo flutuante (embaixo à esq.)
+           │   │    ├ .missao-selo._03 .... selo flutuante (em cima à dir.)
+           │   │    └ .missao-foto
+           │   └ .missao-selo._01 ......... selo flutuante (em cima à esq.)
+           │
+           └ .missao-conteudo ............. DIREITA: o texto
+               ├ .secao-etiqueta
+               ├ .missao-titulo + parágrafos
+               └ .botao-seta .............. o botão do texto rolando
+
+   O TRUQUE DA COMPOSIÇÃO:
+   o vídeo e a foto ficam lado a lado, e a foto é empurrada 3rem para
+   baixo. Esse desalinho de propósito, mais os três selos tortos por
+   cima das beiradas, é o que tira o ar de "duas caixas na página" e dá
+   o ar de coisa montada à mão.
+   ========================================================================== */
+
+
+/* ==========================================================================
+   0) VARIÁVEIS DA SEÇÃO  (acrescentado ao trazer o bloco para este site)
+   --------------------------------------------------------------------------
+   No novo-site2 elas vinham do base.css, que aqui não existe. Ficam presas
+   na própria seção para não mexer em nada fora dela, e o tema escuro troca
+   só estas linhas.
+   ========================================================================== */
+.section.missao {
+  --cor-fundo-claro: #ffffff;
+  --cor-texto:       #0e0e0c;
+  --cor-texto-medio: #3d3d3b;
+  --cor-linha:       rgba(14, 14, 12, 0.12);
+  --cor-acento:      #1f6fd1;
+  --cor-branco:      #ffffff;
+
+  --texto-g: 1.25rem;
+  --texto-m: 1rem;
+  --texto-p: 0.875rem;
+
+  --linha-curta: 1.1;
+  --linha-media: 1.2;
+
+  --aperto-medio: -0.02em;
+  --aperto-leve:  -0.01em;
+
+  --peso-semi: 600;
+
+  --gap-xxs: 1rem;
+  --gap-s:   1.5rem;
+  --gap-l:   2.5rem;
+  --gap-xl:  3.75rem;
+  --gap-2xl: 5rem;
+  --gap-3xl: 7.5rem;
+
+  --raio-g:      20px;
+  --raio-pilula: 999px;
+}
+
+html[data-tema="escuro"] .section.missao {
+  --cor-fundo-claro: #161618;
+  --cor-texto:       #f5f5f5;
+  --cor-texto-medio: #a0a0a5;
+  --cor-linha:       rgba(255, 255, 255, 0.14);
+  --cor-acento:      #4fa3ff;
+}
+
+
+/* ==========================================================================
+   1) A SEÇÃO E A GRADE
+   ========================================================================== */
+.section.missao {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.5rem 6rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.missao-grade {
+  /* a seção inteira sai um pouco menor — vídeo, foto, selos, título e
+     texto juntos, na mesma proporção. zoom (e não transform: scale) porque
+     ele encolhe TAMBÉM o espaço ocupado: com scale sobraria um vão do
+     tamanho original embaixo. Navegador sem zoom mostra no tamanho cheio,
+     que é o que havia antes. */
+  zoom: 0.88;
+
+  display: grid;
+  /* minmax(0, ...) em vez de só "1fr": 1fr sozinho não encolhe abaixo do
+     conteúdo, e uma imagem larga faria a grade estourar a tela. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--gap-xl);
+  align-items: center;
+}
+
+
+/* ==========================================================================
+   2) A COLUNA DA ESQUERDA — o visual
+   --------------------------------------------------------------------------
+   position: relative aqui é o que faz os selos flutuantes terem uma
+   referência para se pendurar. Sem ele, eles se pendurariam na página
+   inteira e sairiam do lugar.
+   ========================================================================== */
+.missao-visual {
+  position: relative;
+  display: flex;
+  gap: var(--gap-xxs);
+  width: 100%;
+}
+
+/* as duas caixas de dentro dividem a largura igualmente */
+.missao-video-caixa,
+.missao-foto-caixa {
+  position: relative;
+  width: 50%;
+}
+
+/* AS DUAS FOTOS COMO CARTAS DE BARALHO.
+   Cada uma ganha a moldura branca em volta (o padding com o fundo claro),
+   o canto arredondado e a sombra — e as DUAS tombam para o mesmo lado,
+   no mesmo ângulo e na mesma altura, com um pedaço de uma por cima da
+   outra.
+
+   Antes cada uma tombava para um lado, uma ficava um degrau mais baixa
+   que a outra e o hover as endireitava. Esse movimento saiu: a
+   inclinação agora é só desenho, igual nas duas, e nada se mexe.
+
+   O giro e a sobreposição moram na CAIXA; a foto por dentro fica reta. */
+.missao-foto-caixa {
+  padding: 8px;
+  border-radius: 18px;
+  background: var(--cor-fundo-claro);
+  box-shadow: 0 14px 34px rgba(14, 14, 12, 0.18);
+  transform: rotate(-4deg);
+}
+
+/* a carta de trás: mesma inclinação, só entra por baixo da outra */
+.missao-foto-caixa._reta {
+  z-index: 1;
+  margin-right: -22px;
+}
+
+/* a de cima passa por cima da outra */
+.missao-foto-caixa:not(._reta) { z-index: 2; }
+
+html[data-tema="escuro"] .missao-foto-caixa {
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
+}
+
+/* CONTORNO INTERNO DA FOTO.
+   Um véu escuro e borrado só nas beiradas, por dentro da imagem, com um
+   fio de luz de 1px por cima. Ele afunda as bordas e destaca o miolo.
+
+   Vai num ::after e não na própria <img>: sombra "inset" em imagem é
+   desenhada ATRÁS do conteúdo dela, ou seja, não apareceria. O inset: 8px
+   é a medida da moldura, para o véu cobrir exatamente a área da foto, e o
+   pointer-events: none deixa o clique e o hover passarem. */
+.missao-foto-caixa {
+  position: relative;
+}
+
+.missao-foto-caixa::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 12px;
+  pointer-events: none;
+  /* duas camadas: uma bem aberta e borrada, que escurece toda a beirada,
+     e outra curta e fechada, que marca o canto */
+  box-shadow: inset 0 0 26px 6px rgba(14, 14, 12, 0.7),
+              inset 0 0 9px 1px rgba(14, 14, 12, 0.55),
+              inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+
+html[data-tema="escuro"] .missao-foto-caixa::after {
+  box-shadow: inset 0 0 30px 8px rgba(0, 0, 0, 0.85),
+              inset 0 0 10px 2px rgba(0, 0, 0, 0.6),
+              inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+/* a caixa é mais estreita que a foto, então o cover corta as laterais.
+   Puxando o recorte para a direita e para cima, a placa da OAB na parede
+   entra no enquadramento em vez de ficar fora dele. */
+.missao-foto-caixa._reta .missao-foto { object-position: 78% 18%; }
+
+
+/* --- 2.1) O VÍDEO --------------------------------------------------------
+   overflow: hidden é o que faz o vídeo respeitar o canto arredondado —
+   sem ele, o retângulo do vídeo passa por cima da curva.
+
+   A caixa é RETRATO (mais alta que larga), como na referência: é o
+   formato de vídeo de celular, e é o que dá o ar de conteúdo recente.  */
+.missao-video-caixa {
+  border-radius: 30px;
+  overflow: hidden;
+  height: 420px;
+
+  /* O FUNDO: PRETO CHAPADO, sem degradê.
+     Quem apaga o preto do vídeo é o canvas (veja o .js do bloco): ele
+     entrega as partículas já recortadas, sem tarja. Só que as partículas
+     são CLARAS — soltas sobre o fundo quase branco do site, elas somem.
+     Daí o fundo escuro: é ele que devolve o contraste que elas precisam.
+
+     É o mesmo preto dos títulos, tirado da paleta. Testamos degradê azul
+     e ficou ruim: o azul é a cor das AÇÕES do site (botões e links), e um
+     card azul grande competia com eles. Chapado, o card não disputa
+     atenção com nada — só segura as partículas. */
+  background-color: var(--cor-texto);
+}
+
+.missao-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* object-fit: cover = preenche a caixa toda, cortando o que sobrar,
+     sem nunca espremer a imagem. */
+  object-fit: cover;
+}
+
+/* --- 2.1b) A TELA QUE APAGA O PRETO --------------------------------------
+   O canvas fica exatamente por cima do vídeo, do mesmo tamanho.
+
+   Por que não deu para resolver só com CSS: mix-blend-mode não cria
+   transparência, ele MISTURA com o que está atrás. Testamos color-dodge
+   e screen, e os dois só funcionam sobre fundo escuro — sobre o fundo
+   claro do site eles lavavam as partículas até o branco. O canvas não
+   mistura com nada: ele apaga o preto de verdade, e por isso funciona
+   sobre qualquer fundo.                                                  */
+.missao-video-tela {
+  position: absolute;
+  inset: 0;                 /* gruda nos quatro cantos da caixa */
+  z-index: 1;               /* acima do vídeo, abaixo do botão (z-index: 2) */
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;     /* o clique atravessa e chega no botão */
+
+  /* O EFEITO FLUTUANTE.
+     As partículas inteiras vagam devagar dentro da caixa, como coisa
+     boiando na água. É um movimento SOBRE o movimento do vídeo, e é o
+     que tira o ar de "vídeo preso num quadrado".
+
+     14 segundos de propósito: lento a ponto de a pessoa não flagrar o
+     movimento, só sentir que a caixa está viva.
+     alternate = vai e volta pelo mesmo caminho, então nunca há um pulo
+     do fim para o começo. */
+  animation: missao-flutuar 14s ease-in-out infinite alternate;
+}
+
+/* O passeio é minúsculo — 2% para o lado, 1,5% para cima. Mais que isso
+   já lê como erro de alinhamento em vez de flutuação.
+   O scale(1.06) é o truque que segura tudo: a tela fica 6% maior que a
+   caixa, então mesmo no ponto mais deslocado do passeio ela ainda cobre
+   os cantos, e nunca aparece uma faixa vazia na beirada. */
+@keyframes missao-flutuar {
+  from { transform: scale(1.06) translate(-2%, 1.5%); }
+  to   { transform: scale(1.06) translate(2%, -1.5%); }
+}
+
+/* QUEM PEDIU MENOS MOVIMENTO NÃO RECEBE O PASSEIO.
+   Tem gente que sente enjoo com coisas se mexendo na tela, e configura
+   isso no próprio sistema. O navegador nos conta, e nós obedecemos: o
+   recorte continua, o vídeo continua, só a flutuação sai. */
+@media (prefers-reduced-motion: reduce) {
+  .missao-video-tela {
+    animation: none;
+  }
+}
+
+/* O vídeo só se esconde DEPOIS que o script avisa que o canvas assumiu.
+   É essa classe que garante o plano B: se o JavaScript não rodar, ela
+   nunca é posta, e a pessoa continua vendo o vídeo normal em vez de um
+   buraco vazio na página. */
+.missao-video-caixa.chave-ligada .missao-video {
+  opacity: 0;
+}
+
+/* --- 2.2) O BOTÃO DE PLAY / PAUSE ---------------------------------------
+   Fica pousado no canto de baixo do vídeo. Ele mostra SEMPRE só um dos
+   dois ícones: o de pausa enquanto o vídeo roda, o de play quando está
+   parado. Quem troca é o JavaScript, pondo a classe .pausado. */
+.missao-video-botao {
+  position: absolute;
+  right: 16px;      /* canto de BAIXO à DIREITA, como na referência */
+  bottom: 16px;
+  z-index: 2;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 34px;
+  height: 34px;
+
+  border-radius: 50%;
+  /* cinza translúcido, não branco: o botão precisa existir sem roubar
+     a atenção do vídeo. Ele é uma saída, não um convite. */
+  background-color: rgba(255, 255, 255, 0.28);
+  color: var(--cor-branco);
+  /* desfoca o vídeo por trás do botão, para o ícone nunca sumir numa
+     cena clara */
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.missao-video-botao:hover {
+  transform: scale(1.08);
+  background-color: rgba(255, 255, 255, 0.45);
+}
+
+.missao-video-botao:focus-visible {
+  outline: 2px solid var(--cor-acento);
+  outline-offset: 3px;
+}
+
+.missao-video-botao svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+/* A regra dos dois ícones, em duas linhas:
+   normalmente aparece o de PAUSA (o vídeo está rodando);
+   com a classe .pausado, aparece o de PLAY. */
+.missao-video-botao .icone-play   { display: none; }
+.missao-video-botao.pausado .icone-play  { display: block; }
+.missao-video-botao.pausado .icone-pausa { display: none; }
+
+
+/* --- 2.3) A FOTO ---------------------------------------------------------- */
+.missao-foto {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 330px;
+  /* o canto de dentro é menor que o da moldura, senão a borda branca some
+     nas pontas */
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+
+/* --- 2.4) OS SELOS FLUTUANTES --------------------------------------------
+   Três pílulas penduradas nas beiradas, cada uma torta para um lado.
+
+   position: absolute + inset é o que permite pendurá-las PARA FORA da
+   caixa (repare nos valores negativos): elas invadem o espaço em volta,
+   e é isso que faz a composição parecer solta em vez de enquadrada.
+
+   A inclinação é pequena de propósito. Muito torto vira enfeite de
+   festa; 15 a 20 graus lê como "colado à mão".                         */
+.missao-selo {
+  position: absolute;
+  z-index: 3;
+
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  padding: 7px 14px;
+  border-radius: var(--raio-pilula);
+  box-shadow: 0 6px 20px rgba(14, 14, 12, 0.14);
+
+  font-size: var(--texto-p);
+  font-weight: var(--peso-semi);
+  white-space: nowrap;   /* o selo nunca quebra em duas linhas */
+}
+
+/* O ÍCONE de cada selo.
+   Na referência cada selo tem um ícone de cor diferente (coração, olho,
+   balão). A cor não vem do selo: vem de uma variável que cada selo
+   define para si, logo abaixo. É o único ponto de cor forte da seção
+   inteira, e é por isso que funciona. */
+.missao-selo svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+  flex-shrink: 0;
+  color: var(--cor-do-icone);
+}
+
+/* --- as três posições, uma por selo --- */
+
+/* 01 — em cima, saindo pela esquerda do vídeo. ESCURO.
+   É o único selo preto: por isso é ele que o olho acha primeiro. */
+.missao-selo._01 {
+  --cor-do-icone: #e5484d;      /* vermelho */
+  top: 30px;
+  left: -26px;
+  transform: rotate(-20deg);
+  background-color: var(--cor-texto);
+  color: var(--cor-branco);
+}
+
+/* 02 — no meio, montado em cima do vão entre o vídeo e a foto.
+   É o que costura as duas mídias numa coisa só. Branco. */
+.missao-selo._02 {
+  --cor-do-icone: #3b82f6;      /* azul */
+  top: 60%;
+  left: 44%;                    /* bem em cima do vão entre as duas */
+  transform: rotate(-20deg);
+  background-color: var(--cor-branco);
+  color: var(--cor-texto);
+}
+
+/* 03 — em cima à direita, tombado para o OUTRO lado.
+   A inclinação contrária é o que impede os três de parecerem
+   um carimbo repetido. Branco. */
+.missao-selo._03 {
+  --cor-do-icone: #f59e0b;      /* laranja */
+  top: 40px;
+  right: 26px;
+  transform: rotate(19deg);
+  background-color: var(--cor-branco);
+  color: var(--cor-texto);
+}
+
+
+/* ==========================================================================
+   3) A COLUNA DA DIREITA — o texto
+   ========================================================================== */
+.missao-conteudo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gap-s);
+}
+
+/* --- 3.1) A etiqueta de cima, em pílula ---------------------------------- */
+.secao-etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+
+  padding: 7px 18px;
+  border: 1px solid var(--cor-linha);
+  border-radius: var(--raio-pilula);
+  background-color: var(--cor-fundo-claro);
+
+  font-size: var(--texto-p);
+  font-weight: var(--peso-semi);
+  letter-spacing: var(--aperto-leve);
+  color: var(--cor-texto);
+}
+
+/* o pontinho azul, feito só com CSS */
+.secao-etiqueta::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--cor-acento);
+  flex-shrink: 0;
+}
+
+/* --- 3.2) O título -------------------------------------------------------
+   42px, o degrau abaixo do título do hero (82px). Ter degraus fixos, e
+   não um tamanho novo a cada seção, é o que faz o site parecer desenhado
+   em vez de remendado. */
+.missao-titulo {
+  font-size: clamp(1.9rem, 3.4vw, 2.625rem);
+  line-height: var(--linha-curta);
+  letter-spacing: var(--aperto-medio);
+  color: var(--cor-texto);
+}
+
+.missao-texto {
+  font-size: var(--texto-g);
+  line-height: var(--linha-media);
+  color: var(--cor-texto-medio);
+}
+
+
+/* ==========================================================================
+   4) O BOTÃO COM O TEXTO ROLANDO
+   --------------------------------------------------------------------------
+   O movimento das letras está no efeito-texto-rolando.css. Aqui é só a
+   aparência. Repare que a bolota da seta fica à ESQUERDA, como na
+   referência — e não à direita, que seria o óbvio.
+   ========================================================================== */
+.botao-seta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-xxs);
+
+  margin-top: var(--gap-xxs);
+  padding: 6px 32px 6px 6px;   /* folga só do lado do texto */
+  border-radius: var(--raio-pilula);
+
+  background-color: var(--cor-texto);
+  color: var(--cor-branco);
+
+  font-size: var(--texto-m);
+  font-weight: var(--peso-semi);
+
+  transition: background-color 0.35s ease;
+}
+
+.botao-seta:hover {
+  background-color: var(--cor-acento);
+}
+
+.botao-seta:focus-visible {
+  outline: 2px solid var(--cor-acento);
+  outline-offset: 3px;
+}
+
+/* --- 4.1) A bolota da seta ----------------------------------------------- */
+.botao-seta-bolota {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--cor-branco);
+  color: var(--cor-texto);
+
+  /* a seta avança um passo quando o mouse chega */
+  transition: transform 0.35s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.botao-seta:hover .botao-seta-bolota {
+  transform: translateX(4px);
+}
+
+/* O desenho da seta é um SVG escrito no próprio HTML, sem arquivo de
+   imagem: acompanha a cor do texto e nunca fica borrado em tela nenhuma. */
+.botao-seta-bolota svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+
+/* ==========================================================================
+   4.5) AJUSTES DESTE SITE  (acrescentado ao trazer o bloco)
+   --------------------------------------------------------------------------
+   Três coisas que o bloco original não precisava:
+     a) o que era preto por ser "a cor do texto" precisa continuar preto no
+        tema escuro — senão a caixa do vídeo e o selo escuro clareiam junto
+        com o texto e viram um bloco branco;
+     b) os títulos usam a Outfit, como o resto deste site;
+     c) as redes sociais da foto antiga, penduradas no canto da foto.
+   ========================================================================== */
+.missao-video-caixa { background-color: #0e0e0c; }
+
+.missao-selo._01 {
+  background-color: #0e0e0c;
+  color: #ffffff;
+}
+
+/* no tema escuro, o que é branco continua branco — e por isso o texto
+   dentro dele tem de continuar escuro, senão some (branco no branco) */
+html[data-tema="escuro"] .missao-selo._02,
+html[data-tema="escuro"] .missao-selo._03 {
+  background-color: #ffffff;
+  color: #0e0e0c;
+}
+
+/* o mesmo no botão: no claro ele é a pílula preta com texto branco; no
+   escuro ele inverte, pílula clara com texto escuro */
+html[data-tema="escuro"] .botao-seta {
+  background-color: #f5f5f5;
+  color: #0e0e0c;
+}
+
+html[data-tema="escuro"] .botao-seta:hover {
+  background-color: var(--cor-acento);
+  color: #ffffff;
+}
+
+html[data-tema="escuro"] .botao-seta-bolota {
+  background-color: #0e0e0c;
+  color: #f5f5f5;
+}
+
+.missao-titulo {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+}
+
+.missao-titulo span { color: var(--accent-mac); }
+
+.missao-texto { font-size: 1rem; line-height: 1.7; }
+
+/* --- as redes sociais, embaixo do texto ---------------------------------
+   Bola VAZADA: só o contorno fino e o ícone na cor do texto de apoio.
+   Quatro bolas coloridas paradas disputam atenção com o título e com os
+   botões; vazadas, elas esperam. A cor da rede acende no hover, que é
+   quando ela informa alguma coisa — "este aqui é o WhatsApp". */
+.missao-redes {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 0.25rem;
+}
+
+.missao-redes a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--cor-linha);
+  border-radius: 50%;
+  color: var(--cor-texto-medio);
+  font-size: 0.95rem;
+  transition: color 0.25s ease, border-color 0.25s ease,
+              background-color 0.25s ease, transform 0.25s ease;
+}
+
+.missao-redes a:hover {
+  transform: translateY(-2px);
+  color: var(--cor-da-rede);
+  border-color: var(--cor-da-rede);
+  /* o mesmo tom, bem diluído, para a bola não ficar oca no hover */
+  background-color: color-mix(in srgb, var(--cor-da-rede) 10%, transparent);
+}
+
+.missao-redes a:focus-visible {
+  outline: 2px solid var(--cor-acento);
+  outline-offset: 3px;
+}
+
+.missao-redes .social-linkedin  { --cor-da-rede: #0a66c2; }
+.missao-redes .social-whatsapp  { --cor-da-rede: #1f9d63; }
+.missao-redes .social-instagram { --cor-da-rede: #d6249f; }
+.missao-redes .social-github    { --cor-da-rede: #24292e; }
+
+html[data-tema="escuro"] .missao-redes .social-linkedin  { --cor-da-rede: #4fa3ff; }
+html[data-tema="escuro"] .missao-redes .social-whatsapp  { --cor-da-rede: #25d366; }
+html[data-tema="escuro"] .missao-redes .social-instagram { --cor-da-rede: #f062c0; }
+html[data-tema="escuro"] .missao-redes .social-github    { --cor-da-rede: #c9d1d9; }
+
+
+/* ==========================================================================
+   5) TELAS MENORES
+   ========================================================================== */
+
+/* --- Tablet e notebook pequeno --- */
+@media (max-width: 991px) {
+  /* as duas colunas viram uma só, o visual em cima e o texto embaixo */
+  .missao-grade {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--gap-l);
+  }
+
+  .missao-video-caixa {
+    height: 300px;
+  }
+
+  .missao-foto {
+    min-height: 300px;
+  }
+}
+
+/* --- Celular --- */
+@media (max-width: 600px) {
+  .section.missao {
+    padding-top: var(--gap-2xl);
+    padding-bottom: var(--gap-2xl);
+  }
+
+  .missao-video-caixa {
+    height: 250px;
+    border-radius: var(--raio-g);
+  }
+
+  .missao-foto {
+    min-height: 250px;
+    border-radius: var(--raio-g);
+  }
+
+  /* o selo de baixo sai: em tela estreita não há margem para ele
+     invadir, e ele acabaria em cima do texto. É o que a referência
+     também faz. */
+  .missao-selo._02 {
+    display: none;
+  }
+
+  /* os outros dois recolhem para dentro, para não vazarem da tela */
+  .missao-selo._01 { left: -10px; }
+  .missao-selo._03 { right: 8px; }
+
+  /* o botão ocupa a linha toda: mais fácil de acertar com o dedo */
+  .botao-seta {
+    width: 100%;
+    padding-right: 6px;
+    justify-content: flex-start;
+    gap: var(--gap-s);
+  }
+}

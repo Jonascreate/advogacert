@@ -1,5 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<!-- O ESCURO É O PADRÃO DA PÁGINA, e por isso o data-tema já vem escrito
+     aqui: quem chega pela primeira vez vê o site preto. O claro é uma
+     escolha, feita no seletor da barra, e o script logo abaixo é quem a
+     devolve nas visitas seguintes. -->
+<html lang="pt-BR" data-tema="escuro">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,17 +11,144 @@
     <meta name="description" content="Escolha seu sistema e proteja seu certificado digital contra o golpe do falso advogado. Suporte especializado para Mac e Windows.">
 
     <!-- Fontes Google -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Lato:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Lato:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- Font Awesome (ícones) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
     <!-- CSS Principal -->
     <link rel="stylesheet" href="assets/css/style.css">
+    <!-- Barra de menu do novo-site2 -->
+    <link rel="stylesheet" href="assets/css/bloco-00-header.css?v=5">
+    <!-- as abas suspensas da barra; depende das variáveis do header acima -->
+    <link rel="stylesheet" href="assets/css/bloco-00-nav-menus.css?v=1">
+    <link rel="stylesheet" href="assets/css/bloco-02-cards.css?v=7">
+    <!-- a cena do cubo dos certificados (porte do bloco 03 do novo-site2) -->
+    <link rel="stylesheet" href="assets/css/efeito-revelar.css?v=1">
+    <link rel="stylesheet" href="assets/css/efeito-texto-rolando.css?v=1">
+    <link rel="stylesheet" href="assets/css/bloco-02-missao.css?v=15">
+    <!-- Tema escolhido na visita anterior. Roda aqui, antes de o corpo ser
+         pintado, para a página não piscar num tema e virar no outro.
+         A lógica é ao contrário da de antes: o escuro já vem no <html>, e
+         este script só TIRA o atributo quando a pessoa escolheu o claro. -->
+    <script>
+        try {
+            if (localStorage.getItem('tema') === 'claro') {
+                document.documentElement.removeAttribute('data-tema');
+            }
+        } catch (e) {}
+    </script>
     <style>
+        /* ─── Barra de menu do novo-site2: o que ela pegava do base.css ───
+           O base.css de lá não entra inteiro (o reset e a fonte dele mudariam
+           o site todo): só as variáveis, a fonte Inter Display e o .container,
+           todos presos à .header. As regras de header/nav do style.css também
+           são neutralizadas aqui, senão elas pintam os links do menu. */
+        @font-face { font-family: 'Inter Display'; src: url('assets/fonts/InterDisplay-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
+        @font-face { font-family: 'Inter Display'; src: url('assets/fonts/InterDisplay-Medium.ttf') format('truetype'); font-weight: 500; font-display: swap; }
+        @font-face { font-family: 'Inter Display'; src: url('assets/fonts/InterDisplay-SemiBold.ttf') format('truetype'); font-weight: 600; font-display: swap; }
+        .header {
+            --cor-fundo: #ffffff;
+            --cor-fundo-claro: #ffffff;
+            --cor-fundo-vidro: rgba(255, 255, 255, 0.82);
+            --cor-texto: #0e0e0c;
+            --cor-linha: rgba(14, 14, 12, 0.12);
+            --cor-ok: #1f9d63;
+            --texto-m: 1rem;
+            --texto-p: 0.875rem;
+            --linha-texto: 1.3;
+            --peso-semi: 600;
+            --gap-xxs: 1rem;
+            --gap-xs: 1.25rem;
+            --gap-s: 1.5rem;
+            --gap-2xl: 5rem;
+            --raio-p: 10px;
+            --raio-pilula: 999px;
+            /* Era 76px, com o logo de 64px dentro: sobravam 6px de cada
+               lado e a barra ficava sem respiro. Em 92px o logo e os menus
+               ganham folga em cima e embaixo.
+               Quem depende desta medida acompanha sozinho: o seletor
+               dia/noite (top: var(--altura-nav) + 12px) e o painel do menu
+               do celular (padding: var(--altura-nav) ...). Só o respiro do
+               hero é à parte, no padding do .platform-hero. */
+            --altura-nav: 92px;
+            font-family: 'Inter Display', 'Inter', -apple-system, 'Segoe UI', Arial, sans-serif;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+        /* mesma largura e recuo do .platform-hero (1100px, 1.5rem): assim a
+           logo fica rente à borda esquerda do título de entrada */
+        .header .container {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+        .header a { text-decoration: none; color: inherit; }
+        .header nav { gap: 1.5rem; }
+        .header nav a {
+            color: var(--cor-texto);
+            font-size: var(--texto-m);
+            letter-spacing: normal;
+        }
+        .header nav a:hover { color: var(--cor-texto); }
+        .header .brand-logo { display: block; max-width: 100%; }
+        /* o WhatsApp mora no botão do menu: a bolinha flutuante que o
+           script.js cria (a[href wa.me] solto no body) sai só nesta página */
+        .nav-status-whats { color: #25d366; font-size: 1.1rem; line-height: 1; }
+        body > a[href^="https://wa.me/"] { display: none !important; }
+        .header button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+
+        /* seletor dia/noite: trilho com sol e lua, e uma bola que desliza
+           para cima do modo ativo. O ícone de cima da bola troca de cor
+           (a do fundo) para aparecer sobre ela.
+           Fixo logo abaixo da barra (76px), rente à borda direita do mesmo
+           container de 1100px do menu. z-index 98: acima da página, abaixo
+           do painel do menu do celular (99), que o cobre quando abre. */
+        .header .tema-toggle {
+            position: fixed;
+            top: calc(var(--altura-nav) + 12px);
+            right: max(1.5rem, calc((100vw - 1100px) / 2 + 1.5rem));
+            z-index: 98;
+            width: 58px;
+            height: 30px;
+            padding: 0 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid var(--cor-linha);
+            border-radius: var(--raio-pilula);
+            background: var(--cor-fundo-claro);
+            box-shadow: 0 1px 2px rgba(14, 14, 12, 0.05);
+            color: var(--cor-texto);
+            font-size: 12px;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+        .tema-toggle i {
+            position: relative;
+            z-index: 1;
+            opacity: 0.45;
+            transition: color 0.3s ease, opacity 0.3s ease;
+        }
+        .tema-toggle-bola {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--cor-texto);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
+        }
+        .tema-toggle .tema-toggle-sol { opacity: 1; color: var(--cor-fundo); }
+        [data-tema="escuro"] .tema-toggle-bola { transform: translateX(28px); }
+        [data-tema="escuro"] .tema-toggle .tema-toggle-sol { opacity: 0.45; color: inherit; }
+        [data-tema="escuro"] .tema-toggle .tema-toggle-lua { opacity: 1; color: var(--cor-fundo); }
+        .header .tema-toggle:focus-visible { outline: 2px solid var(--cor-texto); outline-offset: 2px; }
+
         :root {
-            --accent-mac: #6ee7c8;
-            --accent-mac-dark: #21b98f;
+            --accent-mac: #a6ce4e;
+            --accent-mac-dark: #8bbf3f;
             --accent-win: #4fa3ff;
             --accent-win-dark: #1f6fd1;
             --accent-danger: #ff6b5e;
@@ -33,7 +164,13 @@
             /* os dois somam sempre 15.5rem: passar altura de um para o outro
                desce o texto sem mudar a altura da seção — o que vem depois
                (anúncio e cards) não se move */
-            padding: 14.5rem 1.5rem 1rem;
+            /* 9.5rem = os 92px da barra do menu + o respiro até o título.
+               Este padding é o ÚNICO lugar que define esse respiro: o body
+               não tem margem nem padding próprios, e o menu é fixo (sai do
+               fluxo), então nada mais empurra o conteúdo para baixo da
+               barra. Mexer na altura da barra sem mexer aqui volta a colar
+               o título nela. */
+            padding: 9.5rem 1.5rem 1rem;
             max-width: 820px;
             margin: 0 auto;
         }
@@ -44,18 +181,23 @@
             height: auto;
             margin: 0 auto 1.4rem;
         }
-        /* TESTE DE FONTE: só este título usa Lato, no peso mais forte dela.
-           O resto do site segue na Outfit — para voltar, troque font-family. */
+        /* mesma letra do título do index2.html: Outfit 600, sem caixa alta */
         .platform-hero h1 {
-            font-family: 'Lato', sans-serif;
-            font-size: 2.45rem;
-            font-weight: 900;
-            /* em caixa alta o tracking não pode ser negativo: as maiúsculas
-               têm todas a mesma altura e empastam se ficarem apertadas */
-            text-transform: uppercase;
-            line-height: 1.2;
-            letter-spacing: 0.01em;
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(2rem, 5vw, 3.1rem);
+            font-weight: 600;
+            line-height: 1.18;
+            letter-spacing: -0.02em;
             margin-bottom: 1.25rem;
+        }
+        /* "Suporte para" numa linha só, em letra normal; o degradê continua
+           sendo só do "certificados digitais", que vem embaixo inteiro */
+        .platform-hero h1 .hero-linha0 {
+            background: none;
+            -webkit-text-fill-color: initial;
+            filter: none;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
         }
         .platform-hero h1 span {
             background: linear-gradient(135deg, var(--accent-mac), var(--accent-win));
@@ -63,17 +205,18 @@
             background-clip: text;
             -webkit-text-fill-color: transparent;
             /* halo do degradê: destaca a parte principal sem mudar a cor */
-            filter: drop-shadow(0 0 22px rgba(110, 231, 200, 0.28));
+            filter: drop-shadow(0 0 22px rgba(166, 206, 78, 0.28));
         }
-        /* segunda linha: mesma caixa alta, corpo bem menor e sem o degradê,
-           para ficar claro qual das duas é a principal */
+        /* segunda linha: corpo bem menor e sem o degradê, para ficar claro
+           qual das duas é a principal */
         .platform-hero h1 .hero-linha2 {
             display: block;
             margin-top: 0.9rem;
             /* menor que a linha de cima, mas sem sumir */
             font-size: 0.5em;
-            font-weight: 700;
-            letter-spacing: 0.1em;
+            /* traço fino, para não competir com o título em 600 */
+            font-weight: 300;
+            letter-spacing: 0;
             background: none;
             filter: none;
             -webkit-text-fill-color: initial;
@@ -107,6 +250,19 @@
             font-size: 1.3rem;
             line-height: 1.8;
         }
+        /* a chamada: a primeira frase sai em linha própria, maior e em cor
+           cheia — é ela que precisa ser lida de longe */
+        .hero-desc-chamada {
+            display: block;
+            /* só a chamada fica em caixa alta; o resto do parágrafo segue
+               em letra normal */
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            font-size: 1.2em;
+            font-weight: 700;
+            line-height: 1.35;
+        }
         .hero-desc-free {
             color: var(--accent-win);
             font-weight: 600;
@@ -115,7 +271,7 @@
         .hero-desc-paid {
             color: var(--accent-mac);
             font-weight: 600;
-            text-shadow: 0 0 16px rgba(110, 231, 200, 0.6);
+            text-shadow: 0 0 16px rgba(166, 206, 78, 0.6);
         }
 
         /* === CARDS DE PLATAFORMA === */
@@ -182,7 +338,7 @@
         .curso-anuncio-tag i {
             font-size: 0.95rem;
             color: var(--accent-mac);
-            filter: drop-shadow(0 0 6px rgba(110, 231, 200, 0.75));
+            filter: drop-shadow(0 0 6px rgba(166, 206, 78, 0.75));
         }
         .curso-anuncio-texto strong {
             display: block;
@@ -285,9 +441,9 @@
             opacity: 0;
             transition: opacity .35s ease;
             background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%),
-                        var(--brilho, rgba(110,231,200,.16)), transparent 68%);
+                        var(--brilho, rgba(166,206,78,.16)), transparent 68%);
         }
-        .platform-card.mac::before { --brilho: rgba(110, 231, 200, 0.18); }
+        .platform-card.mac::before { --brilho: rgba(166, 206, 78, 0.18); }
         .platform-card.win::before { --brilho: rgba(79, 163, 255, 0.18); }
         @media (hover: hover) {
             .platform-card:hover::before { opacity: 1; }
@@ -318,14 +474,14 @@
             background: conic-gradient(from var(--border-angle),
                 transparent 0deg,
                 transparent 190deg,
-                rgba(110, 231, 200, 0) 210deg,
-                #21b98f 250deg,
-                #6ee7c8 300deg,
+                rgba(166, 206, 78, 0) 210deg,
+                #8bbf3f 250deg,
+                #a6ce4e 300deg,
                 #fff 330deg,
-                #6ee7c8 350deg,
-                rgba(110, 231, 200, 0) 360deg);
+                #a6ce4e 350deg,
+                rgba(166, 206, 78, 0) 360deg);
             opacity: 0.6;
-            filter: drop-shadow(0 0 2px rgba(110, 231, 200, 0.5));
+            filter: drop-shadow(0 0 2px rgba(166, 206, 78, 0.5));
         }
         .platform-card.win::after {
             background: conic-gradient(from var(--border-angle),
@@ -343,13 +499,13 @@
         }
 
         .platform-card.mac {
-            border-color: rgba(110, 231, 200, 0.3);
-            background: linear-gradient(160deg, rgba(110,231,200,0.1), rgba(22,22,24,0.35) 55%);
-            box-shadow: 0 0 0 1px rgba(110,231,200,0.06), 0 20px 50px rgba(33, 185, 143, 0.1);
+            border-color: rgba(166, 206, 78, 0.3);
+            background: linear-gradient(160deg, rgba(166,206,78,0.1), rgba(22,22,24,0.35) 55%);
+            box-shadow: 0 0 0 1px rgba(166,206,78,0.06), 0 20px 50px rgba(33, 185, 143, 0.1);
         }
         .platform-card.mac:hover {
-            border-color: rgba(110, 231, 200, 0.6);
-            box-shadow: 0 0 0 1px rgba(110,231,200,0.15), 0 25px 60px rgba(33, 185, 143, 0.2);
+            border-color: rgba(166, 206, 78, 0.6);
+            box-shadow: 0 0 0 1px rgba(166,206,78,0.15), 0 25px 60px rgba(33, 185, 143, 0.2);
         }
         .platform-card.win {
             background: linear-gradient(160deg, rgba(79,163,255,0.08), rgba(22,22,24,0.35) 55%);
@@ -368,9 +524,9 @@
             align-items: center;
             gap: 0.3rem;
             white-space: nowrap;
-            background: linear-gradient(135deg, rgba(110,231,200,0.22), rgba(33,185,143,0.28));
+            background: linear-gradient(135deg, rgba(166,206,78,0.22), rgba(33,185,143,0.28));
             backdrop-filter: blur(6px);
-            border: 1px solid rgba(110, 231, 200, 0.4);
+            border: 1px solid rgba(166, 206, 78, 0.4);
             color: var(--accent-mac);
             font-weight: 700;
             font-size: 0.68rem;
@@ -392,9 +548,9 @@
             animation: iconFloat 3.2s ease-in-out infinite;
         }
         .platform-card.mac .platform-icon {
-            background: rgba(110, 231, 200, 0.12);
+            background: rgba(166, 206, 78, 0.12);
             color: var(--accent-mac);
-            border: 1px solid rgba(110, 231, 200, 0.25);
+            border: 1px solid rgba(166, 206, 78, 0.25);
             animation-name: iconFloat, iconGlowMac;
             animation-duration: 3.2s, 3.2s;
             animation-timing-function: ease-in-out, ease-in-out;
@@ -415,8 +571,8 @@
             50% { transform: translateY(-4px); }
         }
         @keyframes iconGlowMac {
-            0%, 100% { box-shadow: 0 0 0 rgba(110, 231, 200, 0); }
-            50% { box-shadow: 0 8px 24px rgba(110, 231, 200, 0.35); }
+            0%, 100% { box-shadow: 0 0 0 rgba(166, 206, 78, 0); }
+            50% { box-shadow: 0 8px 24px rgba(166, 206, 78, 0.35); }
         }
         @keyframes iconGlowWin {
             0%, 100% { box-shadow: 0 0 0 rgba(79, 163, 255, 0); }
@@ -476,7 +632,7 @@
             margin-bottom: 1.5rem;
         }
         .platform-card.mac .promo-strip {
-            background: rgba(110, 231, 200, 0.1);
+            background: rgba(166, 206, 78, 0.1);
             color: var(--accent-mac);
         }
         .platform-card.win .promo-strip {
@@ -555,86 +711,11 @@
             line-height: 1.65;
         }
 
-        /* === FUNDO DO TOPO (da linha do header até o começo dos cards) ===
-           A foto fica atrás do título, recortada pela faixa e correndo
-           levemente com o mouse. O véu escuro por cima garante a leitura. */
+        /* === FUNDO DO TOPO ===
+           A foto de fundo saiu: a faixa ficou só como invólucro do hero. */
         .hero-band {
-            --header-h: 92px;
-            /* sangria: quanto a faixa avança para baixo, atravessando o respiro
-               da seção seguinte até encostar na borda de cima dos cards */
-            --sangra: 3rem;
             position: relative;
             z-index: 1;
-        }
-        /* este é o recorte: começa exatamente na linha do header e termina
-           onde a seção dos cards começa */
-        .hero-band-clip {
-            position: absolute;
-            top: var(--header-h);
-            left: 0;
-            right: 0;
-            bottom: calc(var(--sangra) * -1);
-            z-index: 0;
-            overflow: hidden;
-            pointer-events: none;
-            /* nenhuma das duas linhas de corte é reta: em cima a imagem nasce
-               transparente na altura do header; embaixo ela se apaga antes de
-               tocar os cards (feather) */
-            -webkit-mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,0.35) 6%, #000 22%, #000 68%, rgba(0,0,0,0.35) 90%, transparent 100%);
-            mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,0.35) 6%, #000 22%, #000 68%, rgba(0,0,0,0.35) 90%, transparent 100%);
-        }
-        /* faixa de desfoque colada no topo: borra a própria foto ali,
-           então a emenda com o header vira um degradê e não um recorte */
-        .hero-band-clip::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: 0;
-            height: 130px;
-            z-index: 1;
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 30%, transparent 100%);
-            mask-image: linear-gradient(180deg, #000 0%, #000 30%, transparent 100%);
-        }
-        /* A foto fica presa à janela (background-attachment: fixed): a página
-           rola por cima dela e a imagem não se move — o texto e os objetos é
-           que passam. O recorte da faixa funciona como janela. */
-        .hero-band-img {
-            position: absolute;
-            inset: 0;
-            background: url('assets/img/bg-home.png') center center / cover no-repeat fixed;
-        }
-        /* iOS trata "fixed" de forma instável; no celular a foto volta a rolar junto */
-        @media (max-width: 768px) {
-            .hero-band-img { background-attachment: scroll; }
-        }
-        /* véu escuro: o título é branco e a foto tem áreas bem claras */
-        .hero-band-clip::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            z-index: 2;
-            background: linear-gradient(180deg, rgba(10, 10, 11, 0.88) 0%, rgba(10, 10, 11, 0.74) 45%, rgba(10, 10, 11, 0.94) 100%);
-        }
-        /* mesma tira de desfoque do topo, espelhada na emenda de baixo */
-        .hero-band::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: calc(var(--sangra) * -1);
-            height: 130px;
-            z-index: 1;
-            pointer-events: none;
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            -webkit-mask-image: linear-gradient(0deg, #000 0%, #000 30%, transparent 100%);
-            mask-image: linear-gradient(0deg, #000 0%, #000 30%, transparent 100%);
-        }
-        @media (max-width: 768px) {
-            .hero-band { --header-h: 76px; }
         }
 
         /* === ESTEIRA INFINITA (MARQUEE) === */
@@ -643,11 +724,24 @@
             z-index: 1;
             max-width: 1100px;
             margin: 0 auto;
-            padding: 0 1.5rem 6rem;
+            /* o respiro de baixo era 6rem, medida de quando as esteiras de
+               tribunais moravam aqui. Hoje esta seção é só o título, e logo
+               abaixo dela começa a pista da cena dos certificados — cada rem
+               daqui é um rem de vazio entre o título e o cubo. 2rem. */
+            padding: 0 1.5rem 2rem;
         }
-        /* leque de luz atrás das esteiras — mesmas definições do blush do mouse:
-           radial-gradient até transparent 70%, blur(80px) e opacity 0.4 */
+        /* LEQUE DE LUZ DESLIGADO.
+           Ele era o brilho ATRÁS DAS ESTEIRAS de tribunais — dois radiais
+           turquesa e azul, desfocados, no lugar exato em que as esteiras
+           passavam. As esteiras estão comentadas, e sem elas o brilho virou
+           uma mancha colorida solta em cima do título, sem nada para
+           iluminar.
+
+           Está desligado, não apagado: reativar as esteiras é tirar os dois
+           comentários, e aí este brilho volta junto trocando o display. */
         .belt-section::before {
+            display: none;
+
             content: '';
             position: absolute;
             left: 0;
@@ -682,7 +776,8 @@
         }
         .belt-reverse .belt-track {
             animation-direction: reverse;
-            animation-duration: 34s;
+            /* era 34s: menos tempo por volta = logos mais rápidas */
+            animation-duration: 20s;
         }
         /* o track tem 2 metades idênticas: -50% recoloca exatamente na origem */
         @keyframes beltRun {
@@ -715,7 +810,7 @@
             border: 1px solid rgba(255, 255, 255, 0.09);
             /* degradê escuro + halo da marca no topo */
             background:
-                radial-gradient(120% 90% at 50% 0%, rgba(110, 231, 200, 0.13), transparent 62%),
+                radial-gradient(120% 90% at 50% 0%, rgba(166, 206, 78, 0.13), transparent 62%),
                 linear-gradient(160deg, #24272d 0%, #16181c 55%, #101216 100%);
             display: flex;
             align-items: center;
@@ -746,8 +841,6 @@
         /* ajuste fino de escala por marca (arte com sobra ou com pouca margem) */
         .belt-token.reduzida img { transform: scale(0.78); }
         .belt-token.mini img { transform: scale(0.75); }
-        .belt-logo.reduzida img { transform: scale(0.74); }
-        .belt-logo.ampliada img { transform: scale(1.24); }
 
         @media (prefers-reduced-motion: reduce) {
             .belt-track { animation: none; }
@@ -844,7 +937,7 @@
         }
         .remote-buttons .btn-anydesk:hover {
             transform: translateY(-2px);
-            box-shadow: 0 12px 26px rgba(110, 231, 200, 0.3);
+            box-shadow: 0 12px 26px rgba(166, 206, 78, 0.3);
         }
 
         /* === MÍDIAS DE CERTIFICADO: cada uma é o download da sua leitora === */
@@ -921,7 +1014,7 @@
             color: var(--text-muted);
             transition: color 0.25s ease;
         }
-        .cert-item:hover .cert-acao { color: var(--accent-mac, #6ee7c8); }
+        .cert-item:hover .cert-acao { color: var(--accent-mac, #a6ce4e); }
         .cert-nota {
             margin: 2rem 0 0;
             text-align: center;
@@ -1011,13 +1104,13 @@
             box-shadow: 0 0 60px rgba(79, 163, 255, 0.3);
         }
         .plan-card.paid {
-            border-color: rgba(110, 231, 200, 0.3);
-            background-color: rgba(110, 231, 200, 0.06);
-            box-shadow: 0 0 45px rgba(110, 231, 200, 0.16);
+            border-color: rgba(166, 206, 78, 0.3);
+            background-color: rgba(166, 206, 78, 0.06);
+            box-shadow: 0 0 45px rgba(166, 206, 78, 0.16);
         }
         .plan-card.paid:hover {
-            border-color: rgba(110, 231, 200, 0.5);
-            box-shadow: 0 0 60px rgba(110, 231, 200, 0.3);
+            border-color: rgba(166, 206, 78, 0.5);
+            box-shadow: 0 0 60px rgba(166, 206, 78, 0.3);
         }
 
         /* ─── HOLOFOTE NO CURSOR (bloco aditivo — remover não altera nada) ───
@@ -1043,11 +1136,11 @@
             opacity: 0;
             transition: opacity .35s ease;
             background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%),
-                        var(--brilho, rgba(110,231,200,.14)), transparent 66%);
+                        var(--brilho, rgba(166,206,78,.14)), transparent 66%);
         }
         /* cada cartão brilha no próprio acento: o free é azul, o pago é verde */
         .plan-card.free::before { --brilho: rgba(79, 163, 255, 0.16); }
-        .plan-card.paid::before { --brilho: rgba(110, 231, 200, 0.16); }
+        .plan-card.paid::before { --brilho: rgba(166, 206, 78, 0.16); }
         @media (hover: hover) {
             .plan-card:hover::before { opacity: 1; }
         }
@@ -1068,7 +1161,7 @@
             color: var(--text-secondary);
         }
         .plan-card.paid .plan-tag {
-            background: linear-gradient(135deg, rgba(110,231,200,0.2), rgba(33,185,143,0.24));
+            background: linear-gradient(135deg, rgba(166,206,78,0.2), rgba(33,185,143,0.24));
             color: var(--accent-mac);
         }
         .plan-card h3 {
@@ -1138,12 +1231,12 @@
             color: var(--accent-mac);
         }
         .plan-card.paid .plan-btn {
-            background: linear-gradient(135deg, var(--accent-mac-dark, #21b98f), var(--accent-mac));
+            background: linear-gradient(135deg, var(--accent-mac-dark, #8bbf3f), var(--accent-mac));
             color: #062018;
         }
         .plan-card.paid .plan-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 15px 30px rgba(110, 231, 200, 0.3);
+            box-shadow: 0 15px 30px rgba(166, 206, 78, 0.3);
         }
 
         /* === DUAS OFERTAS NO MESMO CARTÃO ===
@@ -1166,8 +1259,8 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .plan-opcao.destaque {
-            border-color: rgba(110, 231, 200, 0.35);
-            background: rgba(110, 231, 200, 0.07);
+            border-color: rgba(166, 206, 78, 0.35);
+            background: rgba(166, 206, 78, 0.07);
         }
         .plan-opcao-nome {
             font-size: 0.75rem;
@@ -1189,11 +1282,11 @@
            destacar, e dois botões cheios lado a lado competiriam entre si. */
         .plan-card.paid .plan-opcao:not(.destaque) .plan-btn {
             background: transparent;
-            border: 1px solid rgba(110, 231, 200, 0.45);
+            border: 1px solid rgba(166, 206, 78, 0.45);
             color: var(--accent-mac);
         }
         .plan-card.paid .plan-opcao:not(.destaque) .plan-btn:hover {
-            background: rgba(110, 231, 200, 0.1);
+            background: rgba(166, 206, 78, 0.1);
             box-shadow: none;
         }
         /* Num celular as duas ofertas empilham: lado a lado, cada uma teria
@@ -1241,7 +1334,7 @@
             height: 160px;
             border-radius: 50%;
             background: url('assets/img/jonas-fundador.png') center 15%/cover no-repeat;
-            border: 2px solid rgba(110, 231, 200, 0.35);
+            border: 2px solid rgba(166, 206, 78, 0.35);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1249,7 +1342,7 @@
             font-size: 3.25rem;
             font-weight: 700;
             color: var(--accent-mac);
-            box-shadow: 0 15px 40px rgba(110, 231, 200, 0.15);
+            box-shadow: 0 15px 40px rgba(166, 206, 78, 0.15);
         }
         .founder-social {
             position: absolute;
@@ -1281,7 +1374,7 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            background: linear-gradient(135deg, rgba(110,231,200,0.16), rgba(79,163,255,0.14));
+            background: linear-gradient(135deg, rgba(166,206,78,0.16), rgba(79,163,255,0.14));
             color: var(--accent-mac);
             padding: 0.4rem 1rem;
             border-radius: 100px;
@@ -1294,7 +1387,7 @@
             position: absolute;
             inset: 0;
             border-radius: inherit;
-            border: 1px solid rgba(110, 231, 200, 0.5);
+            border: 1px solid rgba(166, 206, 78, 0.5);
             pointer-events: none;
             -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 50%, transparent 100%);
             mask-image: linear-gradient(90deg, #000 0%, #000 50%, transparent 100%);
@@ -1344,6 +1437,1581 @@
             .belt-token,
             .belt-logo { width: 113px; height: 61px; }
         }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           TEMA CLARO
+           Fica no fim para vencer as regras escuras acima e as do style.css,
+           que é compartilhado com as outras páginas e não foi tocado.
+           As variáveis claras valem só nas seções da página, não no :root:
+           os modais de pagamento e do chamado grátis (criados pelo script.js
+           direto no body) misturam essas variáveis com branco fixo e
+           continuam no tema escuro, legíveis.
+           O verde-menta e o azul claro somem sobre o branco: os acentos
+           descem para os tons fechados da marca.
+           ═══════════════════════════════════════════════════════════════════ */
+        body { background: #fff; color: #1b1f24; }
+        body > header,
+        .hero-band,
+        body > section,
+        body > footer {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f6;
+            --bg-card: #ffffff;
+            --accent-gold: #6ba32f;
+            --accent-gold-light: #1f6fd1;
+            --accent-mac: #6ba32f;
+            --accent-mac-dark: #587f28;
+            --accent-win: #1f6fd1;
+            --accent-win-dark: #1558a8;
+            --text-primary: #1b1f24;
+            --text-secondary: #5f6672;
+            --text-muted: #8a909a;
+            --border-color: #e6e7ea;
+            --btn-gradient: linear-gradient(135deg, var(--accent-mac-dark), var(--accent-mac));
+            color: var(--text-primary);
+        }
+
+        /* manchas que seguem o mouse: no branco a menta chapada vira borrão */
+        .blush { opacity: 0.12; }
+
+        header { background: rgba(255, 255, 255, 0.9); }
+
+        /* logo em azul chapado (o mesmo dos botões do index2) e menor */
+        .logo-mask,
+        .footer-logo-mask { background: #0c6ce4; }
+        .logo-icon { height: 50px; }
+
+        /* bot flutuante: o degradê do título de entrada no DESENHO do robô,
+           não no fundo. O botão segue com o fundo que o script.js dá.
+           O botão é criado pelo script.js com estilo inline, e estilo inline
+           vence folha de estilo: daí os !important. Vale só nesta página. */
+        /* o robô flutua para cima e volta, para o olho perceber que ali tem
+           alguém para chamar. display: inline-block porque ícone em linha
+           não aceita transform. */
+        @keyframes botFlutua {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        /* O BOT NO MESMO ACABAMENTO DAS REDES SOCIAIS, nas cores do
+           LinkedIn: bola vazada com contorno fino e o robô na cor de apoio;
+           no hover, o azul do LinkedIn acende no traço, no contorno e num
+           véu diluído do mesmo tom.
+           Os !important existem porque o script.js escreve a cor direto no
+           elemento, e estilo inline vence folha de estilo. */
+        #chat-bot-btn {
+            background: transparent !important;
+            border: 1px solid rgba(14, 14, 12, 0.18) !important;
+            color: #5f6672 !important;
+            transition: color 0.25s ease, border-color 0.25s ease,
+                        background-color 0.25s ease !important;
+        }
+        #chat-bot-btn:hover {
+            color: #0a66c2 !important;
+            border-color: #0a66c2 !important;
+            background: rgba(10, 102, 194, 0.1) !important;
+        }
+        html[data-tema="escuro"] #chat-bot-btn {
+            border-color: rgba(255, 255, 255, 0.18) !important;
+            color: #a0a0a5 !important;
+        }
+        html[data-tema="escuro"] #chat-bot-btn:hover {
+            color: #4fa3ff !important;
+            border-color: #4fa3ff !important;
+            background: rgba(79, 163, 255, 0.14) !important;
+        }
+        #chat-bot-btn i {
+            display: inline-block;
+            animation: botFlutua 2.4s ease-in-out infinite;
+            color: inherit;
+        }
+        /* quem pediu menos movimento no sistema vê o robô parado */
+        @media (prefers-reduced-motion: reduce) {
+            #chat-bot-btn i { animation: none; }
+        }
+
+        /* rodapé mais fino: o style.css usa 4rem em volta, o que dá uma
+           faixa alta demais. Aqui, só nesta página, ele aperta. (No
+           style.css a regra é compartilhada com as outras páginas.) */
+        footer { padding: 1.5rem 2.5rem; }
+        .footer-logo-mask { height: 30px; }
+        .footer-links { gap: 1.5rem; }
+        @media (max-width: 768px) {
+            footer { padding: 1.25rem 1.5rem; }
+        }
+
+        .platform-hero h1 span {
+            filter: none;
+            /* degradê do título de entrada, com as paradas passadas no Figma */
+            background: linear-gradient(90deg, #67e300 0%, #224eff 25%, #ff02ee 50%, #ff151e 75%, #fc9a04 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+        .hero-desc-free,
+        .hero-desc-paid { text-shadow: none; }
+
+        /* esteira dos tribunais: caixa branca e as logos nas cores originais
+           (o "clarear" invertia as marcas escuras para o fundo escuro; o SEEU,
+           que é claro, agora é o único que precisa inverter) */
+        .belt-section::before { opacity: 0.18; }
+        /* Entrada num container só, como o hero do novo-site: texto à
+           esquerda (título, segunda linha, Mac/Windows e o parágrafo) e a
+           esteira dos tribunais no canto direito, alinhada pela base.
+           439px é a largura da esteira de lá. */
+        .platform-hero {
+            max-width: 1100px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 439px);
+            column-gap: 3rem;
+            text-align: left;
+        }
+        .hero-texto { grid-column: 1; grid-row: 1; }
+        .hero-logos { margin-left: 0; }
+        /* o parágrafo saiu da entrada: abre a seção de Mac/Windows e curso */
+        .platform-section .hero-desc {
+            /* sem limite de largura: a frase ocupa a margem toda da seção */
+            max-width: none;
+            margin: 0 auto 2.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+        .hero-sistemas-wrap {
+            grid-column: 2;
+            grid-row: 1;
+            align-self: end;
+            width: 100%;
+        }
+        @media (max-width: 900px) {
+            .platform-hero { grid-template-columns: minmax(0, 1fr); }
+            .hero-sistemas-wrap { grid-column: 1; grid-row: 2; margin-top: 2rem; }
+        }
+        /* bloco dos tribunais compacto: janela, frase, logos, nomes e aviso menores */
+        /* a caixa cresce, as logos continuam no mesmo tamanho: cabem mais na faixa */
+        .hero-sistemas-wrap { max-width: 460px; justify-self: end; }
+        .hero-sistemas-wrap .belt-token,
+        .hero-sistemas-wrap .belt-logo,
+        .hero-sistemas-wrap .belt-logo.vertical { width: 90px; height: 38px; }
+        .hero-sistemas-wrap .belt-item { margin-right: 16px; gap: 0.25rem; }
+        /* A caixa era 70x30 e quase toda marca já batia na largura dela: não
+           adiantava só aumentar o scale, a arte era cortada pelo overflow.
+           Quem cresceu foi a caixa, para 90x38, e cada marca manteve o scale
+           que já tinha — assim todas sobem os mesmos 27%, na proporção.
+           (O scale continua diferente de uma para outra porque a margem
+           transparente da arte muda muito: a do TRT é 73% de margem na
+           altura e a do SEEU, 61% na largura. No mesmo número elas sairiam
+           minúsculas.)
+           Duas exceções: o TRF estava em 1.2 e era cortado em cima e embaixo
+           pelo overflow — em 1.0 ele preenche a caixa inteira sem perder
+           nada; e STF e STJ ficam do tamanho que já tinham, porque na caixa
+           maior é o 0.62 que devolve exatamente o que rendiam em 70x30. */
+        .belt-logo.pje img,
+        .belt-logo.eproc img { transform: scale(0.8); }
+        .belt-logo.esaj img,
+        .belt-logo.tjgo img,
+        .belt-logo.trf img { transform: scale(1); }
+        .belt-logo.trt img { transform: scale(1.45); }
+        .belt-logo.seeu img { transform: scale(1.45); }
+        .belt-logo.stf img,
+        .belt-logo.stj img { transform: scale(0.62); }
+        .hero-sistemas-wrap .belt-name { font-size: 0.6rem; }
+        /* --- a tag do curso, acima das logos dos tribunais ---
+           Uma faixa fina só: as duas marcas à esquerda, o nome e o aviso à
+           direita. As logos são as versões brancas, por isso o invert as
+           devolve escuras (o mesmo truque do anúncio lá de baixo). */
+        /* --- a tag do curso: DOIS QUADROS lado a lado ---
+           A mecânica é a MESMA dos cards de compra de suporte, peça por
+           peça: .hero-curso-item é a VAGA (é ela que cresce, com transição
+           de 0.6s ease) e .hero-curso-quadro é a caixa, que só acompanha e
+           cuida da borda e da sombra em 0.35s. Mexer no tamanho da própria
+           caixa faria o vizinho tremer.
+
+           Os dois partem de 50% da linha, como os cards partem de 33%, e o
+           que recebe o mouse vai para 62% — a mesma proporção de crescimento
+           dos cards (33 -> 46). Antes eles partiam de tamanhos diferentes, e
+           por isso o movimento não tinha a mesma cadência. */
+        .hero-curso-tag {
+            display: flex;
+            align-items: stretch;
+            gap: 0.7rem;
+            /* ALTURA TRAVADA. Sem isto, ao crescer para o lado o quadro do
+               texto ficava mais estreito, o texto quebrava em mais linhas e
+               a tag inteira CRESCIA PARA CIMA, empurrando a página. Com a
+               altura fixa, o movimento é só na horizontal. */
+            min-height: 7.75rem;
+            /* folga até o "Compatível com..." e a esteira dos tribunais.
+               Era 2.4rem: o card ficava rente à faixa. */
+            margin-bottom: 3.6rem;
+            align-content: center;
+        }
+        /* --- esteira das mídias de certificado: coluna da ESQUERDA do hero,
+           embaixo das logos do Mac e do Windows, na mesma linha da esteira
+           dos tribunais, que mora na coluna da direita. --- */
+        /* O min-width: 0 é obrigatório e não é enfeite: .hero-texto é item
+           do grid do .platform-hero, e item de grid nasce com min-width:
+           auto — ou seja, não encolhe abaixo do conteúdo. O track da
+           esteira tem width: max-content (mais de 1000px), então sem isto
+           ele estica a coluna e a página inteira ganha arrasto lateral. */
+        .hero-texto { min-width: 0; }
+        /* o título fica CENTRADO SOBRE A FAIXA, e não sobre a coluna toda:
+           por isso os dois moram no mesmo bloco, com a mesma largura */
+        .hero-midias-bloco {
+            /* 480px NÃO é estético, é o que CENTRA A DIVISA entre as duas
+               esteiras no meio da página. As colunas do hero não são metades
+               iguais (a da esquerda tem 618px e a dos tribunais, 439px), e a
+               dos tribunais não pode começar a aparecer antes da própria
+               borda, em 806px. Então quem tem de recuar é esta: com 480px o
+               meio do vazio entre as duas cai em ~720px, que é o centro do
+               container de 1100px. Mexer nesta largura desloca a divisa. */
+            max-width: 480px;
+            /* o respiro entre as logos do Mac/Windows e a faixa. Foi 1.6rem,
+               depois 0.7rem (colou demais) e agora 2.2rem, para a arte não
+               encostar na esteira. */
+            margin-top: 2.2rem;
+        }
+        .hero-texto .hero-midias { margin: 0; max-width: none; }
+        /* A DISSOLVÊNCIA QUE SEPARA AS DUAS ESTEIRAS.
+           É a borda de dentro de cada faixa: a direita desta e a esquerda
+           da dos tribunais. Quanto mais cedo o preto acaba (aqui, 60% em
+           vez dos 74% padrão), mais longo fica o esmaecido e maior o vazio
+           entre as duas. A ponta de fora continua curta, para não comer
+           item à toa. */
+        .hero-texto .hero-midias {
+            -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 12%, #000 60%, transparent 100%);
+            mask-image: linear-gradient(90deg, transparent 0%, #000 12%, #000 60%, transparent 100%);
+        }
+        /* mesma caixa e mesmo corpo de nome da esteira dos tribunais, que
+           no hero são menores que o padrão da página (96x44) */
+        .hero-texto .hero-midias .belt-token { width: 90px; height: 38px; }
+        /* LARGURA TRAVADA no item, e não só na caixa da imagem: sem ela o
+           item nasce do tamanho do seu conteúdo, e o nome mais comprido
+           ("Cartão com chip", 93px) esticava aquele item além dos 90px da
+           caixa. O passo da fileira saía desigual e os textos ficavam a
+           distâncias diferentes um do outro. 96px cabe o nome mais longo
+           sem quebrar linha.
+           O gap 0.25rem (contra os 0.4rem do padrão) é o que encosta o
+           nome na imagem, igual à esteira dos tribunais. */
+        .hero-texto .hero-midias .belt-item {
+            /* 90px é o PISO: é a largura da caixa da imagem, e o item não
+               encolhe abaixo dela sem encolher a imagem junto. O que
+               aproximou a fileira foi a margem (era 16px) e o corpo do
+               nome (era 0.6rem, e o nome mais longo dava 93px, mais que a
+               própria caixa). Em 0.55rem ele cabe nos 90px com folga. */
+            width: 90px;
+            margin-right: 6px;
+            gap: 0.25rem;
+        }
+        .hero-texto .hero-midias .belt-name {
+            font-size: 0.55rem;
+            white-space: nowrap;
+        }
+        /* ESCALA POR MÍDIA, e não uma só para todas — é o mesmo remédio que
+           as logos dos tribunais já usam (o TRT está em 1.45).
+           O motivo é a margem transparente dentro de cada arquivo, que eu
+           medi: o desenho ocupa 85% da altura do PNG no G&D, 96% no A1,
+           mas só 57% no SafeNet, 59% no Bird ID e 69% no cartão. Com uma
+           escala única, esses três apareciam bem menores que os outros
+           dentro da mesma caixa — a sobra estava nas beiradas do arquivo,
+           não no CSS.
+           Os números abaixo deixam o DESENHO de todas com ~30px de altura
+           dentro da caixa de 38px. A caixa e o passo da esteira não mudam,
+           então a fileira não fica mais alta nem mais larga. */
+        .hero-texto .hero-midias .belt-token img { transform: scale(0.88); }
+        .hero-texto .hero-midias .belt-token.gd img { transform: scale(1.05); }
+        .hero-texto .hero-midias .belt-token.safenet img { transform: scale(0.95); }
+        .hero-texto .hero-midias .belt-token.cartao img { transform: scale(1.15); }
+        .hero-texto .hero-midias .belt-token.birdid img { transform: scale(1.34); }
+        .hero-texto .hero-midias .belt-token.a1 img { transform: scale(0.88); }
+        /* MESMA VELOCIDADE da esteira dos tribunais — e por isso o número é
+           outro. A duração é o tempo de uma volta, não a velocidade: lá são
+           9 itens de 106px (90 + 16 de margem) = 954px por metade, em 20s,
+           ou 47.7px por segundo. Aqui são 5 itens de 96px (90 de largura
+           travada + 6 de margem) = 480px por metade, e nos mesmos 47.7px/s
+           a volta fecha em 10.1s. Mexeu na largura ou na margem do item?
+           Refaça esta conta, ou as duas esteiras saem em passos diferentes. */
+        .hero-texto .hero-midias .belt-track { animation-duration: 10.1s; }
+        .hero-curso-item {
+            min-width: 0;
+            transition: flex-basis 0.6s ease;
+        }
+        /* o quadro das marcas é o menor: elas ocupam pouco e o texto é que
+           precisa de linha */
+        .hero-curso-item._logos { flex: 1 1 30%; }
+        .hero-curso-item._texto { flex: 1 1 70%; }
+        @media (hover: hover) {
+            /* o mesmo passo nos dois (7 pontos), para a cadência ser igual.
+               Passo curto de propósito: quanto mais o vizinho se espreme,
+               mais o texto quebra linha — e é a quebra que fazia a caixa
+               crescer para cima. */
+            .hero-curso-item._logos:hover { flex-basis: 37%; }
+            .hero-curso-item._texto:hover { flex-basis: 77%; }
+        }
+        .hero-curso-quadro {
+            display: flex;
+            height: 100%;
+            /* caixa leve: pouco recheio, canto menor e fundo quase
+               transparente, para a tag não pesar mais que a esteira
+               dos tribunais que vem logo abaixo */
+            padding: 0.7rem 0.8rem;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.55);
+            transition: border-color 0.35s ease, box-shadow 0.35s ease;
+        }
+        @media (hover: hover) {
+            .hero-curso-item:hover .hero-curso-quadro {
+                border-color: rgba(107, 163, 47, 0.4);
+                box-shadow: 0 16px 40px rgba(107, 163, 47, 0.14);
+            }
+        }
+        .hero-curso-logos {
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+        }
+        .hero-curso-texto {
+            flex-direction: column;
+            justify-content: center;
+            gap: 0.35rem;
+        }
+        /* as logos são as versões brancas: o invert as devolve escuras e o
+           hue-rotate preserva o tom (o mesmo truque do anúncio antigo) */
+        /* tamanho fixo de novo: deixar as marcas acompanharem a largura do
+           quadro as inchava demais quando ele abria no hover */
+        /* o max-width é o cinto de segurança do tamanho fixo: quando o quadro
+           encolhe (tela estreita, ou o vizinho crescendo no hover), a marca
+           acompanha em vez de vazar para fora da caixa */
+        .hero-curso-logos img { width: 78px; max-width: 100%; height: auto; filter: invert(1) hue-rotate(180deg); }
+        .hero-curso-logos img.claude { width: 86px; }
+        html[data-tema="escuro"] .hero-curso-logos img { filter: none; }
+        .hero-curso-mais { color: var(--text-muted); font-size: 0.8rem; line-height: 1; }
+        .hero-curso-selo {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            color: var(--accent-mac);
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .hero-curso-texto strong { font-size: 0.78rem; line-height: 1.3; color: var(--text-primary); }
+        .hero-curso-texto small { font-size: 0.66rem; line-height: 1.4; color: var(--text-secondary); }
+        html[data-tema="escuro"] .hero-curso-quadro { background: rgba(255, 255, 255, 0.04); }
+        /* sem mouse não existe hover, e dois quadros não cabem lado a lado */
+        @media (max-width: 560px) {
+            .hero-curso-tag { flex-direction: column; }
+            .hero-curso-item, .hero-curso-item:hover { flex-basis: auto; }
+            .hero-curso-logos { flex-direction: row; }
+        }
+        /* .platform-hero na frente para vencer o ".platform-hero p" (1.08rem, linha 1.7) */
+        .platform-hero .hero-sistemas-texto {
+            margin-bottom: 0.75rem;
+            line-height: 1.3;
+            font-size: 13.5px;
+            text-align: center;   /* centrada sobre a faixa de logos */
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .hero-sistemas-texto span { color: var(--text-secondary); }
+        .hero-sistemas-wrap .belt {
+            max-width: none;
+            /* a ponta ESQUERDA (era 9%) é o outro lado da divisa com a
+               esteira das mídias: quanto mais tarde o preto começa, mais
+               longo o esmaecido entre as duas */
+            -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 26%, #000 91%, transparent 100%);
+            mask-image: linear-gradient(90deg, transparent 0%, #000 26%, #000 91%, transparent 100%);
+        }
+        .hero-sistemas-wrap .courts-note {
+            justify-content: flex-start;
+            text-align: left;
+            margin-top: 0.6rem;
+            font-size: 0.65rem;
+        }
+
+        /* logos soltas, sem card, e menores */
+        .belt-token,
+        .belt-logo,
+        .belt-logo.vertical {
+            width: 96px;
+            height: 44px;
+            padding: 0;
+            background: none;
+            border: 0;
+            border-radius: 0;
+            box-shadow: none;
+        }
+        .belt-item { margin-right: 22px; }
+        .belt-token img,
+        .belt-logo img,
+        .belt-logo.clarear img { filter: none; }
+        .belt-logo:not(.clarear) img { filter: invert(1) hue-rotate(180deg); }
+
+        /* cards de Mac e Windows */
+        .platform-card,
+        .platform-card.mac,
+        .platform-card.win {
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            box-shadow: 0 8px 24px rgba(20, 24, 31, 0.06);
+        }
+        .platform-card.mac {
+            border-color: rgba(107, 163, 47, 0.3);
+            background: linear-gradient(160deg, rgba(107, 163, 47, 0.07), #fff 55%);
+        }
+        .platform-card.win {
+            background: linear-gradient(160deg, rgba(31, 111, 209, 0.06), #fff 55%);
+        }
+        .platform-card.mac:hover { box-shadow: 0 14px 34px rgba(107, 163, 47, 0.14); }
+        .platform-card.win:hover { box-shadow: 0 14px 34px rgba(31, 111, 209, 0.12); }
+        .platform-card.mac::after,
+        .platform-card.win::after { filter: none; }
+        .recommended-tag {
+            background: rgba(107, 163, 47, 0.1);
+            border-color: rgba(107, 163, 47, 0.35);
+            backdrop-filter: none;
+        }
+
+        /* Um quadro largo só, em três colunas: Mac e Windows empilhados, o
+           vídeo do suporte remoto e o texto com o botão. Lado a lado a seção
+           fica baixa, em vez de empilhar tudo na vertical. */
+        .platform-duo {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr) minmax(0, 1fr);
+            gap: 1.75rem;
+            align-items: center;
+            padding: 1.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            background: #fff;
+            box-shadow: 0 10px 30px rgba(20, 24, 31, 0.06);
+        }
+        /* os cards ficam na altura do próprio conteúdo, centrados na coluna,
+           em vez de esticar até a altura do card do curso */
+        .platform-duo .platform-grid {
+            grid-template-columns: minmax(0, 1fr);
+            align-content: center;
+        }
+        /* Mac e Windows sem o card: some fundo, borda, sombra, a moldura
+           animada (::after) e o holofote (::before); o conteúdo fica solto
+           sobre o branco da página */
+        .platform-duo .platform-card,
+        .platform-duo .platform-card.mac,
+        .platform-duo .platform-card.win,
+        .platform-duo .platform-card:hover {
+            background: none;
+            border-color: transparent;
+            box-shadow: none;
+            transform: none;
+        }
+        .platform-duo .platform-card::before,
+        .platform-duo .platform-card::after { display: none; }
+        /* a linha fina separa os serviços do suporte remoto */
+        .platform-duo .platform-grid {
+            padding-right: 1.75rem;
+            border-right: 1px solid var(--border-color);
+        }
+        /* colunas estreitas: o selo "Recomendado" sai do canto (onde
+           cobriria o texto) e desce para baixo do texto do Mac */
+        .platform-duo .platform-card.mac {
+            flex-wrap: wrap;
+            padding-right: 1.1rem;
+        }
+        .platform-duo .platform-card.mac .card-text { flex-basis: calc(100% - 40px - 0.9rem); }
+        .platform-duo .recommended-tag {
+            order: 3;
+            position: static;
+            transform: none;
+            margin-left: calc(40px + 0.9rem);
+        }
+        /* a caixa do suporte remoto some: o vídeo e o texto viram a segunda
+           e a terceira coluna do quadro */
+        .platform-duo .remote-section { display: contents; }
+        .platform-duo .remote-visual { aspect-ratio: auto; }
+        .platform-duo .remote-visual .remote-window { width: 100%; }
+        .platform-duo .remote-visual .remote-topbar { padding: 0.45rem 0.6rem; gap: 0.3rem; }
+        .platform-duo .remote-visual .remote-dot { width: 7px; height: 7px; }
+        .platform-duo .remote-text h2 { font-size: 0.98rem; margin-bottom: 0.4rem; }
+        .platform-duo .remote-text p { font-size: 0.74rem; line-height: 1.5; margin-bottom: 0.85rem; }
+        .platform-duo .remote-buttons a { padding: 0.6rem 1.1rem; font-size: 0.85rem; }
+        /* telas médias: serviços e vídeo em cima, o texto na linha de baixo */
+        @media (max-width: 1060px) {
+            .platform-duo { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); }
+            .platform-duo .remote-text { grid-column: 1 / -1; }
+        }
+        /* celular: tudo numa coluna, sem a linha divisória */
+        @media (max-width: 700px) {
+            .platform-duo { grid-template-columns: minmax(0, 1fr); padding: 1.25rem; }
+            .platform-duo .platform-grid { padding-right: 0; border-right: 0; }
+        }
+        /* ─── VÍDEO DO SUPORTE REMOTO (.rv) ───
+           Loop de 26s. Linha do tempo (a legenda segue as mesmas faixas):
+             0–42%   WhatsApp: pedido do TJCE, pergunta do AnyDesk, "vou enviar"
+             42–58%  AnyDesk: o número é selecionado e copiado
+             58–78%  WhatsApp: o número é enviado e o suporte responde
+             78–100% pedido de conexão: zoom, clique em Aceitar, o zoom volta
+                     ao meio e o vídeo recomeça pela conversa
+           Para mexer no tempo de um detalhe, ajuste o percentual dele dentro
+           da faixa. Tamanhos em em, com a fonte presa à largura (cqw): o
+           desenho inteiro escala junto, do computador ao celular. */
+        .rv {
+            --rv-dur: 26s;
+            container-type: inline-size;
+        }
+        .rv-tela {
+            position: relative;
+            aspect-ratio: 16 / 10;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(7px, 2.6cqw, 13px);
+            color: #1b1f24;
+            background: #f4f5f7;
+        }
+        .rv-camada {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            animation: var(--rv-dur) linear infinite;
+        }
+        .rv-cursor {
+            position: absolute;
+            left: 45%;
+            top: 45%;
+            z-index: 2;
+            font-size: 1.35em;
+            color: #111;
+            filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+            animation: var(--rv-dur) ease-in-out infinite;
+        }
+
+        /* ── fundo: réplica da janela do AnyDesk 9 ──
+           Medidas tiradas do print real (1366px de largura): --u vale 1px
+           daquele print, então cada número abaixo é o mesmo da tela original. */
+        .rv-ad {
+            --u: calc(100cqw / 1366);
+            position: absolute;
+            inset: 0;
+            background: #f4f5f7;
+            color: #222;
+            font-family: 'Segoe UI', 'Inter', sans-serif;
+            /* zoom de câmera no número enquanto ele é copiado: a janela
+               inteira fica pequena demais para ler nesse tamanho */
+            transform-origin: 50% 17%;
+            animation: rv-zoom var(--rv-dur) ease-in-out infinite;
+        }
+        @keyframes rv-zoom {
+            0%, 43% { transform: none; }
+            45.9%, 57% { transform: scale(1.9); }
+            59.3%, 100% { transform: none; }
+        }
+        .rv-ad i { font-style: normal; }
+        .rv-ad-titulo {
+            display: flex;
+            align-items: center;
+            gap: calc(10 * var(--u));
+            height: calc(30 * var(--u));
+            padding: 0 calc(8 * var(--u));
+            font-size: calc(15 * var(--u));
+        }
+        .rv-ad-titulo b { font-weight: 600; }
+        .rv-ad-logo,
+        .rv-logo-mini {
+            position: relative;
+            display: inline-block;
+            flex-shrink: 0;
+            width: calc(26 * var(--u));
+            height: calc(18 * var(--u));
+        }
+        .rv-ad-logo i,
+        .rv-logo-mini i {
+            position: absolute;
+            top: 18%;
+            width: 46%;
+            height: 64%;
+            background: #ef443b;
+            transform: rotate(45deg);
+        }
+        .rv-ad-logo i:first-child,
+        .rv-logo-mini i:first-child { left: 2%; }
+        .rv-ad-logo i:last-child,
+        .rv-logo-mini i:last-child { left: 42%; background: #d93a32; }
+        .rv-ad-aba {
+            display: flex;
+            align-items: center;
+            gap: calc(8 * var(--u));
+            width: calc(158 * var(--u));
+            height: calc(24 * var(--u));
+            margin-left: calc(2 * var(--u));
+            padding: 0 calc(10 * var(--u));
+            border-radius: calc(3 * var(--u));
+            background: #fff;
+            color: #333;
+        }
+        .rv-ad-nova { color: #555; }
+        .rv-ad-janela {
+            display: flex;
+            gap: calc(45 * var(--u));
+            margin-left: auto;
+            padding-right: calc(14 * var(--u));
+            color: #444;
+        }
+        .rv-ad-endereco {
+            display: flex;
+            align-items: center;
+            gap: calc(8 * var(--u));
+            height: calc(33 * var(--u));
+            padding: 0 calc(8 * var(--u));
+            font-size: calc(15 * var(--u));
+        }
+        .rv-ad-ok { color: #2ea44f; font-size: calc(17 * var(--u)); }
+        .rv-ad-campo {
+            display: flex;
+            flex: 1;
+            align-items: center;
+            justify-content: space-between;
+            height: calc(30 * var(--u));
+            padding: 0 calc(12 * var(--u));
+            border: 1px solid #d6d8db;
+            border-radius: calc(4 * var(--u));
+            background: #fff;
+            color: #555;
+        }
+        .rv-ad-campo span { display: flex; gap: calc(18 * var(--u)); color: #333; }
+        .rv-ad-endereco .fa-bars { margin: 0 calc(6 * var(--u)); font-size: calc(19 * var(--u)); }
+        .rv-ad-faixa {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: calc(40 * var(--u));
+            background: #ff4436;
+            color: #222;
+            font-size: calc(13.5 * var(--u));
+            white-space: nowrap;
+        }
+        .rv-ad-faixa u { font-weight: 700; }
+        .rv-ad-id {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: calc(12 * var(--u));
+            height: calc(82 * var(--u));
+            font-size: calc(21 * var(--u));
+        }
+        .rv-ad-id > i { font-size: calc(18 * var(--u)); }
+        .rv-ad-num {
+            position: relative;
+            margin: 0 calc(10 * var(--u));
+            color: #ef443b;
+            font-size: calc(48 * var(--u));
+            font-weight: 500;
+            line-height: 1;
+            white-space: nowrap;
+        }
+        /* seleção azul do texto, arrastada da esquerda para a direita */
+        .rv-ad-num::before {
+            content: '';
+            position: absolute;
+            inset: -6% -2%;
+            background: rgba(0, 120, 215, 0.3);
+            transform: scaleX(0);
+            transform-origin: left;
+            animation: rv-sel var(--rv-dur) linear infinite;
+        }
+        @keyframes rv-sel {
+            0%, 47.1% { transform: scaleX(0); }
+            51.2%, 57.6% { transform: scaleX(1); }
+            58.1%, 100% { transform: scaleX(0); }
+        }
+        .rv-ad-ibeam {
+            position: absolute;
+            top: 5%;
+            left: -8%;
+            color: #111;
+            /* dentro do zoom de 1.9x: na tela fica perto de 3.8cqw */
+            font-size: 2cqw;
+            opacity: 0;
+            filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff);
+            animation: rv-ibeam var(--rv-dur) ease-in-out infinite;
+        }
+        @keyframes rv-ibeam {
+            0%, 44.2% { left: 30%; top: 260%; opacity: 0; }
+            45.3% { opacity: 1; }
+            47.1% { left: -2%; top: 5%; }
+            51.2%, 57.6% { left: 100%; top: 5%; opacity: 1; }
+            58.1%, 100% { left: 100%; top: 5%; opacity: 0; }
+        }
+        .rv-ad-copiado {
+            position: absolute;
+            left: 50%;
+            bottom: 125%;
+            padding: 0.3em 0.7em;
+            border-radius: 0.4em;
+            background: #1b1f24;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.3cqw;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            animation: rv-copiado var(--rv-dur) linear infinite;
+        }
+        @keyframes rv-copiado {
+            0%, 51.7% { opacity: 0; transform: translate(-50%, 0.4em); }
+            53.5%, 57.6% { opacity: 1; transform: translate(-50%, 0); }
+            58.1%, 100% { opacity: 0; }
+        }
+        .rv-ad-convidar {
+            display: flex;
+            align-items: center;
+            gap: calc(6 * var(--u));
+            padding: calc(2 * var(--u)) calc(8 * var(--u));
+            border: 1px solid #ef443b;
+            color: #ef443b;
+            font-size: calc(16 * var(--u));
+        }
+        .rv-ad-abas {
+            display: flex;
+            align-items: center;
+            gap: calc(30 * var(--u));
+            padding: calc(26 * var(--u)) calc(32 * var(--u)) 0;
+            color: #aaa;
+            font-size: calc(15.5 * var(--u));
+        }
+        .rv-ad-abas b { color: #ef443b; font-weight: 700; }
+        .rv-ad-vistas { display: flex; gap: calc(20 * var(--u)); margin-left: auto; color: #555; }
+        .rv-ad-noticias {
+            margin: calc(24 * var(--u)) calc(30 * var(--u)) 0;
+            padding-bottom: calc(4 * var(--u));
+            border-bottom: 1px solid #333;
+            color: #555;
+            font-size: calc(13 * var(--u));
+        }
+        .rv-ad-cards {
+            display: flex;
+            gap: calc(8 * var(--u));
+            padding: calc(11 * var(--u)) calc(30 * var(--u));
+        }
+        .rv-ad-card {
+            position: relative;
+            flex-shrink: 0;
+            width: calc(235 * var(--u));
+            height: calc(180 * var(--u));
+            padding: calc(16 * var(--u)) calc(15 * var(--u));
+            overflow: hidden;
+            color: #fff;
+            font-size: calc(15.5 * var(--u));
+            font-weight: 700;
+        }
+        .rv-ad-card > span {
+            display: block;
+            margin-top: calc(8 * var(--u));
+            font-size: calc(13.5 * var(--u));
+            font-weight: 400;
+            line-height: 1.4;
+        }
+        .rv-ad-card1 {
+            padding-top: calc(22 * var(--u));
+            background: linear-gradient(140deg, #bfeaf8 0%, #8fd3f0 38%, #f2a7c3 68%, #f9d86b 100%);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+        }
+        .rv-ad-card1 strong { display: block; font-size: calc(27 * var(--u)); }
+        .rv-ad-card1 em {
+            position: absolute;
+            right: calc(14 * var(--u));
+            top: calc(6 * var(--u));
+            color: transparent;
+            font-size: calc(150 * var(--u));
+            font-style: normal;
+            line-height: 1;
+            -webkit-text-stroke: calc(3 * var(--u)) rgba(240, 160, 110, 0.8);
+        }
+        .rv-ad-saiba {
+            position: absolute;
+            left: calc(20 * var(--u));
+            bottom: calc(20 * var(--u));
+            padding: calc(7 * var(--u)) calc(32 * var(--u));
+            background: #444;
+            font-size: calc(12 * var(--u));
+            text-shadow: none;
+        }
+        .rv-ad-card2 { background: linear-gradient(160deg, #d06a9b, #a83e72); }
+        .rv-ad-card3 { background: linear-gradient(160deg, #4a6d98, #34547f); }
+        .rv-ad-card4 { background: linear-gradient(160deg, #f6d060, #eb9a3d); }
+        .rv-ad-card5 { background: linear-gradient(160deg, #c8abda, #b397cc); }
+        .rv-ad-card4 .rv-ad-gravar {
+            margin-top: calc(50 * var(--u));
+            padding: calc(14 * var(--u)) calc(10 * var(--u));
+            background: #f8dc9c;
+            color: #555;
+            text-align: center;
+        }
+
+        /* ── camada: conversa no WhatsApp ──
+           As mensagens entram pela altura (max-height), com o corpo alinhado
+           embaixo: cada nova empurra as anteriores para cima, como no app. */
+        .rv-zap-camada {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            background:
+                radial-gradient(90% 70% at 20% 10%, rgba(79, 163, 255, 0.35), transparent 60%),
+                radial-gradient(80% 70% at 90% 100%, rgba(166, 206, 78, 0.28), transparent 60%),
+                linear-gradient(160deg, #1d2633, #121821);
+            animation-name: rv-zap;
+        }
+        @keyframes rv-zap {
+            0%, 39.5% { opacity: 1; }
+            41.9%, 58.1% { opacity: 0; }
+            60.5%, 76.7% { opacity: 1; }
+            79.1%, 97.7% { opacity: 0; }
+            98.3%, 100% { opacity: 1; }
+        }
+        .rv-zap {
+            display: flex;
+            flex-direction: column;
+            width: 76%;
+            height: 90%;
+            overflow: hidden;
+            border-radius: 0.7em;
+            background: #efeae2;
+            box-shadow: 0 1.2em 3em rgba(0, 0, 0, 0.45);
+            font-size: 1.05em;
+        }
+        .rv-zap-topo {
+            display: flex;
+            align-items: center;
+            gap: 0.6em;
+            padding: 0.5em 0.8em;
+            background: #008069;
+            color: #fff;
+        }
+        .rv-zap-topo > i { font-size: 0.85em; }
+        .rv-avatar {
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            width: 1.9em;
+            height: 1.9em;
+            border-radius: 50%;
+            background: #fff;
+            color: #008069;
+            font-size: 0.85em;
+            font-weight: 800;
+        }
+        .rv-zap-nome { display: flex; flex-direction: column; line-height: 1.2; }
+        .rv-zap-nome strong { font-size: 0.88em; }
+        .rv-zap-nome small { font-size: 0.7em; opacity: 0.85; }
+        .rv-zap-acoes { display: flex; gap: 1em; margin-left: auto; font-size: 0.85em; }
+        .rv-zap-corpo {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            justify-content: flex-end;
+            min-height: 0;
+            overflow: hidden;
+            padding: 0.2em 0.7em 0.5em;
+            background-color: #efeae2;
+            background-image: radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+            background-size: 0.9em 0.9em;
+        }
+        .rv-msg {
+            display: flex;
+            flex-shrink: 0;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            animation: var(--rv-dur) ease-out infinite;
+        }
+        .rv-msg-eu { justify-content: flex-end; }
+        .rv-bolha {
+            max-width: 80%;
+            margin-top: 0.4em;
+            padding: 0.4em 0.6em 0.3em;
+            border-radius: 0.55em;
+            background: #fff;
+            color: #111b21;
+            font-size: 0.9em;
+            line-height: 1.35;
+            box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+        }
+        .rv-msg-eu .rv-bolha { background: #d9fdd3; border-top-right-radius: 0; }
+        .rv-msg-ele .rv-bolha { border-top-left-radius: 0; }
+        .rv-bolha small {
+            float: right;
+            margin: 0.4em 0 0 0.8em;
+            color: #667781;
+            font-size: 0.72em;
+        }
+        .rv-bolha small i { color: #53bdeb; }
+        .rv-bolha-num { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+        .rv-digitando {
+            display: flex;
+            gap: 0.25em;
+            margin-top: 0.4em;
+            padding: 0.6em 0.75em;
+            border-radius: 0.55em;
+            border-top-left-radius: 0;
+            background: #fff;
+        }
+        .rv-digitando span {
+            width: 0.4em;
+            height: 0.4em;
+            border-radius: 50%;
+            background: #8a909a;
+            animation: rv-pulo 0.9s ease-in-out infinite;
+        }
+        .rv-digitando span:nth-child(2) { animation-delay: 0.15s; }
+        .rv-digitando span:nth-child(3) { animation-delay: 0.3s; }
+        @keyframes rv-pulo { 0%, 100% { transform: none; } 50% { transform: translateY(-0.25em); } }
+        .rv-m1 { animation-name: rv-m1; }
+        .rv-t1 { animation-name: rv-t1; }
+        .rv-m2 { animation-name: rv-m2; }
+        .rv-m3 { animation-name: rv-m3; }
+        .rv-m4 { animation-name: rv-m4; }
+        .rv-t2 { animation-name: rv-t2; }
+        .rv-m5 { animation-name: rv-m5; }
+        /* as mensagens somem em 97%, com a conversa ainda escondida, para o
+           loop recomeçar com a tela limpa */
+        @keyframes rv-m1 { 0%, 3.5% { max-height: 0; opacity: 0; } 5.8%, 96.5% { max-height: 8em; opacity: 1; } 97.1%, 100% { max-height: 0; opacity: 0; } }
+        @keyframes rv-t1 { 0%, 9.3% { max-height: 0; opacity: 0; } 10.5%, 16.3% { max-height: 3em; opacity: 1; } 16.9%, 100% { max-height: 0; opacity: 0; } }
+        @keyframes rv-m2 { 0%, 16.9% { max-height: 0; opacity: 0; } 19.2%, 96.5% { max-height: 8em; opacity: 1; } 97.1%, 100% { max-height: 0; opacity: 0; } }
+        @keyframes rv-m3 { 0%, 27.9% { max-height: 0; opacity: 0; } 30.2%, 96.5% { max-height: 8em; opacity: 1; } 97.1%, 100% { max-height: 0; opacity: 0; } }
+        @keyframes rv-m4 { 0%, 62.8% { max-height: 0; opacity: 0; } 65.1%, 96.5% { max-height: 8em; opacity: 1; } 97.1%, 100% { max-height: 0; opacity: 0; } }
+        @keyframes rv-t2 { 0%, 66.3% { max-height: 0; opacity: 0; } 67.4%, 69.8% { max-height: 3em; opacity: 1; } 70.3%, 100% { max-height: 0; opacity: 0; } }
+        @keyframes rv-m5 { 0%, 70.3% { max-height: 0; opacity: 0; } 72.7%, 96.5% { max-height: 8em; opacity: 1; } 97.1%, 100% { max-height: 0; opacity: 0; } }
+        .rv-zap-rodape {
+            display: flex;
+            align-items: center;
+            gap: 0.45em;
+            padding: 0.35em 0.5em;
+            background: #f0f2f5;
+        }
+        .rv-zap-rodape span {
+            flex: 1;
+            padding: 0.35em 0.8em;
+            border-radius: 1em;
+            background: #fff;
+            color: #8696a0;
+            font-size: 0.8em;
+        }
+        .rv-zap-rodape i {
+            display: grid;
+            place-items: center;
+            width: 1.9em;
+            height: 1.9em;
+            border-radius: 50%;
+            background: #00a884;
+            color: #fff;
+            font-size: 0.8em;
+        }
+
+        /* ── camada: pedido de conexão ──
+           Réplica da janela real do AnyDesk que pede autorização (print de
+           700x491px). --k vale 1px daquele print e todo elemento é posicionado
+           com as mesmas coordenadas do original. Depois de aberta, a câmera
+           dá zoom nos botões Aceitar/Recusar para o clique ficar legível. */
+        .rv-pedido-camada {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* fundo escuro e opaco desde a entrada: a conversa do WhatsApp
+               passa direto para o pedido, sem a tela do número no meio */
+            background: #0d1117;
+            animation-name: rv-pedido-camada;
+        }
+        /* só some depois que a sessão (camada de cima) já cobriu tudo, senão
+           o fundo com o número aparece no meio da troca */
+        @keyframes rv-pedido-camada { 0%, 76.7% { opacity: 0; } 77.9%, 98.3% { opacity: 1; } 100% { opacity: 0; } }
+        .rv-ac {
+            --k: calc(80cqw / 700);
+            position: relative;
+            flex-shrink: 0;
+            width: calc(700 * var(--k));
+            height: calc(491 * var(--k));
+            border: 1px solid #e0463c;
+            background: #fff;
+            box-shadow: 0 1em 2.6em rgba(0, 0, 0, 0.35);
+            color: #333;
+            font-family: 'Segoe UI', 'Inter', sans-serif;
+            font-size: calc(14.5 * var(--k));
+            /* zoom em volta do ponto entre os dois botões de baixo */
+            transform-origin: 21% 92%;
+            animation: rv-pedido var(--rv-dur) ease-in-out infinite;
+        }
+        /* abre, dá zoom no Aceitar e, depois do clique (78,5%), o zoom
+           volta: a janela retorna ao tamanho inteiro sobre o fundo escuro
+           e fica ali até a sessão entrar por cima */
+        @keyframes rv-pedido {
+            0%, 77.3% { transform: translate(0, 0) scale(0.9); }
+            80.2%, 84.9% { transform: translate(0, 0) scale(1); }
+            88.4%, 92.4% { transform: translate(4cqw, -8cqw) scale(1.45); }
+            95.9%, 100% { transform: translate(0, 0) scale(1); }
+        }
+        .rv-ac > div > *,
+        .rv-ac-titulo > * { position: absolute; }
+        .rv-ac i { font-style: normal; }
+
+        .rv-ac-titulo {
+            position: absolute;
+            inset: 0 0 auto;
+            height: calc(34 * var(--k));
+            background: #f0f0f0;
+        }
+        .rv-ac-logo {
+            left: calc(6 * var(--k));
+            top: calc(9 * var(--k));
+            width: calc(26 * var(--k));
+            height: calc(16 * var(--k));
+        }
+        .rv-ac-logo i {
+            position: absolute;
+            top: 12%;
+            width: 46%;
+            height: 72%;
+            border: calc(3.5 * var(--k)) solid #333;
+            border-left: 0;
+            border-bottom: 0;
+            transform: rotate(45deg);
+        }
+        .rv-ac-logo i:first-child { left: 0; background: #333; }
+        .rv-ac-logo i:last-child { left: 42%; }
+        .rv-ac-aba {
+            left: calc(37 * var(--k));
+            top: calc(6 * var(--k));
+            display: flex;
+            align-items: center;
+            gap: calc(8 * var(--k));
+            width: calc(160 * var(--k));
+            height: calc(28 * var(--k));
+            padding: 0 calc(6 * var(--k));
+            background: #fff;
+            color: #222;
+            font-size: calc(13 * var(--k));
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .rv-ac-aba-icone {
+            width: calc(15 * var(--k));
+            height: calc(15 * var(--k));
+            background: #e8322a;
+        }
+        .rv-ac-janela {
+            right: calc(20 * var(--k));
+            top: calc(10 * var(--k));
+            display: flex;
+            gap: calc(38 * var(--k));
+            color: #333;
+            font-size: calc(13 * var(--k));
+        }
+
+        .rv-ac-esq,
+        .rv-ac-dir { position: absolute; top: 0; bottom: 0; }
+        .rv-ac-esq { left: 0; width: calc(313 * var(--k)); }
+        .rv-ac-dir {
+            left: calc(313 * var(--k));
+            right: 0;
+            top: calc(36 * var(--k));
+            border-left: 1px solid #ccc;
+        }
+
+        /* avatar vermelho com a figura branca (cabeça e V) */
+        .rv-ac-avatar {
+            left: calc(21 * var(--k));
+            top: calc(57 * var(--k));
+            width: calc(100 * var(--k));
+            height: calc(100 * var(--k));
+            background: linear-gradient(135deg, #f0463c, #c9241c);
+        }
+        .rv-ac-avatar i {
+            position: absolute;
+            left: 50%;
+            top: calc(19 * var(--k));
+            width: calc(30 * var(--k));
+            height: calc(30 * var(--k));
+            border-radius: 50%;
+            background: #fff;
+            transform: translateX(-50%);
+        }
+        .rv-ac-avatar b {
+            position: absolute;
+            left: 50%;
+            top: calc(40 * var(--k));
+            width: calc(34 * var(--k));
+            height: calc(34 * var(--k));
+            border: calc(14 * var(--k)) solid #fff;
+            border-top: 0;
+            border-left: 0;
+            transform: translateX(-50%) rotate(45deg);
+        }
+        .rv-ac-quem {
+            left: calc(136 * var(--k));
+            top: calc(58 * var(--k));
+            display: flex;
+            flex-direction: column;
+            gap: calc(4 * var(--k));
+            color: #555;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: calc(13 * var(--k));
+        }
+        .rv-ac-quem strong { color: #222; font-family: 'Segoe UI', 'Inter', sans-serif; font-size: calc(16 * var(--k)); }
+        .rv-ac-texto {
+            left: calc(141 * var(--k));
+            top: calc(146 * var(--k));
+            width: calc(160 * var(--k));
+            line-height: 1.35;
+        }
+        .rv-ac-status {
+            left: calc(24 * var(--k));
+            top: calc(167 * var(--k));
+            display: flex;
+            gap: calc(8 * var(--k));
+            font-size: calc(12 * var(--k));
+        }
+        .rv-ac-status i:first-child { color: #2e9e44; }
+        .rv-ac-perfil {
+            left: calc(21 * var(--k));
+            top: calc(204 * var(--k));
+            color: #222;
+            font-size: calc(15 * var(--k));
+            font-weight: 700;
+        }
+        .rv-ac-select {
+            left: calc(21 * var(--k));
+            top: calc(233 * var(--k));
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: calc(272 * var(--k));
+            height: calc(31 * var(--k));
+            padding: 0 calc(12 * var(--k)) 0 calc(32 * var(--k));
+            border: 1px solid #ccc;
+            color: #666;
+            font-size: calc(15 * var(--k));
+        }
+        .rv-ac-perm {
+            display: grid;
+            place-items: center;
+            width: calc(48 * var(--k));
+            height: calc(40 * var(--k));
+            background: #5b8dd6;
+            color: #fff;
+            font-size: calc(15 * var(--k));
+        }
+        .rv-ac-p1, .rv-ac-p2, .rv-ac-p3, .rv-ac-p4, .rv-ac-p5 { top: calc(275 * var(--k)); }
+        .rv-ac-p6, .rv-ac-p7 { top: calc(323 * var(--k)); }
+        .rv-ac-p1, .rv-ac-p6 { left: calc(21 * var(--k)); }
+        .rv-ac-p2, .rv-ac-p7 { left: calc(77 * var(--k)); }
+        .rv-ac-p3 { left: calc(133 * var(--k)); }
+        .rv-ac-p4 { left: calc(189 * var(--k)); }
+        .rv-ac-p5 { left: calc(245 * var(--k)); }
+        .rv-ac-p7 { background: #e6e6e6; color: #c8c8c8; }
+        .rv-ac-mais {
+            left: calc(246 * var(--k));
+            top: calc(334 * var(--k));
+            color: #555;
+            font-size: calc(15 * var(--k));
+        }
+        .rv-ac-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: calc(8 * var(--k));
+            height: calc(32 * var(--k));
+            color: #fff;
+            font-size: calc(14.5 * var(--k));
+        }
+        .rv-ac-aceitar-perfil {
+            left: calc(21 * var(--k));
+            top: calc(398 * var(--k));
+            width: calc(272 * var(--k));
+            background: #2e9a40;
+        }
+        .rv-ac-aceitar {
+            left: calc(21 * var(--k));
+            top: calc(438 * var(--k));
+            width: calc(132 * var(--k));
+            background: #2e9a40;
+        }
+        .rv-ac-recusar {
+            left: calc(161 * var(--k));
+            top: calc(438 * var(--k));
+            width: calc(132 * var(--k));
+            background: #f4433b;
+        }
+        /* o clique no Aceitar de baixo */
+        .rv-ac .rv-aceitar { animation: rv-aperta var(--rv-dur) linear infinite; }
+        @keyframes rv-aperta {
+            0%, 90.7% { filter: none; }
+            91.3%, 92.4% { filter: brightness(0.82); }
+            93%, 100% { filter: none; }
+        }
+        .rv-ac .rv-cursor {
+            left: 50%;
+            top: 45%;
+            /* dentro do zoom de 1.45x: na tela fica perto de 3.8cqw */
+            font-size: 2.6cqw;
+            animation-name: rv-cursor-aceitar;
+        }
+        @keyframes rv-cursor-aceitar {
+            0%, 85.5% { transform: translate(5em, -4em); }
+            90.1% { transform: translate(0, 0); }
+            91.3% { transform: scale(0.8); }
+            92.4%, 100% { transform: translate(0, 0); }
+        }
+
+        /* lado direito: chat da sessão */
+        .rv-ac-tab {
+            top: 0;
+            display: grid;
+            place-items: center;
+            height: calc(34 * var(--k));
+            color: #fff;
+            font-size: calc(15 * var(--k));
+            font-weight: 600;
+        }
+        .rv-ac-tab-chat { left: 0; width: calc(193 * var(--k)); background: #5b8dd6; }
+        .rv-ac-tab-arq { left: calc(193 * var(--k)); right: 0; background: #cfcfcf; white-space: nowrap; }
+        .rv-ac-log {
+            left: calc(9 * var(--k));
+            top: calc(46 * var(--k));
+            color: #222;
+            font-weight: 700;
+            text-decoration: underline;
+        }
+        .rv-ac-linha1,
+        .rv-ac-linha2 { left: 0; right: 0; height: 1px; background: #ccc; }
+        .rv-ac-linha1 { top: calc(68 * var(--k)); }
+        .rv-ac-linha2 { top: calc(389 * var(--k)); }
+        .rv-ac-nome {
+            left: calc(4 * var(--k));
+            top: calc(79 * var(--k));
+            color: #222;
+            font-weight: 700;
+        }
+        .rv-ac-hora {
+            right: calc(7 * var(--k));
+            top: calc(78 * var(--k));
+            color: #555;
+            font-size: calc(12 * var(--k));
+        }
+        .rv-ac-evento {
+            left: calc(6 * var(--k));
+            top: calc(108 * var(--k));
+            display: flex;
+            align-items: center;
+            gap: calc(9 * var(--k));
+            color: #444;
+        }
+        .rv-ac-evento i { color: #e0a800; font-size: calc(12 * var(--k)); }
+        .rv-ac-msg {
+            left: calc(14 * var(--k));
+            top: calc(414 * var(--k));
+            color: #444;
+            font-style: italic;
+        }
+        .rv-ac-enviar {
+            right: calc(10 * var(--k));
+            top: calc(412 * var(--k));
+            color: #444;
+            font-size: calc(20 * var(--k));
+        }
+
+        /* ── legenda e progresso, como nos stories: um traço por passo ── */
+        .rv-legenda {
+            padding: 0.7em 0.9em 0.8em;
+            border-top: 1px solid var(--border-color);
+            font-size: clamp(10px, 2.9cqw, 13.5px);
+        }
+        .rv-progresso {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.35em;
+            margin-bottom: 0.6em;
+        }
+        .rv-progresso span {
+            height: 0.22em;
+            overflow: hidden;
+            border-radius: 1em;
+            background: var(--border-color);
+        }
+        .rv-progresso i {
+            display: block;
+            height: 100%;
+            background: var(--accent-mac);
+            transform: scaleX(0);
+            transform-origin: left;
+            animation: var(--rv-dur) linear infinite;
+        }
+        .rv-progresso span:nth-child(1) i { animation-name: rv-seg1; }
+        .rv-progresso span:nth-child(2) i { animation-name: rv-seg2; }
+        .rv-progresso span:nth-child(3) i { animation-name: rv-seg3; }
+        .rv-progresso span:nth-child(4) i { animation-name: rv-seg4; }
+        @keyframes rv-seg1 { 0% { transform: scaleX(0); } 41.9%, 100% { transform: scaleX(1); } }
+        @keyframes rv-seg2 { 0%, 41.9% { transform: scaleX(0); } 58.1%, 100% { transform: scaleX(1); } }
+        @keyframes rv-seg3 { 0%, 58.1% { transform: scaleX(0); } 77.3%, 100% { transform: scaleX(1); } }
+        @keyframes rv-seg4 { 0%, 77.3% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
+        .rv-passos { display: grid; }
+        .rv-passo {
+            grid-area: 1 / 1;
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1em;
+            font-weight: 600;
+            line-height: 1.35;
+            opacity: 0;
+            animation: var(--rv-dur) linear infinite;
+        }
+        .rv-passos .rv-p1 { animation-name: rv-p1; }
+        .rv-passos .rv-p2 { animation-name: rv-p2; }
+        .rv-passos .rv-p3 { animation-name: rv-p3; }
+        .rv-passos .rv-p4 { animation-name: rv-p4; }
+        @keyframes rv-p1 { 0% { opacity: 0; } 1.7%, 40.1% { opacity: 1; } 41.9%, 100% { opacity: 0; } }
+        @keyframes rv-p2 { 0%, 41.9% { opacity: 0; } 43.6%, 56.4% { opacity: 1; } 58.1%, 100% { opacity: 0; } }
+        @keyframes rv-p3 { 0%, 58.1% { opacity: 0; } 59.9%, 76.2% { opacity: 1; } 77.3%, 100% { opacity: 0; } }
+        @keyframes rv-p4 { 0%, 77.3% { opacity: 0; } 78.5%, 98.8% { opacity: 1; } 100% { opacity: 0; } }
+        .rv-passo b {
+            display: inline-grid;
+            place-items: center;
+            width: 1.5em;
+            height: 1.5em;
+            margin-right: 0.45em;
+            border-radius: 50%;
+            background: var(--accent-mac);
+            color: #fff;
+            font-size: 0.8em;
+        }
+        html[data-tema="escuro"] .rv-passo b { color: #062018; }
+
+        /* quem pediu menos movimento vê a conversa parada, com as três
+           primeiras mensagens, e os quatro passos escritos um embaixo do outro */
+        @media (prefers-reduced-motion: reduce) {
+            .rv *, .rv *::before, .rv *::after { animation: none !important; }
+            .rv-m1, .rv-m2, .rv-m3 { max-height: none; opacity: 1; }
+            .rv-passo { grid-area: auto; margin-bottom: 0.35em; opacity: 1; }
+            .rv-progresso, .rv-ad-ibeam { display: none; }
+        }
+
+        /* curso como anúncio "em breve", no fim da seção dos certificados:
+           uma faixa só, com as marcas, o texto e o selo "Logo mais" em linha.
+           Não é link, então não sobe no hover e o selo não parece botão. */
+        .curso-anuncio.em-breve {
+            flex-direction: row;
+            text-align: left;
+            gap: 1.6rem;
+            margin-top: 3.5rem;
+            padding: 1.4rem 1.8rem;
+            border: 1px dashed var(--border-color);
+            border-radius: 16px;
+            background: var(--bg-secondary);
+        }
+        .curso-anuncio.em-breve:hover { transform: none; }
+        .curso-anuncio.em-breve .curso-anuncio-icone img { width: 88px; }
+        .curso-anuncio.em-breve .curso-anuncio-icone img.claude { width: 96px; }
+        .curso-anuncio.em-breve .curso-anuncio-texto strong { font-size: 1.05rem; }
+        .curso-anuncio.em-breve .curso-anuncio-texto p { font-size: 0.85rem; line-height: 1.55; }
+        .curso-anuncio.em-breve .curso-anuncio-btn {
+            padding: 0.55rem 1.1rem;
+            font-size: 0.85rem;
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            cursor: default;
+        }
+        @media (max-width: 860px) {
+            .curso-anuncio.em-breve { flex-direction: column; align-items: flex-start; }
+            .curso-anuncio.em-breve .curso-anuncio-btn { width: auto; }
+        }
+
+        /* anúncio do curso: as duas logos são as versões brancas, o invert
+           as devolve escuras e o hue-rotate preserva o tom */
+        .curso-anuncio-icone img { filter: invert(1) hue-rotate(180deg); }
+        .curso-anuncio-tag i { filter: none; }
+        .curso-anuncio-btn { color: #fff; }
+
+        /* suporte remoto */
+        .remote-section {
+            background: #fff;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            box-shadow: 0 10px 30px rgba(20, 24, 31, 0.06);
+        }
+        .remote-visual .remote-window { box-shadow: 0 16px 40px rgba(20, 24, 31, 0.14); }
+        .remote-buttons .btn-anydesk { color: #fff; }
+        .remote-buttons .btn-anydesk:hover { box-shadow: 0 12px 26px rgba(107, 163, 47, 0.25); }
+
+        /* mídias de certificado */
+        .cert-item:hover { background: rgba(20, 24, 31, 0.04); }
+        .cert-item > img { filter: drop-shadow(0 6px 10px rgba(20, 24, 31, 0.18)); }
+
+        /* quem está por trás */
+        .founder-card {
+            background: #fff;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            box-shadow: 0 10px 30px rgba(20, 24, 31, 0.06);
+        }
+        .founder-social a { border-color: #fff; box-shadow: 0 4px 10px rgba(20, 24, 31, 0.18); }
+        .founder-badges span { background: var(--bg-secondary); }
+        .founder-tag { background: rgba(107, 163, 47, 0.1); }
+
+        /* planos */
+        .plan-card {
+            background-color: #fff;
+            border-color: var(--border-color);
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+        .plan-card.free {
+            border-color: rgba(31, 111, 209, 0.3);
+            background-color: rgba(31, 111, 209, 0.03);
+            box-shadow: 0 10px 30px rgba(31, 111, 209, 0.08);
+        }
+        .plan-card.free:hover { box-shadow: 0 16px 40px rgba(31, 111, 209, 0.14); }
+        .plan-card.paid {
+            border-color: rgba(107, 163, 47, 0.35);
+            background-color: rgba(107, 163, 47, 0.03);
+            box-shadow: 0 10px 30px rgba(107, 163, 47, 0.08);
+        }
+        .plan-card.paid:hover { box-shadow: 0 16px 40px rgba(107, 163, 47, 0.14); }
+        .plan-card.paid .plan-tag { background: rgba(107, 163, 47, 0.1); }
+        .plan-opcao {
+            background: #fff;
+            border-color: var(--border-color);
+        }
+        .plan-opcao.destaque {
+            border-color: rgba(107, 163, 47, 0.4);
+            background: rgba(107, 163, 47, 0.06);
+        }
+        .plan-card.paid .plan-btn { color: #fff; }
+        .plan-card.paid .plan-btn:hover { box-shadow: 0 12px 26px rgba(107, 163, 47, 0.25); }
+        .plan-card.paid .plan-opcao:not(.destaque) .plan-btn {
+            color: var(--accent-mac);
+            border-color: rgba(107, 163, 47, 0.45);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           TEMA ESCURO
+           Ligado pelo seletor do menu, que põe data-tema="escuro" no <html>.
+           Fica depois do tema claro e com o [data-tema] na frente de cada
+           regra, para vencer as regras claras sem mexer nelas. Só cor:
+           nenhum tamanho ou posição muda aqui.
+           Os acentos voltam para o verde-menta e o azul claro da marca, que
+           no branco sumiam e no escuro são os que acendem.
+           ═══════════════════════════════════════════════════════════════════ */
+        html[data-tema="escuro"] { color-scheme: dark; }
+        html[data-tema="escuro"] body { background: #0a0a0b; color: #f5f5f5; }
+        html[data-tema="escuro"] body > header,
+        html[data-tema="escuro"] .hero-band,
+        html[data-tema="escuro"] body > section,
+        html[data-tema="escuro"] body > footer {
+            --bg-primary: #0a0a0b;
+            --bg-secondary: #111113;
+            --bg-card: #161618;
+            --accent-gold: #a6ce4e;
+            --accent-gold-light: #4fa3ff;
+            --accent-mac: #a6ce4e;
+            --accent-mac-dark: #8bbf3f;
+            --accent-win: #4fa3ff;
+            --accent-win-dark: #1f6fd1;
+            --text-primary: #f5f5f5;
+            --text-secondary: #a0a0a5;
+            --text-muted: #6b6b70;
+            --border-color: #2a2a2e;
+        }
+
+        /* menu: as variáveis da barra passam para o escuro */
+        html[data-tema="escuro"] .header {
+            --cor-fundo: #0a0a0b;
+            --cor-fundo-claro: #161618;
+            --cor-fundo-vidro: rgba(10, 10, 11, 0.78);
+            --cor-texto: #f5f5f5;
+            --cor-linha: rgba(255, 255, 255, 0.12);
+        }
+        /* a logo do menu é preta: invertida vira branca */
+        html[data-tema="escuro"] .brand-logo { filter: invert(1); }
+
+        html[data-tema="escuro"] .blush { opacity: 0.22; }
+        html[data-tema="escuro"] .footer-logo-mask {
+            background: linear-gradient(135deg, var(--accent-mac), var(--accent-win));
+        }
+
+        /* tribunais: as marcas escuras ("clarear") invertem para aparecer no
+           fundo escuro; o SEEU, que já é claro, fica como está */
+        html[data-tema="escuro"] .belt-logo.clarear img { filter: invert(1) hue-rotate(180deg); }
+        html[data-tema="escuro"] .belt-logo:not(.clarear) img { filter: none; }
+        html[data-tema="escuro"] .belt-section::before { opacity: 0.3; }
+
+        /* curso: as duas logos já são as versões brancas, sem inverter */
+        html[data-tema="escuro"] .curso-anuncio-icone img { filter: none; }
+        /* texto escuro nos botões verdes, como no escuro original */
+        html[data-tema="escuro"] .curso-anuncio-btn,
+        html[data-tema="escuro"] .remote-buttons .btn-anydesk { color: #062018; }
+
+        html[data-tema="escuro"] .recommended-tag {
+            background: rgba(166, 206, 78, 0.12);
+            border-color: rgba(166, 206, 78, 0.4);
+        }
+
+        /* quadro de serviços + suporte remoto */
+        html[data-tema="escuro"] .platform-duo {
+            background: var(--bg-card);
+            box-shadow: none;
+        }
+
+        /* suporte remoto */
+        html[data-tema="escuro"] .remote-section {
+            background: var(--bg-card);
+            box-shadow: none;
+        }
+        html[data-tema="escuro"] .remote-visual .remote-window { box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); }
+        html[data-tema="escuro"] .remote-buttons .btn-anydesk:hover { box-shadow: 0 12px 26px rgba(166, 206, 78, 0.25); }
+
+        /* mídias de certificado */
+        html[data-tema="escuro"] .cert-item:hover { background: rgba(255, 255, 255, 0.04); }
+        html[data-tema="escuro"] .cert-item > img { filter: drop-shadow(0 6px 11px rgba(0, 0, 0, 0.5)); }
+
+        /* quem está por trás */
+        html[data-tema="escuro"] .founder-card {
+            background: var(--bg-card);
+            box-shadow: none;
+        }
+        html[data-tema="escuro"] .founder-social a { border-color: #161618; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35); }
+        html[data-tema="escuro"] .founder-badges span { background: rgba(255, 255, 255, 0.04); }
+        html[data-tema="escuro"] .founder-tag { background: rgba(166, 206, 78, 0.12); }
+
+        /* planos */
+        /* planos */
+        html[data-tema="escuro"] .plan-card {
+            background-color: rgba(255, 255, 255, 0.03);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+        html[data-tema="escuro"] .plan-card.free {
+            border-color: rgba(79, 163, 255, 0.3);
+            background-color: rgba(79, 163, 255, 0.06);
+            box-shadow: 0 0 45px rgba(79, 163, 255, 0.12);
+        }
+        html[data-tema="escuro"] .plan-card.free:hover { box-shadow: 0 0 60px rgba(79, 163, 255, 0.22); }
+        html[data-tema="escuro"] .plan-card.paid {
+            border-color: rgba(166, 206, 78, 0.3);
+            background-color: rgba(166, 206, 78, 0.06);
+            box-shadow: 0 0 45px rgba(166, 206, 78, 0.12);
+        }
+        html[data-tema="escuro"] .plan-card.paid:hover { box-shadow: 0 0 60px rgba(166, 206, 78, 0.22); }
+        html[data-tema="escuro"] .plan-card.paid .plan-tag { background: rgba(166, 206, 78, 0.14); }
+        html[data-tema="escuro"] .plan-card.paid .plan-btn { color: #062018; }
+        html[data-tema="escuro"] .plan-opcao {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        html[data-tema="escuro"] .plan-opcao.destaque {
+            border-color: rgba(166, 206, 78, 0.35);
+            background: rgba(166, 206, 78, 0.07);
+        }
+        html[data-tema="escuro"] .plan-card.paid .plan-btn:hover { box-shadow: 0 15px 30px rgba(166, 206, 78, 0.25); }
+        html[data-tema="escuro"] .plan-card.paid .plan-opcao:not(.destaque) .plan-btn {
+            color: var(--accent-mac);
+            border-color: rgba(166, 206, 78, 0.45);
+        }
     </style>
 </head>
 <body>
@@ -1353,128 +3021,496 @@
         <div class="blush blush-3" id="blush3"></div>
     </div>
 
-    <header>
-        <a href="index.html" class="logo">
-            <div class="logo-icon">
-                <div class="logo-mask" role="img" aria-label="AdvogaCert"></div>
+    <!-- Barra de menu trazida de Advoga_scroll/novo-site2 (bloco 00).
+         Estilos: assets/css/bloco-00-header.css  |  Script: assets/js/bloco-00-header.js
+         Abas suspensas: assets/css/bloco-00-nav-menus.css + o .js de mesmo nome
+         Cada link tem o texto duas vezes de propósito: é o efeito das letras
+         subindo no hover. -->
+    <section class="header">
+        <div class="navbar" role="banner">
+            <div class="container">
+                <div class="navbar-wrapper">
+
+                    <a href="index.html" class="brand-logo-wrap" aria-label="AdvogaCert — página inicial">
+                        <img src="assets/img/logo-escuro.png" alt="AdvogaCert" class="brand-logo">
+                    </a>
+
+                    <nav class="navbar-manu-block" aria-label="Menu principal">
+                        <div class="menu-link-wrap">
+
+                            <!-- OS CINCO ITENS COM PAINEL.
+                                 O gatilho é <button>, e não <a>: ele não leva a
+                                 lugar nenhum, só abre a aba suspensa. Era isso
+                                 que os dois primeiros itens faziam errado antes:
+                                 "Tela inicial" apontava para "#", que só pula
+                                 para o topo, e "Curso" para #curso, uma âncora
+                                 que não existe na página.
+
+                                 Desenho: assets/css/bloco-00-nav-menus.css
+                                 Script: assets/js/bloco-00-nav-menus.js
+                                 Cada painel precisa de id: é por ele que a
+                                 versão do celular acha o conteúdo para copiar. -->
+                            <div class="nav-item">
+                                <button type="button" class="nav-link" id="gatilho-planos"
+                                        aria-haspopup="true" aria-expanded="false" aria-controls="menu-planos">
+                                    <div class="nav-link-text">Planos</div>
+                                    <div class="nav-link-text" aria-hidden="true">Planos</div>
+                                    <div class="nav-link-line"></div>
+                                </button>
+                                <i class="fa-solid fa-chevron-down nav-seta" aria-hidden="true"></i>
+
+                                <div class="nav-drop" id="menu-planos" aria-labelledby="gatilho-planos">
+                                    <span class="nav-drop-rotulo">Nossos planos</span>
+                                    <div class="nav-drop-lista">
+                                        <a href="#planos" class="nav-drop-item">
+                                            <span class="nav-drop-icone"><i class="fa-solid fa-flask" aria-hidden="true"></i></span>
+                                            <span class="nav-drop-texto">
+                                                <span class="nav-drop-titulo">1 chamado grátis</span>
+                                                <span class="nav-drop-desc">Teste o atendimento sem cartão</span>
+                                            </span>
+                                        </a>
+                                        <a href="#planos" class="nav-drop-item">
+                                            <span class="nav-drop-icone"><i class="fa-solid fa-bolt" aria-hidden="true"></i></span>
+                                            <span class="nav-drop-texto">
+                                                <span class="nav-drop-titulo">Premium avulso</span>
+                                                <span class="nav-drop-desc">R$ 59 por dia, sem mensalidade</span>
+                                            </span>
+                                        </a>
+                                        <a href="#planos" class="nav-drop-item">
+                                            <span class="nav-drop-icone"><i class="fa-solid fa-star" aria-hidden="true"></i></span>
+                                            <span class="nav-drop-texto">
+                                                <span class="nav-drop-titulo">Premium mensal</span>
+                                                <span class="nav-drop-desc">R$ 199 por mês, o melhor custo</span>
+                                            </span>
+                                        </a>
+                                        <a href="#plataformas" class="nav-drop-item">
+                                            <span class="nav-drop-icone"><i class="fa-solid fa-headset" aria-hidden="true"></i></span>
+                                            <span class="nav-drop-texto">
+                                                <span class="nav-drop-titulo">Como o atendimento funciona</span>
+                                                <span class="nav-drop-desc">O passo a passo pelo AnyDesk</span>
+                                            </span>
+                                        </a>
+                                    </div>
+                                    <a href="#plataformas" class="nav-drop-pe">
+                                        <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
+                                        Tribunais e sistemas atendidos
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="nav-item">
+                                <button type="button" class="nav-link" id="gatilho-downloads"
+                                        aria-haspopup="true" aria-expanded="false" aria-controls="menu-downloads">
+                                    <div class="nav-link-text">Downloads</div>
+                                    <div class="nav-link-text" aria-hidden="true">Downloads</div>
+                                    <div class="nav-link-line"></div>
+                                </button>
+                                <i class="fa-solid fa-chevron-down nav-seta" aria-hidden="true"></i>
+
+                                <div class="nav-drop" id="menu-downloads" aria-labelledby="gatilho-downloads">
+                                    <span class="nav-drop-rotulo">Para instalar no seu computador</span>
+                                    <div class="nav-drop-lista">
+                                        <a href="https://anydesk.com/pt/downloads" target="_blank" rel="noopener" class="nav-drop-item">
+                                            <span class="nav-drop-icone"><i class="fa-solid fa-display" aria-hidden="true"></i></span>
+                                            <span class="nav-drop-texto">
+                                                <span class="nav-drop-titulo">AnyDesk <i class="fa-solid fa-arrow-up-right-from-square nav-drop-fora" aria-hidden="true"></i></span>
+                                                <span class="nav-drop-desc">O programa do atendimento remoto</span>
+                                            </span>
+                                        </a>
+                                    </div>
+                                    <a href="https://wa.me/5561986241570" target="_blank" rel="noopener" class="nav-drop-pe">
+                                        <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+                                        Não sabe qual é a sua mídia? Chame a gente.
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="nav-item">
+                                <button type="button" class="nav-link" id="gatilho-curso"
+                                        aria-haspopup="true" aria-expanded="false" aria-controls="menu-curso">
+                                    <div class="nav-link-text">Curso</div>
+                                    <div class="nav-link-text" aria-hidden="true">Curso</div>
+                                    <div class="nav-link-line"></div>
+                                </button>
+                                <i class="fa-solid fa-chevron-down nav-seta" aria-hidden="true"></i>
+
+                                <div class="nav-drop" id="menu-curso" aria-labelledby="gatilho-curso">
+                                    <span class="nav-drop-rotulo">Formação</span>
+                                    <div class="nav-drop-lista">
+                                        <a href="curso.html" class="nav-drop-item">
+                                            <span class="nav-drop-icone"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i></span>
+                                            <span class="nav-drop-texto">
+                                                <span class="nav-drop-titulo">Página do curso</span>
+                                                <span class="nav-drop-desc">A apresentação completa</span>
+                                            </span>
+                                        </a>
+                                        <a href="curso.html#programa" class="nav-drop-item">
+                                            <span class="nav-drop-icone"><i class="fa-solid fa-list-check" aria-hidden="true"></i></span>
+                                            <span class="nav-drop-texto">
+                                                <span class="nav-drop-titulo">O que você vai aprender</span>
+                                                <span class="nav-drop-desc">O programa, módulo por módulo</span>
+                                            </span>
+                                        </a>
+                                        <a href="curso.html#como-funciona" class="nav-drop-item">
+                                            <span class="nav-drop-icone"><i class="fa-solid fa-circle-play" aria-hidden="true"></i></span>
+                                            <span class="nav-drop-texto">
+                                                <span class="nav-drop-titulo">Como as aulas funcionam</span>
+                                                <span class="nav-drop-desc">Formato, ritmo e material</span>
+                                            </span>
+                                        </a>
+                                        <a href="curso.html#inscricao" class="nav-drop-item">
+                                            <span class="nav-drop-icone"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i></span>
+                                            <span class="nav-drop-texto">
+                                                <span class="nav-drop-titulo">Turmas e inscrição</span>
+                                                <span class="nav-drop-desc">Veja a disponibilidade da próxima</span>
+                                            </span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="nav-item">
+                                <button type="button" class="nav-link" id="gatilho-sobre"
+                                        aria-haspopup="true" aria-expanded="false" aria-controls="menu-sobre">
+                                    <div class="nav-link-text">Quem sou eu</div>
+                                    <div class="nav-link-text" aria-hidden="true">Quem sou eu</div>
+                                    <div class="nav-link-line"></div>
+                                </button>
+                                <i class="fa-solid fa-chevron-down nav-seta" aria-hidden="true"></i>
+
+                                <div class="nav-drop" id="menu-sobre" aria-labelledby="gatilho-sobre">
+                                    <span class="nav-drop-rotulo">Quem está por trás</span>
+                                    <div class="nav-drop-lista">
+                                        <a href="#sobre" class="nav-drop-item">
+                                            <span class="nav-drop-icone"><i class="fa-solid fa-user-tie" aria-hidden="true"></i></span>
+                                            <span class="nav-drop-texto">
+                                                <span class="nav-drop-titulo">Minha história</span>
+                                                <span class="nav-drop-desc">Suporte à OAB-DF e à OAB-CE</span>
+                                            </span>
+                                        </a>
+                                        <a href="https://www.linkedin.com/in/jonas-costa-2a7256393/" target="_blank" rel="noopener" class="nav-drop-item">
+                                            <span class="nav-drop-icone"><i class="fa-brands fa-linkedin-in" aria-hidden="true"></i></span>
+                                            <span class="nav-drop-texto">
+                                                <span class="nav-drop-titulo">LinkedIn <i class="fa-solid fa-arrow-up-right-from-square nav-drop-fora" aria-hidden="true"></i></span>
+                                                <span class="nav-drop-desc">A trajetória profissional</span>
+                                            </span>
+                                        </a>
+                                        <a href="https://www.instagram.com/jonasadvogare" target="_blank" rel="noopener" class="nav-drop-item">
+                                            <span class="nav-drop-icone"><i class="fa-brands fa-instagram" aria-hidden="true"></i></span>
+                                            <span class="nav-drop-texto">
+                                                <span class="nav-drop-titulo">Instagram <i class="fa-solid fa-arrow-up-right-from-square nav-drop-fora" aria-hidden="true"></i></span>
+                                                <span class="nav-drop-desc">@jonasadvogare</span>
+                                            </span>
+                                        </a>
+                                        <a href="https://github.com/Jonascreate/advogacert" target="_blank" rel="noopener" class="nav-drop-item">
+                                            <span class="nav-drop-icone"><i class="fa-brands fa-github" aria-hidden="true"></i></span>
+                                            <span class="nav-drop-texto">
+                                                <span class="nav-drop-titulo">GitHub <i class="fa-solid fa-arrow-up-right-from-square nav-drop-fora" aria-hidden="true"></i></span>
+                                                <span class="nav-drop-desc">O código por trás deste site</span>
+                                            </span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ._fim: é o último da barra, então o painel se
+                                 prende pela DIREITA. Preso pela esquerda, ele
+                                 passaria da borda da janela e a página inteira
+                                 ganharia arrasto lateral. -->
+                            <div class="nav-item">
+                                <button type="button" class="nav-link" id="gatilho-contato"
+                                        aria-haspopup="true" aria-expanded="false" aria-controls="menu-contato">
+                                    <div class="nav-link-text">Contato</div>
+                                    <div class="nav-link-text" aria-hidden="true">Contato</div>
+                                    <div class="nav-link-line"></div>
+                                </button>
+                                <i class="fa-solid fa-chevron-down nav-seta" aria-hidden="true"></i>
+
+                                <div class="nav-drop _fim" id="menu-contato" aria-labelledby="gatilho-contato">
+                                    <span class="nav-drop-rotulo">Falar com o suporte</span>
+                                    <div class="nav-drop-lista">
+                                        <a href="https://wa.me/5561986241570" target="_blank" rel="noopener" class="nav-drop-item">
+                                            <span class="nav-drop-icone"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i></span>
+                                            <span class="nav-drop-texto">
+                                                <span class="nav-drop-titulo">WhatsApp <i class="fa-solid fa-arrow-up-right-from-square nav-drop-fora" aria-hidden="true"></i></span>
+                                                <span class="nav-drop-desc">O caminho mais rápido</span>
+                                            </span>
+                                        </a>
+                                        <a href="contato.html" class="nav-drop-item">
+                                            <span class="nav-drop-icone"><i class="fa-solid fa-envelope-open-text" aria-hidden="true"></i></span>
+                                            <span class="nav-drop-texto">
+                                                <span class="nav-drop-titulo">Página de contato</span>
+                                                <span class="nav-drop-desc">Formulário e horários</span>
+                                            </span>
+                                        </a>
+                                        <a href="mailto:advogare@agentej.us" class="nav-drop-item">
+                                            <span class="nav-drop-icone"><i class="fa-solid fa-envelope" aria-hidden="true"></i></span>
+                                            <span class="nav-drop-texto">
+                                                <span class="nav-drop-titulo">E-mail</span>
+                                                <span class="nav-drop-desc">advogare@agentej.us</span>
+                                            </span>
+                                        </a>
+                                        <a href="tel:+5561986241570" class="nav-drop-item">
+                                            <span class="nav-drop-icone"><i class="fa-solid fa-phone" aria-hidden="true"></i></span>
+                                            <span class="nav-drop-texto">
+                                                <span class="nav-drop-titulo">Telefone</span>
+                                                <span class="nav-drop-desc">(61) 98624-1570</span>
+                                            </span>
+                                        </a>
+                                    </div>
+                                    <a href="login.html" class="nav-drop-pe">
+                                        <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
+                                        Já é cliente? Entre na sua área.
+                                    </a>
+                                </div>
+                            </div>
+
+                        </div>
+                    </nav>
+
+                    <div class="navbar-button-block">
+                        <a href="https://wa.me/5561986241570" target="_blank" rel="noopener" class="nav-status">
+                            <i class="fa-brands fa-whatsapp nav-status-whats" aria-hidden="true"></i>
+                            <span class="nav-status-text">Suporte aberto agora</span>
+                        </a>
+                        <button type="button"
+                                class="menu-open-block"
+                                aria-label="Abrir menu"
+                                aria-expanded="false"
+                                aria-controls="menu-mobile">
+                            <span class="menu-open-bar"></span>
+                            <span class="menu-open-bar"></span>
+                        </button>
+                    </div>
+
+                </div>
             </div>
-        </a>
-        <nav>
-            <a href="contato.html">Contato</a>
-        </nav>
-    </header>
+        </div>
+
+        <!-- seletor de tema: fixo no canto direito, logo abaixo da barra -->
+        <button type="button" class="tema-toggle" role="switch" aria-checked="false" aria-label="Modo escuro">
+            <i class="fa-solid fa-sun tema-toggle-sol" aria-hidden="true"></i>
+            <i class="fa-solid fa-moon tema-toggle-lua" aria-hidden="true"></i>
+            <span class="tema-toggle-bola" aria-hidden="true"></span>
+        </button>
+
+        <!-- MENU DO CELULAR.
+             Os mesmos quatro menus da barra, aqui em forma de sanfona: o item
+             abre e a lista desce empurrando o resto, em vez de flutuar.
+
+             As caixas .menu-mobile-sub nascem VAZIAS de propósito. É o
+             bloco-00-nav-menus.js que copia para dentro delas a lista do
+             painel do computador indicado em data-menu. Assim os links moram
+             num lugar só, e mexer lá em cima não deixa o celular para trás. -->
+        <div class="menu-mobile" id="menu-mobile">
+            <div class="menu-mobile-inner">
+
+                <div class="menu-mobile-item">
+                    <button type="button" class="menu-mobile-link" aria-expanded="false">
+                        Planos
+                        <i class="fa-solid fa-chevron-down nav-seta" aria-hidden="true"></i>
+                    </button>
+                    <div class="menu-mobile-sub" data-menu="menu-planos"></div>
+                </div>
+
+                <div class="menu-mobile-item">
+                    <button type="button" class="menu-mobile-link" aria-expanded="false">
+                        Downloads
+                        <i class="fa-solid fa-chevron-down nav-seta" aria-hidden="true"></i>
+                    </button>
+                    <div class="menu-mobile-sub" data-menu="menu-downloads"></div>
+                </div>
+
+                <div class="menu-mobile-item">
+                    <button type="button" class="menu-mobile-link" aria-expanded="false">
+                        Curso
+                        <i class="fa-solid fa-chevron-down nav-seta" aria-hidden="true"></i>
+                    </button>
+                    <div class="menu-mobile-sub" data-menu="menu-curso"></div>
+                </div>
+
+                <div class="menu-mobile-item">
+                    <button type="button" class="menu-mobile-link" aria-expanded="false">
+                        Quem sou eu
+                        <i class="fa-solid fa-chevron-down nav-seta" aria-hidden="true"></i>
+                    </button>
+                    <div class="menu-mobile-sub" data-menu="menu-sobre"></div>
+                </div>
+
+                <div class="menu-mobile-item">
+                    <button type="button" class="menu-mobile-link" aria-expanded="false">
+                        Contato
+                        <i class="fa-solid fa-chevron-down nav-seta" aria-hidden="true"></i>
+                    </button>
+                    <div class="menu-mobile-sub" data-menu="menu-contato"></div>
+                </div>
+
+            </div>
+        </div>
+    </section>
 
     <!-- Faixa de fundo: vai da linha do header até o começo dos cards -->
     <div class="hero-band">
-        <div class="hero-band-clip">
-            <div class="hero-band-img" id="heroBannerImg" role="img" aria-label="Certificados digitais instalados em Mac e Windows"></div>
-        </div>
-
+        <!-- Um container só: o texto de entrada à esquerda e a esteira dos
+             tribunais no canto direito, como no modelo do novo-site -->
         <section class="platform-hero">
+            <div class="hero-texto">
             <h1>
-                Suporte para <span>certificados digitais</span>
+                <span class="hero-linha0">Suporte para</span><br>
+                <span>certificados digitais</span>
                 <!-- o texto fica no HTML (leitor de tela e busca leem normal);
                      o script apaga e redigita na abertura da página -->
-                <span class="hero-linha2" data-digitar>em todas as unidades da federação</span>
+                <span class="hero-linha2" data-digitar>Tribunais de todas as unidades da federação</span>
             </h1>
             <!-- as plataformas entram entre o título e o texto, dividindo os dois -->
             <img class="hero-logos" src="assets/img/mac-win.png"
                  alt="Suporte para Mac e Windows" loading="lazy">
 
-            <!-- Esteira: sistemas dos tribunais -->
-            <div class="belt belt-reverse">
+            <!-- Esteira das mídias de certificado: coluna da ESQUERDA do
+                 hero, embaixo das logos do Mac e do Windows. Fica na mesma
+                 altura da esteira dos tribunais, que é a da coluna da
+                 direita. São as mesmas cinco mídias da seção "Certificados
+                 digitais". As duas metades do track são idênticas (é o -50%
+                 do beltRun) e a segunda vai com aria-hidden, para o leitor
+                 de tela não ler os nomes duas vezes. -->
+            <div class="hero-midias-bloco">
+            <p class="hero-sistemas-texto">Por qual certificado <span>você assina?</span></p>
+            <div class="belt hero-midias" role="group" aria-label="Mídias atendidas: token G&amp;D StarSign, token SafeNet 5100, cartão com chip, Bird ID em nuvem e certificado A1 em arquivo">
                 <div class="belt-track">
-                    <div class="belt-item">
-                        <div class="belt-logo clarear"><img src="assets/img/A_PJE.png" alt="PJe — Processo Judicial Eletrônico" loading="lazy"></div>
-                        <span class="belt-name">PJe</span>
-                    </div>
-                    <div class="belt-item">
-                        <div class="belt-logo clarear"><img src="assets/img/A_ESAJ.png" alt="e-SAJ — Portal de Serviços" loading="lazy"></div>
-                        <span class="belt-name">e-SAJ</span>
-                    </div>
-                    <div class="belt-item">
-                        <div class="belt-logo clarear"><img src="assets/img/A_EPROC.png" alt="eproc — Processo Eletrônico" loading="lazy"></div>
-                        <span class="belt-name">eproc</span>
-                    </div>
-                    <div class="belt-item">
-                        <div class="belt-logo clarear"><img src="assets/img/A_STJ.png" alt="STJ — Superior Tribunal de Justiça" loading="lazy"></div>
-                        <span class="belt-name">STJ</span>
-                    </div>
-                    <div class="belt-item">
-                        <div class="belt-logo clarear vertical"><img src="assets/img/A_STF.png" alt="STF — Supremo Tribunal Federal" loading="lazy"></div>
-                        <span class="belt-name">STF</span>
-                    </div>
-                    <div class="belt-item">
-                        <div class="belt-logo clarear vertical"><img src="assets/img/A_TJGO.png" alt="TJGO — Tribunal de Justiça do Estado de Goiás" loading="lazy"></div>
-                        <span class="belt-name">TJGO</span>
-                    </div>
-                    <div class="belt-item">
-                        <div class="belt-logo clarear vertical"><img src="assets/img/A_TRF.png" alt="TRF — Justiça Federal" loading="lazy"></div>
-                        <span class="belt-name">TRF</span>
-                    </div>
-                    <div class="belt-item">
-                        <div class="belt-logo clarear ampliada"><img src="assets/img/A_TRT.png" alt="Justiça do Trabalho — TRT" loading="lazy"></div>
-                        <span class="belt-name">TRT</span>
-                    </div>
-                    <!-- SEEU já é uma marca clara: sem a classe "clarear", que inverteria e a apagaria -->
-                    <div class="belt-item">
-                        <div class="belt-logo ampliada"><img src="assets/img/A_SEEU.png" alt="SEEU — Sistema Eletrônico de Execução Unificado" loading="lazy"></div>
-                        <span class="belt-name">SEEU</span>
+                    <div class="belt-item"><div class="belt-token gd"><img src="assets/img/A_GD.png" alt="" loading="lazy"></div><span class="belt-name">G&amp;D StarSign</span></div>
+                    <div class="belt-item"><div class="belt-token safenet"><img src="assets/img/A_TOKENSAFE.png" alt="" loading="lazy"></div><span class="belt-name">SafeNet 5100</span></div>
+                    <div class="belt-item"><div class="belt-token cartao"><img src="assets/img/A_CARTAO.png" alt="" loading="lazy"></div><span class="belt-name">Cartão com chip</span></div>
+                    <div class="belt-item"><div class="belt-token birdid"><img src="assets/img/A_BIRDID.webp" alt="" loading="lazy"></div><span class="belt-name">Bird ID</span></div>
+                    <div class="belt-item"><div class="belt-token a1"><img src="assets/img/A_PFX_SEM_A1.png" alt="" loading="lazy"></div><span class="belt-name">A1 em arquivo</span></div>
+
+                    <div class="belt-item" aria-hidden="true"><div class="belt-token gd"><img src="assets/img/A_GD.png" alt="" loading="lazy"></div><span class="belt-name">G&amp;D StarSign</span></div>
+                    <div class="belt-item" aria-hidden="true"><div class="belt-token safenet"><img src="assets/img/A_TOKENSAFE.png" alt="" loading="lazy"></div><span class="belt-name">SafeNet 5100</span></div>
+                    <div class="belt-item" aria-hidden="true"><div class="belt-token cartao"><img src="assets/img/A_CARTAO.png" alt="" loading="lazy"></div><span class="belt-name">Cartão com chip</span></div>
+                    <div class="belt-item" aria-hidden="true"><div class="belt-token birdid"><img src="assets/img/A_BIRDID.webp" alt="" loading="lazy"></div><span class="belt-name">Bird ID</span></div>
+                    <div class="belt-item" aria-hidden="true"><div class="belt-token a1"><img src="assets/img/A_PFX_SEM_A1.png" alt="" loading="lazy"></div><span class="belt-name">A1 em arquivo</span></div>
+                </div>
+            </div>
+            </div><!-- /.hero-midias-bloco -->
+            </div>
+
+            <!-- Esteira dos tribunais: canto direito do mesmo container -->
+            <div class="hero-sistemas-wrap">
+                <!-- Anúncio do curso, acima das logos dos tribunais.
+                     Veio do anúncio que ficava no fim da seção dos
+                     certificados, para o mesmo texto não aparecer duas
+                     vezes na página. Quando as inscrições abrirem, troque a
+                     <div> por um <a href="curso.html"> e ponha o botão. -->
+                <div class="hero-curso-tag" data-scroll="load">
+                    <div class="hero-curso-item _logos">
+                        <div class="hero-curso-quadro hero-curso-logos" scroll-item="show">
+                            <img src="assets/img/pje-claro.png" alt="PJe — Processo Judicial Eletrônico" loading="lazy">
+                            <span class="hero-curso-mais">+</span>
+                            <img class="claude" src="assets/img/claude-claro.png" alt="Claude" loading="lazy">
+                        </div>
                     </div>
 
-                    <!-- cópia idêntica: fecha o loop sem emenda -->
-                    <div class="belt-item" aria-hidden="true">
-                        <div class="belt-logo clarear"><img src="assets/img/A_PJE.png" alt="" loading="lazy"></div>
-                        <span class="belt-name">PJe</span>
+                    <div class="hero-curso-item _texto">
+                        <div class="hero-curso-quadro hero-curso-texto" scroll-item="show">
+                            <span class="hero-curso-selo"><i class="fa-solid fa-graduation-cap"></i> Em breve · Curso ao vivo</span>
+                            <strong>PJe sem travar e IA Claude trabalhando no seu escritório</strong>
+                            <small>Advogado! Aproveite dois cursos que irão enriquecer e diminuir o seu tempo de trabalho.</small>
+                        </div>
                     </div>
-                    <div class="belt-item" aria-hidden="true">
-                        <div class="belt-logo clarear"><img src="assets/img/A_ESAJ.png" alt="" loading="lazy"></div>
-                        <span class="belt-name">e-SAJ</span>
-                    </div>
-                    <div class="belt-item" aria-hidden="true">
-                        <div class="belt-logo clarear"><img src="assets/img/A_EPROC.png" alt="" loading="lazy"></div>
-                        <span class="belt-name">eproc</span>
-                    </div>
-                    <div class="belt-item" aria-hidden="true">
-                        <div class="belt-logo clarear"><img src="assets/img/A_STJ.png" alt="" loading="lazy"></div>
-                        <span class="belt-name">STJ</span>
-                    </div>
-                    <div class="belt-item" aria-hidden="true">
-                        <div class="belt-logo clarear vertical"><img src="assets/img/A_STF.png" alt="" loading="lazy"></div>
-                        <span class="belt-name">STF</span>
-                    </div>
-                    <div class="belt-item" aria-hidden="true">
-                        <div class="belt-logo clarear vertical"><img src="assets/img/A_TJGO.png" alt="" loading="lazy"></div>
-                        <span class="belt-name">TJGO</span>
-                    </div>
-                    <div class="belt-item" aria-hidden="true">
-                        <div class="belt-logo clarear vertical"><img src="assets/img/A_TRF.png" alt="" loading="lazy"></div>
-                        <span class="belt-name">TRF</span>
-                    </div>
-                    <div class="belt-item" aria-hidden="true">
-                        <div class="belt-logo clarear ampliada"><img src="assets/img/A_TRT.png" alt="" loading="lazy"></div>
-                        <span class="belt-name">TRT</span>
-                    </div>
-                    <div class="belt-item" aria-hidden="true">
-                        <div class="belt-logo ampliada"><img src="assets/img/A_SEEU.png" alt="" loading="lazy"></div>
-                        <span class="belt-name">SEEU</span>
+                </div>
+
+                <p class="hero-sistemas-texto">Compatível com os <span>sistemas que você já usa</span></p>
+                <div class="belt belt-reverse">
+                    <div class="belt-track">
+                        <div class="belt-item">
+                            <div class="belt-logo clarear pje"><img src="assets/img/A_PJE.png" alt="PJe — Processo Judicial Eletrônico" loading="lazy"></div>
+                            <span class="belt-name">PJe</span>
+                        </div>
+                        <div class="belt-item">
+                            <div class="belt-logo clarear esaj"><img src="assets/img/A_ESAJ.png" alt="e-SAJ — Portal de Serviços" loading="lazy"></div>
+                            <span class="belt-name">e-SAJ</span>
+                        </div>
+                        <div class="belt-item">
+                            <div class="belt-logo clarear eproc"><img src="assets/img/A_EPROC.png" alt="eproc — Processo Eletrônico" loading="lazy"></div>
+                            <span class="belt-name">eproc</span>
+                        </div>
+                        <div class="belt-item">
+                            <div class="belt-logo clarear stj"><img src="assets/img/A_STJ.png" alt="STJ — Superior Tribunal de Justiça" loading="lazy"></div>
+                            <span class="belt-name">STJ</span>
+                        </div>
+                        <div class="belt-item">
+                            <div class="belt-logo clarear vertical stf"><img src="assets/img/A_STF.png" alt="STF — Supremo Tribunal Federal" loading="lazy"></div>
+                            <span class="belt-name">STF</span>
+                        </div>
+                        <div class="belt-item">
+                            <div class="belt-logo clarear vertical tjgo"><img src="assets/img/A_TJGO.png" alt="TJGO — Tribunal de Justiça do Estado de Goiás" loading="lazy"></div>
+                            <span class="belt-name">TJGO</span>
+                        </div>
+                        <div class="belt-item">
+                            <div class="belt-logo clarear vertical trf"><img src="assets/img/A_TRF.png" alt="TRF — Justiça Federal" loading="lazy"></div>
+                            <span class="belt-name">TRF</span>
+                        </div>
+                        <div class="belt-item">
+                            <div class="belt-logo clarear trt"><img src="assets/img/A_TRT.png" alt="Justiça do Trabalho — TRT" loading="lazy"></div>
+                            <span class="belt-name">TRT</span>
+                        </div>
+                        <!-- SEEU já é uma marca clara: sem a classe "clarear", que inverteria e a apagaria -->
+                        <div class="belt-item">
+                            <div class="belt-logo seeu"><img src="assets/img/A_SEEU.png" alt="SEEU — Sistema Eletrônico de Execução Unificado" loading="lazy"></div>
+                            <span class="belt-name">SEEU</span>
+                        </div>
+
+                        <!-- cópia idêntica: fecha o loop sem emenda -->
+                        <div class="belt-item" aria-hidden="true">
+                            <div class="belt-logo clarear pje"><img src="assets/img/A_PJE.png" alt="" loading="lazy"></div>
+                            <span class="belt-name">PJe</span>
+                        </div>
+                        <div class="belt-item" aria-hidden="true">
+                            <div class="belt-logo clarear esaj"><img src="assets/img/A_ESAJ.png" alt="" loading="lazy"></div>
+                            <span class="belt-name">e-SAJ</span>
+                        </div>
+                        <div class="belt-item" aria-hidden="true">
+                            <div class="belt-logo clarear eproc"><img src="assets/img/A_EPROC.png" alt="" loading="lazy"></div>
+                            <span class="belt-name">eproc</span>
+                        </div>
+                        <div class="belt-item" aria-hidden="true">
+                            <div class="belt-logo clarear stj"><img src="assets/img/A_STJ.png" alt="" loading="lazy"></div>
+                            <span class="belt-name">STJ</span>
+                        </div>
+                        <div class="belt-item" aria-hidden="true">
+                            <div class="belt-logo clarear vertical stf"><img src="assets/img/A_STF.png" alt="" loading="lazy"></div>
+                            <span class="belt-name">STF</span>
+                        </div>
+                        <div class="belt-item" aria-hidden="true">
+                            <div class="belt-logo clarear vertical tjgo"><img src="assets/img/A_TJGO.png" alt="" loading="lazy"></div>
+                            <span class="belt-name">TJGO</span>
+                        </div>
+                        <div class="belt-item" aria-hidden="true">
+                            <div class="belt-logo clarear vertical trf"><img src="assets/img/A_TRF.png" alt="" loading="lazy"></div>
+                            <span class="belt-name">TRF</span>
+                        </div>
+                        <div class="belt-item" aria-hidden="true">
+                            <div class="belt-logo clarear trt"><img src="assets/img/A_TRT.png" alt="" loading="lazy"></div>
+                            <span class="belt-name">TRT</span>
+                        </div>
+                        <div class="belt-item" aria-hidden="true">
+                            <div class="belt-logo seeu"><img src="assets/img/A_SEEU.png" alt="" loading="lazy"></div>
+                            <span class="belt-name">SEEU</span>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <div class="courts-note">
-                <i class="fas fa-shield-halved"></i>
-                <span>Marcas e sistemas citados pertencem aos respectivos tribunais. A AdvogaCert presta apenas suporte técnico.</span>
-            </div>
-
-            <p class="hero-desc">
-                Instalamos certificados digitais em computadores com Windows e em MacBook,
-                com suporte especializado do início ao fim. Escolha no final do site o card de <span class="hero-desc-free">suporte grátis</span> ou de <span class="hero-desc-paid">suporte premium</span>.
-            </p>
         </section>
     </div>
 
+    <!-- Mac e Windows empilhados à esquerda, o anúncio do curso ao lado -->
     <section class="platform-section" id="plataformas">
+        <p class="hero-desc">
+            <strong class="hero-desc-chamada">Não consegue acessar os tribunais? Protocolar petição?<br>Chama o suporte!</strong>
+            Verificamos o funcionamento do certificado digital em computadores Windows e Mac,
+            com acesso a todos os sistemas do Brasil.
+            Escolha no final do site o card de <span class="hero-desc-free">suporte grátis</span> ou de <span class="hero-desc-paid">suporte premium</span>.
+        </p>
+        <div class="platform-duo">
         <div class="platform-grid">
             <a class="platform-card mac">
                 <div class="recommended-tag"><i class="fas fa-check"></i> Recomendado</div>
@@ -1495,66 +3531,9 @@
                 </div>
             </a>
         </div>
-    </section>
 
-    <!-- Anúncio do curso: depois dos cards de Mac e Windows -->
-    <section class="curso-anuncio-secao" id="curso">
-        <a href="curso.html" class="curso-anuncio">
-            <div class="curso-anuncio-icone">
-                <img src="assets/img/pje-claro.png" alt="PJe — Processo Judicial Eletrônico" loading="lazy">
-                <span class="curso-anuncio-mais">+</span>
-                <img class="claude" src="assets/img/claude-claro.png" alt="Claude" loading="lazy">
-            </div>
-            <div class="curso-anuncio-texto">
-                <span class="curso-anuncio-tag">
-                    <i class="fa-solid fa-graduation-cap"></i> Novo · Curso ao vivo
-                </span>
-                <strong>PJe sem travar e IA Claude trabalhando no seu escritório</strong>
-                <p>
-                    Do certificado que o navegador não reconhece ao protocolo, e a inteligência
-                    artificial lendo processo e redigindo com você. Turmas pequenas, com perguntas.
-                </p>
-            </div>
-            <span class="curso-anuncio-btn">Ver o curso <i class="fa-solid fa-arrow-right"></i></span>
-        </a>
-    </section>
-
-    <section class="belt-section" id="como-funciona">
-        <div class="section-head">
-            <h2>Seu <span>certificado digital</span> e seu <span>tribunal</span>, nós atendemos</h2>
-        </div>
-
-        <!-- Esteira 1 (mídias de certificado) desativada a pedido — reativar é só
-             tirar este comentário. As imagens seguem em assets/img/.
-        <!- - Esteira 1: mídias de certificado (esquerda) - ->
-        <div class="belt">
-            <div class="belt-track">
-                <div class="belt-token"><img src="assets/img/A_GD.png" alt="Certificado digital de assinatura em mídia G&amp;D StarSign" loading="lazy"></div>
-                <div class="belt-token"><img src="assets/img/A_CARTAO.png" alt="Certificado digital de assinatura em cartão com chip" loading="lazy"></div>
-                <div class="belt-token reduzida"><img src="assets/img/A_TOKENSAFE.png" alt="Certificado digital de assinatura em mídia SafeNet 5100" loading="lazy"></div>
-                <div class="belt-token"><img src="assets/img/A_BIRDID.webp" alt="Bird ID — certificado digital em nuvem" loading="lazy"></div>
-                <div class="belt-token mini"><img src="assets/img/A_PFX_SEM_A1.png" alt="Certificado digital A1 em arquivo .pfx" loading="lazy"></div>
-                <div class="belt-token"><img src="assets/img/A_GD.png" alt="Certificado digital de assinatura em mídia G&amp;D StarSign" loading="lazy"></div>
-                <div class="belt-token"><img src="assets/img/A_CARTAO.png" alt="Certificado digital de assinatura em cartão com chip" loading="lazy"></div>
-                <div class="belt-token reduzida"><img src="assets/img/A_TOKENSAFE.png" alt="Certificado digital de assinatura em mídia SafeNet 5100" loading="lazy"></div>
-                <div class="belt-token"><img src="assets/img/A_BIRDID.webp" alt="Bird ID — certificado digital em nuvem" loading="lazy"></div>
-                <div class="belt-token mini"><img src="assets/img/A_PFX_SEM_A1.png" alt="Certificado digital A1 em arquivo .pfx" loading="lazy"></div>
-
-                <!- - cópia idêntica: fecha o loop sem emenda - ->
-                <div class="belt-token" aria-hidden="true"><img src="assets/img/A_GD.png" alt="" loading="lazy"></div>
-                <div class="belt-token" aria-hidden="true"><img src="assets/img/A_CARTAO.png" alt="" loading="lazy"></div>
-                <div class="belt-token reduzida" aria-hidden="true"><img src="assets/img/A_TOKENSAFE.png" alt="" loading="lazy"></div>
-                <div class="belt-token" aria-hidden="true"><img src="assets/img/A_BIRDID.webp" alt="" loading="lazy"></div>
-                <div class="belt-token mini" aria-hidden="true"><img src="assets/img/A_PFX_SEM_A1.png" alt="" loading="lazy"></div>
-                <div class="belt-token" aria-hidden="true"><img src="assets/img/A_GD.png" alt="" loading="lazy"></div>
-                <div class="belt-token" aria-hidden="true"><img src="assets/img/A_CARTAO.png" alt="" loading="lazy"></div>
-                <div class="belt-token reduzida" aria-hidden="true"><img src="assets/img/A_TOKENSAFE.png" alt="" loading="lazy"></div>
-                <div class="belt-token" aria-hidden="true"><img src="assets/img/A_BIRDID.webp" alt="" loading="lazy"></div>
-                <div class="belt-token mini" aria-hidden="true"><img src="assets/img/A_PFX_SEM_A1.png" alt="" loading="lazy"></div>
-            </div>
-        </div>
-        -->
-
+        <!-- suporte remoto no lugar do curso: a tela do AnyDesk à esquerda,
+             explicação e download à direita -->
         <div class="remote-section">
             <div class="remote-visual">
                 <div class="remote-window">
@@ -1563,9 +3542,140 @@
                         <div class="remote-dot"></div>
                         <div class="remote-dot"></div>
                     </div>
-                    <div class="remote-body">
-                        <img src="img/Tela%20Any%20Desk.PNG"
-                             alt="Tela do AnyDesk com o ID desta máquina em destaque" loading="lazy">
+                    <!-- "Vídeo" do atendimento, feito só com HTML e CSS, em loop
+                         de 30s. Camadas empilhadas na mesma tela: a janela do
+                         AnyDesk fica sempre no fundo e a conversa do WhatsApp,
+                         o pedido de conexão e a sessão aparecem por cima.
+                         Todas as animações usam a mesma duração (--rv-dur),
+                         por isso andam sincronizadas. -->
+                    <div class="remote-body rv" role="img"
+                         aria-label="Como funciona: o cliente chama no WhatsApp pedindo acesso ao TJCE; o suporte pergunta o número do AnyDesk; o cliente copia o número na tela do AnyDesk e envia; quando o pedido de conexão aparece, clica em Aceitar; o técnico resolve e o cliente acompanha tudo.">
+                        <div class="rv-tela">
+
+                            <!-- fundo: réplica da janela do AnyDesk 9 -->
+                            <div class="rv-ad">
+                                <div class="rv-ad-titulo">
+                                    <span class="rv-ad-logo"><i></i><i></i></span>
+                                    <b>AnyDesk</b>
+                                    <span class="rv-ad-aba"><i class="fa-solid fa-display"></i> Nova sessão</span>
+                                    <i class="fa-regular fa-window-maximize rv-ad-nova"></i>
+                                    <span class="rv-ad-janela"><i class="fa-solid fa-minus"></i><i class="fa-regular fa-window-restore"></i><i class="fa-solid fa-xmark"></i></span>
+                                </div>
+                                <div class="rv-ad-endereco">
+                                    <i class="fa-solid fa-circle-check rv-ad-ok"></i>
+                                    <span class="rv-ad-campo">Digite o endereço remoto <span><i class="fa-regular fa-file-lines"></i><i class="fa-solid fa-arrow-right"></i></span></span>
+                                    <i class="fa-solid fa-bars"></i>
+                                </div>
+                                <div class="rv-ad-faixa">Free license (non-professional use). Start&nbsp;<u>professional trial</u>&nbsp;or&nbsp;<u>purchase license</u>&nbsp;to unlock more features.</div>
+                                <div class="rv-ad-id">
+                                    Este dispositivo
+                                    <span class="rv-ad-num">1 871 933 131
+                                        <i class="fa-solid fa-i-cursor rv-ad-ibeam"></i>
+                                        <span class="rv-ad-copiado"><i class="fa-regular fa-copy"></i> Copiado</span>
+                                    </span>
+                                    <i class="fa-solid fa-circle-info"></i>
+                                    <i class="fa-solid fa-lock"></i>
+                                    <span class="rv-ad-convidar"><i class="fa-solid fa-share"></i> Convidar</span>
+                                </div>
+                                <div class="rv-ad-abas">
+                                    <b>Notícias</b><span>Favoritos</span><span>Sessões Recentes</span><span>Encontrados</span><span>Convites</span>
+                                    <span class="rv-ad-vistas"><i class="fa-solid fa-grip"></i><i class="fa-solid fa-grip-vertical"></i><i class="fa-solid fa-list"></i></span>
+                                </div>
+                                <div class="rv-ad-noticias"><i class="fa-regular fa-newspaper"></i> Notícias</div>
+                                <div class="rv-ad-cards">
+                                    <div class="rv-ad-card rv-ad-card1">Discover<strong>AnyDesk</strong><em>9</em><span class="rv-ad-saiba">Saiba Mais</span></div>
+                                    <div class="rv-ad-card rv-ad-card2">Instalar AnyDesk<span><u>Instalar AnyDesk neste dispositivo...</u></span></div>
+                                    <div class="rv-ad-card rv-ad-card3">Detectar<span>Encontre outros clients AnyDesk na sua rede local automaticamente.</span></div>
+                                    <div class="rv-ad-card rv-ad-card4">Gravar tela<span class="rv-ad-gravar">Não foram encontradas gravações de tela</span></div>
+                                    <div class="rv-ad-card rv-ad-card5">Ajude-nos a melhorar<span>Com sua permissão, gostaríamos de coletar dados de cliente.</span></div>
+                                </div>
+                            </div>
+
+                            <!-- camada: conversa no WhatsApp (abre o vídeo e volta
+                                 depois para o envio do número) -->
+                            <div class="rv-camada rv-zap-camada">
+                                <div class="rv-zap">
+                                    <div class="rv-zap-topo">
+                                        <i class="fa-solid fa-arrow-left"></i>
+                                        <span class="rv-avatar">A</span>
+                                        <span class="rv-zap-nome"><strong>Suporte AdvogaCert</strong><small>online</small></span>
+                                        <span class="rv-zap-acoes"><i class="fa-solid fa-video"></i><i class="fa-solid fa-phone"></i></span>
+                                    </div>
+                                    <div class="rv-zap-corpo">
+                                        <div class="rv-msg rv-msg-eu rv-m1"><span class="rv-bolha">Oi, gostaria de acessar o TJCE.<small>10:41 <i class="fa-solid fa-check-double"></i></small></span></div>
+                                        <div class="rv-msg rv-msg-ele rv-t1"><span class="rv-digitando"><span></span><span></span><span></span></span></div>
+                                        <div class="rv-msg rv-msg-ele rv-m2"><span class="rv-bolha">Olá, somos do suporte AdvogaCert. O(a) senhor(a) tem o número do AnyDesk?<small>10:41</small></span></div>
+                                        <div class="rv-msg rv-msg-eu rv-m3"><span class="rv-bolha">Sim, vou enviar.<small>10:42 <i class="fa-solid fa-check-double"></i></small></span></div>
+                                        <div class="rv-msg rv-msg-eu rv-m4"><span class="rv-bolha rv-bolha-num">1 871 933 131<small>10:42 <i class="fa-solid fa-check-double"></i></small></span></div>
+                                        <div class="rv-msg rv-msg-ele rv-t2"><span class="rv-digitando"><span></span><span></span><span></span></span></div>
+                                        <div class="rv-msg rv-msg-ele rv-m5"><span class="rv-bolha">Recebido! Vou conectar. Quando aparecer o pedido, clique em <b>Aceitar</b>.<small>10:42</small></span></div>
+                                    </div>
+                                    <div class="rv-zap-rodape">
+                                        <span>Mensagem</span>
+                                        <i class="fa-solid fa-microphone"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- camada: pedido de conexão — réplica da janela real
+                                 do AnyDesk que abre no computador do cliente -->
+                            <div class="rv-camada rv-pedido-camada">
+                                <div class="rv-ac">
+                                    <div class="rv-ac-titulo">
+                                        <span class="rv-ac-logo"><i></i><i></i></span>
+                                        <span class="rv-ac-aba"><i class="rv-ac-aba-icone"></i> Suporte AdvogaCert</span>
+                                        <span class="rv-ac-janela"><i class="fa-solid fa-minus"></i><i class="fa-regular fa-square"></i><i class="fa-solid fa-xmark"></i></span>
+                                    </div>
+
+                                    <div class="rv-ac-esq">
+                                        <span class="rv-ac-avatar"><i></i><b></b></span>
+                                        <span class="rv-ac-quem"><strong>Suporte AdvogaCert</strong>742 118 903</span>
+                                        <span class="rv-ac-texto">gostaria de ver a sua área de trabalho.</span>
+                                        <span class="rv-ac-status"><i class="fa-solid fa-lock"></i><i class="fa-solid fa-display"></i></span>
+                                        <span class="rv-ac-perfil">Perfil</span>
+                                        <span class="rv-ac-select">Padrão <i class="fa-solid fa-chevron-down"></i></span>
+                                        <span class="rv-ac-perm rv-ac-p1"><i class="fa-solid fa-keyboard"></i></span>
+                                        <span class="rv-ac-perm rv-ac-p2"><i class="fa-solid fa-right-to-bracket"></i></span>
+                                        <span class="rv-ac-perm rv-ac-p3"><i class="fa-solid fa-clipboard"></i></span>
+                                        <span class="rv-ac-perm rv-ac-p4"><i class="fa-solid fa-volume-high"></i></span>
+                                        <span class="rv-ac-perm rv-ac-p5"><i class="fa-solid fa-video"></i></span>
+                                        <span class="rv-ac-perm rv-ac-p6"><i class="fa-solid fa-pen"></i></span>
+                                        <span class="rv-ac-perm rv-ac-p7"><i class="fa-solid fa-display"></i></span>
+                                        <span class="rv-ac-mais">Mais</span>
+                                        <span class="rv-ac-btn rv-ac-aceitar-perfil"><i class="fa-solid fa-shield-halved"></i> Aceitar</span>
+                                        <span class="rv-ac-btn rv-ac-aceitar rv-aceitar">
+                                            Aceitar
+                                            <i class="fa-solid fa-arrow-pointer rv-cursor"></i>
+                                        </span>
+                                        <span class="rv-ac-btn rv-ac-recusar">Recusar</span>
+                                    </div>
+
+                                    <div class="rv-ac-dir">
+                                        <span class="rv-ac-tab rv-ac-tab-chat">Chat</span>
+                                        <span class="rv-ac-tab rv-ac-tab-arq">Transferência de Arquivos</span>
+                                        <span class="rv-ac-log">Abrir registro do chat</span>
+                                        <span class="rv-ac-linha1"></span>
+                                        <span class="rv-ac-nome">Suporte AdvogaCert</span>
+                                        <span class="rv-ac-hora">11:18</span>
+                                        <span class="rv-ac-evento"><i class="fa-solid fa-display"></i> Solicitação de sessão recebida</span>
+                                        <span class="rv-ac-linha2"></span>
+                                        <span class="rv-ac-msg">Mensagem</span>
+                                        <i class="fa-solid fa-paper-plane rv-ac-enviar"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="rv-legenda">
+                            <div class="rv-progresso"><span><i></i></span><span><i></i></span><span><i></i></span><span><i></i></span></div>
+                            <div class="rv-passos">
+                                <p class="rv-passo rv-p1"><b>1</b> Chame a gente no WhatsApp</p>
+                                <p class="rv-passo rv-p2"><b>2</b> Abra o AnyDesk e copie o seu número</p>
+                                <p class="rv-passo rv-p3"><b>3</b> Mande o número na conversa</p>
+                                <p class="rv-passo rv-p4"><b>4</b> Quando o pedido aparecer, clique em Aceitar</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1584,122 +3694,160 @@
                 </div>
             </div>
         </div>
-
-        <!-- Mídias de certificado em pé, cada uma virando o download da sua leitora -->
-        <p class="cert-shelf-title">Token, cartão, nuvem ou arquivo A1</p>
-        <p class="cert-shelf-sub">Baixe o driver da sua mídia. Se não souber qual é a sua, chame a gente.</p>
-        <div class="cert-shelf">
-            <a href="#" class="cert-item">
-                <img src="assets/img/A_GD.png" alt="Certificado digital em mídia G&amp;D StarSign" loading="lazy">
-                <span class="cert-nome">G&amp;D StarSign</span>
-                <span class="cert-acao"><i class="fas fa-download"></i> Driver</span>
-            </a>
-            <a href="#" class="cert-item menor">
-                <img src="assets/img/A_TOKENSAFE.png" alt="Certificado digital em mídia SafeNet 5100" loading="lazy">
-                <span class="cert-nome">SafeNet 5100</span>
-                <span class="cert-acao"><i class="fas fa-download"></i> Driver</span>
-            </a>
-            <a href="#" class="cert-item">
-                <img src="assets/img/A_CARTAO.png" alt="Certificado digital em cartão com chip" loading="lazy">
-                <span class="cert-nome">Cartão com chip</span>
-                <span class="cert-acao"><i class="fas fa-download"></i> Driver da leitora</span>
-            </a>
-            <a href="#" class="cert-item maior">
-                <img src="assets/img/A_BIRDID.webp" alt="Bird ID — certificado digital em nuvem" loading="lazy">
-                <span class="cert-nome">Bird ID (nuvem)</span>
-                <span class="cert-acao"><i class="fas fa-mobile-screen"></i> Aplicativo</span>
-            </a>
-            <a href="#" class="cert-item menor">
-                <img src="assets/img/A_PFX_SEM_A1.png" alt="Certificado digital A1 em arquivo .pfx" loading="lazy">
-                <span class="cert-nome">A1 em arquivo</span>
-                <span class="cert-acao"><i class="fas fa-circle-info"></i> Como emitir</span>
-            </a>
-        </div>
-        <p class="cert-nota">
-            Links de download por enquanto vazios — assim que definirem a marca da leitora/token homologada,
-            é só passar os arquivos ou as URLs oficiais que eu conecto aqui.
-        </p>
-    </section>
-
-    <section class="founder-section" id="sobre">
-        <div class="founder-card">
-            <div class="founder-photo-col">
-                <div class="founder-photo-wrap">
-                    <div class="founder-photo"></div>
-                    <div class="founder-social">
-                        <a href="#" class="social-linkedin" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#" class="social-whatsapp" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-                        <a href="#" class="social-instagram" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="social-github" aria-label="GitHub"><i class="fab fa-github"></i></a>
-                    </div>
-                </div>
-            </div>
-            <div class="founder-info">
-                <div class="founder-tag"><i class="fas fa-user-shield"></i> Quem está por trás</div>
-                <h2>Desenvolvido por quem vive a <span>rotina jurídica</span> de perto</h2>
-                <p class="founder-bio">
-                    A AdvogaCert foi criada por Jonas, técnico em TI com atuação direta junto à OAB-DF e à
-                    OAB-CE, prestando suporte técnico a advogados e escritórios no dia a dia da profissão.
-                    Essa proximidade com a categoria é o que permite identificar rapidamente os golpes que
-                    mais afetam advogados — como a clonagem de identidade profissional via certificado
-                    digital — e construir soluções pensadas para reduzir esse risco na prática.
-                </p>
-                <div class="founder-badges">
-                    <span><i class="fas fa-scale-balanced"></i> Atuação OAB/DF e OAB/CE</span>
-                    <span><i class="fas fa-laptop-code"></i> Técnico especializado</span>
-                    <span><i class="fas fa-headset"></i> Suporte até às 24h</span>
-                </div>
-            </div>
         </div>
     </section>
 
+    <!-- ======================================================================
+         QUEM ESTÁ POR TRÁS — seção trazida de Advoga_scroll/novo-site2
+         (o bloco "missão"), no lugar do cartão antigo.
+         Desenho: assets/css/bloco-02-missao.css | Script: assets/js/bloco-02-missao.js
+         Movimento: efeito-revelar (o conteúdo entra ao rolar). O botão
+         "Ver como funciona" foi tirado; o efeito de letras rolando dele
+         agora vive nos botões dos cards de venda.
+
+         São duas fotos lado a lado: a da advogada com o certificado e a do
+         Jonas, as duas tombadas para o mesmo lado, no mesmo ângulo e na
+         mesma altura. O vídeo de partículas que ficava aqui foi retirado.
+         As redes sociais são as mesmas da foto antiga.
+         ====================================================================== -->
+    <section id="sobre" class="section missao" data-scroll="load">
+        <div class="missao-grade">
+
+            <div class="missao-visual" scroll-item="show">
+
+                <div class="missao-foto-caixa _reta">
+                    <img src="assets/img/advogada-certificado.png"
+                         alt="Advogada usando o certificado digital no notebook"
+                         class="missao-foto" loading="lazy">
+                </div>
+
+                <div class="missao-foto-caixa">
+                    <img src="assets/img/foto-missao.jpg"
+                         alt="Jonas, fundador da AdvogaCert"
+                         class="missao-foto" loading="lazy">
+                </div>
+
+            </div>
+
+            <div class="missao-conteudo">
+
+                <!-- a pílula "Quem está por trás" saiu daqui. O desenho
+                     dela continua no CSS (.secao-etiqueta): para trazê-la
+                     de volta, é só repor a div antes do h2. -->
+
+                <div scroll-item="show">
+                    <h2 class="missao-titulo">
+                        Desenvolvido por quem vive a<br>
+                        <span>rotina jurídica</span> de perto
+                    </h2>
+
+                    <p class="missao-texto" style="margin-top: var(--gap-xxs);">
+                        A AdvogaCert foi criada por Jonas, técnico em TI com atuação direta junto à OAB-DF
+                        e à OAB-CE, prestando suporte técnico a advogados e escritórios no dia a dia da
+                        profissão. Essa proximidade com a categoria é o que permite identificar rapidamente
+                        os golpes que mais afetam advogados — como a clonagem de identidade profissional via
+                        certificado digital — e construir soluções pensadas para reduzir esse risco na prática.
+                    </p>
+                </div>
+
+                <!-- as redes sociais vinham penduradas na foto; agora ficam
+                     embaixo do texto -->
+                <div class="missao-redes" scroll-item="show">
+                    <a href="https://www.linkedin.com/in/jonas-costa-2a7256393/" target="_blank" rel="noopener" class="social-linkedin" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="https://wa.me/5561986241570" target="_blank" rel="noopener" class="social-whatsapp" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                    <a href="https://www.instagram.com/jonasadvogare" target="_blank" rel="noopener" class="social-instagram" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="https://github.com/Jonascreate/advogacert" target="_blank" rel="noopener" class="social-github" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ======================================================================
+         PLANOS — o conteúdo dos cards antigos dentro dos cartões de
+         movimento trazidos de Advoga_scroll/novo-site.
+         Estilos: assets/css/bloco-02-cards.css | Script: assets/js/bloco-02-cards.js
+
+         São TRÊS cartões porque o Premium tinha duas ofertas dentro do mesmo
+         card: agora cada forma de pagar tem o seu cartão.
+
+         ► .venda-item é a VAGA do cartão (é ela que cresce no hover) e
+           .venda-card é o cartão. Mexer no tamanho do próprio cartão faria
+           os vizinhos tremerem.
+         ► No preço, o algarismo fica em <span data-rolo>: é o script que o
+           transforma nas colunas que rolam. Para trocar o valor, troque só
+           o texto. O R$ e o /mês ficam parados.
+         ► Os ganchos do script.js continuam iguais: o id btn-suporte-free e
+           os pares data-plano/data-valor dos botões de pagamento.
+         ====================================================================== -->
     <section class="plans-section" id="planos">
-        <div class="section-title">
+        <div class="section-title entra entra-1">
             <h2>Ao assinar, você garante <span>suporte contínuo</span></h2>
             <p>Teste sem compromisso ou já entre no plano com melhor custo-benefício.</p>
         </div>
-        <div class="plans-grid">
-            <div class="plan-card free">
-                <div class="plan-tag"><i class="fas fa-flask"></i> Teste sem compromisso</div>
-                <h3>1 chamado grátis</h3>
-                <div class="plan-price">R$0</div>
-                <p class="plan-desc">Entre em contato com a equipe e peça agora o seu suporte free: é a chance de testar nosso atendimento antes de decidir pelo plano pago. Atendemos em até 2 horas.</p>
-                <ul>
-                    <li><i class="fas fa-check"></i> 1 chamado de teste</li>
-                    <li><i class="fas fa-check"></i> Atendimento em até 2 horas</li>
-                    <li><i class="fas fa-check"></i> Sem cartão, sem fidelidade</li>
-                    <li><i class="fas fa-check"></i> Suporte para Mac ou Windows</li>
-                </ul>
-                <button type="button" class="plan-btn" id="btn-suporte-free">1 suporte grátis. Usar?</button>
-            </div>
 
-            <!-- Um cartão só, dividido em duas ofertas independentes: avulso
-                 por atendimento e mensal. Cada metade tem o seu botão, e os
-                 benefícios comuns ficam em cima, sem repetir. -->
-            <div class="plan-card paid">
-                <div class="plan-tag"><i class="fas fa-star"></i> Melhor custo-benefício</div>
-                <h3>Premium</h3>
-                <p class="plan-desc">Prioridade no atendimento e checagem de segurança contra fraude de identidade. Escolha pagar só quando precisar ou ter suporte o mês inteiro.</p>
-                <ul>
-                    <li><i class="fas fa-check"></i> Atendimento prioritário em no máximo 30 minutos de espera</li>
-                    <li><i class="fas fa-check"></i> Checklist antifraude incluso</li>
-                    <li><i class="fas fa-check"></i> Suporte para Mac ou Windows</li>
-                </ul>
+        <div class="vendas-flex entra entra-2">
 
-                <div class="plan-split">
-                    <div class="plan-opcao">
-                        <div class="plan-price">R$59 <small>/dia</small></div>
-                        <p class="plan-opcao-nota">Sem mensalidade. Você paga quando precisar.</p>
-                        <button type="button" class="plan-btn" id="btn-assinar-plano" data-plano="Premium" data-valor="59.00">Atendimento</button>
+            <div class="venda-item">
+                <div class="venda-card free">
+                    <div class="venda-topo">
+                        <span class="venda-tag"><i class="fas fa-flask"></i> Teste sem compromisso</span>
+                        <h3>1 chamado grátis</h3>
+                        <div class="venda-preco">R$<span class="numero-rolo" data-rolo>0</span></div>
+                        <p class="venda-nota">Entre em contato com a equipe e peça agora o seu suporte free: é a chance de testar nosso atendimento antes de decidir pelo plano pago. Atendemos em até 2 horas.</p>
                     </div>
-
-                    <div class="plan-opcao destaque">
-                        <div class="plan-price">R$199 <small>/mês</small></div>
-                        <p class="plan-opcao-nota">Chamados ilimitados, sem fidelidade.</p>
-                        <button type="button" class="plan-btn" id="btn-assinar-plus" data-plano="Premium Plus" data-valor="199.00">Assinar agora</button>
+                    <div class="venda-pe">
+                        <ul>
+                            <li><i class="fas fa-check"></i> 1 chamado de teste</li>
+                            <li><i class="fas fa-check"></i> Atendimento em até 2 horas</li>
+                            <li><i class="fas fa-check"></i> Sem cartão, sem fidelidade</li>
+                            <li><i class="fas fa-check"></i> Suporte para Mac ou Windows</li>
+                        </ul>
+                        <button type="button" class="venda-btn" id="btn-suporte-free" data-texto-rolando><span class="texto-rolando"><span class="texto-rolando-linha">1 suporte grátis. Usar?</span><span class="texto-rolando-linha" aria-hidden="true">1 suporte grátis. Usar?</span></span></button>
                     </div>
                 </div>
             </div>
+
+            <div class="venda-item">
+                <div class="venda-card premium">
+                    <div class="venda-topo">
+                        <span class="venda-tag"><i class="fas fa-bolt"></i> Premium avulso</span>
+                        <h3>Só quando precisar</h3>
+                        <div class="venda-preco">R$<span class="numero-rolo" data-rolo>59</span> <small>/dia</small></div>
+                        <p class="venda-nota">Sem mensalidade. Você paga quando precisar, com a mesma prioridade no atendimento.</p>
+                    </div>
+                    <div class="venda-pe">
+                        <ul>
+                            <li><i class="fas fa-check"></i> Atendimento prioritário em no máximo 30 minutos de espera</li>
+                            <li><i class="fas fa-check"></i> Checklist antifraude incluso</li>
+                            <li><i class="fas fa-check"></i> Suporte para Mac ou Windows</li>
+                        </ul>
+                        <button type="button" class="venda-btn" id="btn-assinar-plano" data-plano="Premium" data-valor="59.00" data-texto-rolando><span class="texto-rolando"><span class="texto-rolando-linha">Atendimento</span><span class="texto-rolando-linha" aria-hidden="true">Atendimento</span></span></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="venda-item">
+                <div class="venda-card premium destaque">
+                    <div class="venda-topo">
+                        <span class="venda-tag"><i class="fas fa-star"></i> Melhor custo-benefício</span>
+                        <h3>Premium mensal</h3>
+                        <div class="venda-preco">R$<span class="numero-rolo" data-rolo>199</span> <small>/mês</small></div>
+                        <p class="venda-nota">Chamados ilimitados, sem fidelidade, com checagem de segurança contra fraude de identidade.</p>
+                    </div>
+                    <div class="venda-pe">
+                        <ul>
+                            <li><i class="fas fa-check"></i> Chamados ilimitados no mês</li>
+                            <li><i class="fas fa-check"></i> Atendimento prioritário em no máximo 30 minutos de espera</li>
+                            <li><i class="fas fa-check"></i> Checklist antifraude incluso</li>
+                            <li><i class="fas fa-check"></i> Suporte para Mac ou Windows</li>
+                        </ul>
+                        <button type="button" class="venda-btn" id="btn-assinar-plus" data-plano="Premium Plus" data-valor="199.00" data-texto-rolando><span class="texto-rolando"><span class="texto-rolando-linha">Assinar agora</span><span class="texto-rolando-linha" aria-hidden="true">Assinar agora</span></span></button>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </section>
 
@@ -1720,6 +3868,36 @@
     <script src="assets/js/api.js?v=9"></script>
     <script src="assets/js/telemetria.js?v=2"></script>
     <script src="assets/js/script.js?v=20"></script>
+    <script src="assets/js/bloco-00-header.js?v=1"></script>
+    <script src="assets/js/bloco-00-nav-menus.js?v=1"></script>
+    <!-- o bloco-03-cena-certificados.js saiu daqui junto com a coreografia
+         de rolagem: as mídias agora são uma fila parada, e o arquivo é a
+         única cópia do efeito antigo caso ele volte -->
+    <script src="assets/js/bloco-02-cards.js?v=3"></script>
+    <script src="assets/js/efeito-revelar.js?v=1"></script>
+    <script src="assets/js/efeito-texto-rolando.js?v=1"></script>
+    <script>
+    // Seletor dia/noite do menu. O tema salvo já foi aplicado no <head>;
+    // aqui só se acerta o estado do botão e se troca ao clicar.
+    (function () {
+        const botao = document.querySelector('.tema-toggle');
+        if (!botao) return;
+        const raiz = document.documentElement;
+
+        function marcar(escuro) {
+            botao.setAttribute('aria-checked', escuro ? 'true' : 'false');
+        }
+        marcar(raiz.getAttribute('data-tema') === 'escuro');
+
+        botao.addEventListener('click', function () {
+            const escuro = raiz.getAttribute('data-tema') !== 'escuro';
+            if (escuro) raiz.setAttribute('data-tema', 'escuro');
+            else raiz.removeAttribute('data-tema');
+            marcar(escuro);
+            try { localStorage.setItem('tema', escuro ? 'escuro' : 'claro'); } catch (e) {}
+        });
+    })();
+    </script>
     <script>
     /* ─── HOLOFOTE NO CURSOR (bloco aditivo — remover não altera nada) ───
        Só escreve duas variáveis CSS com a posição do ponteiro dentro do card;
@@ -1759,6 +3937,38 @@
         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
         const texto = alvo.textContent.trim();
+
+        // RESERVA DE ALTURA, medida do texto real.
+        // O CSS reservava 1.3em, uma linha. Isso bastava enquanto a frase
+        // era curta; com 42 caracteres ela quebra em duas linhas nas telas
+        // estreitas e na faixa em que a coluna do texto divide espaço com a
+        // esteira dos tribunais. Como a datilografia RECOMEÇA A CADA 10s, a
+        // página desceria um degrau a cada volta, para sempre.
+        // Aqui a frase inteira é escrita uma vez, a altura que ela ocupou
+        // vira o piso, e o texto volta ao que estava. Medindo em vez de
+        // chutar, vale para qualquer largura de tela e qualquer fonte.
+        function reservarAltura() {
+            const antes = alvo.textContent;
+            alvo.style.minHeight = '';
+            alvo.textContent = texto;
+            alvo.style.minHeight = alvo.offsetHeight + 'px';
+            alvo.textContent = antes;
+        }
+
+        reservarAltura();
+        // a Outfit vem do Google Fonts e chega depois: medida com a fonte de
+        // reserva, a frase pode caber numa linha e passar a ocupar duas
+        // quando a Outfit entra. Por isso mede de novo quando ela carrega.
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(reservarAltura);
+        }
+        // girar o celular ou redimensionar a janela muda o número de linhas;
+        // o timer evita remedir a cada pixel do arrasto
+        let remedir;
+        window.addEventListener('resize', function () {
+            clearTimeout(remedir);
+            remedir = setTimeout(reservarAltura, 200);
+        });
 
         function digitar() {
             alvo.textContent = '';

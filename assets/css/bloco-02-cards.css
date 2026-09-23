@@ -1,0 +1,413 @@
+/* ==========================================================================
+   BLOCO 02  —  EFEITOS NOS CARDS DE VENDA DE SUPORTE
+   --------------------------------------------------------------------------
+   Vem de Advoga_scroll/novo-site (bloco-02-numeros.css). De lá vieram só os
+   EFEITOS; as cores continuam sendo as do site, aqui não se pinta nada.
+
+     1. o cartão CRESCE quando o mouse entra nele, e o vizinho se espreme;
+     2. o título e os cartões SOBEM e aparecem quando a seção chega na tela;
+     3. os preços não aparecem escritos: eles ROLAM até o valor certo, como
+        o contador de quilometragem de um carro.
+
+   ► O SEGREDO DO CONTADOR: cada algarismo é uma COLUNA com dez algarismos
+     empilhados (nove zeros e o certo por último). A janela mostra um de cada
+     vez; a coluna sobe 90% da própria altura para o último aparecer. Por
+     isso a altura da janela e a do algarismo usam a MESMA variável
+     --altura-digito. Nunca separe as duas.
+
+   ► No HTML o preço está escrito normal: <span data-rolo>199</span>. É o
+     JavaScript (assets/js/bloco-02-cards.js) que monta as colunas. Para
+     trocar o valor, troque só o texto.
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1) OS TRÊS CARTÕES
+   --------------------------------------------------------------------------
+   .venda-item é a VAGA do cartão; .venda-card é o cartão. São dois
+   elementos porque quem cresce no hover é a vaga (mudando a fatia que ela
+   ocupa da linha), e o cartão só acompanha. Mexer no tamanho do próprio
+   cartão faria os vizinhos tremerem.
+
+   flex: 1 1 33% = "comece com um terço da linha, e aceite crescer". No
+   hover a fatia vira 46% e as outras duas se espremem. A transição de 0.6s
+   é o que transforma o esticão num deslizar.
+   ========================================================================== */
+.vendas-flex {
+  display: flex;
+  align-items: stretch;
+  gap: 1.25rem;
+}
+
+.venda-item {
+  flex: 1 1 33%;
+  min-width: 0;
+  transition: flex-basis 0.6s ease;
+}
+
+@media (hover: hover) {
+  .venda-item:hover {
+    flex-basis: 46%;
+  }
+}
+
+/* ALTURA TRAVADA DA FILEIRA — o mesmo remédio da tag do curso.
+   O cartão que recebe o mouse cresce para o lado, e os outros dois se
+   espremem. Espremidos, o texto deles quebra em mais linhas e a FILEIRA
+   INTEIRA ficava mais alta: a seção crescia e empurrava o rodapé para
+   baixo a cada passada de mouse.
+
+   Com a altura reservada, a sobra já existe parada, e as linhas a mais
+   cabem nela: o movimento fica só na horizontal.
+
+   De onde vem o 424px: medido no navegador, com a moldura na largura
+   cheia (1100px). Parada, a fileira tem 405px; com o mouse no segundo ou
+   no terceiro cartão, 424px. Reservar o maior dos dois zera a diferença.
+   Mexeu no texto dos cartões? Meça de novo — este número é do texto
+   de hoje.
+
+   Só acima de 992px: dali para baixo os cartões empilham, o hover não
+   existe e a fileira é bem mais alta que isto de qualquer jeito. */
+@media (min-width: 993px) and (hover: hover) {
+  .vendas-flex {
+    min-height: 424px;
+  }
+}
+
+/* A lista vem logo abaixo do texto, sem vão: o que desce para o pé é só
+   o botão (margin-top: auto lá embaixo), e é isso que mantém os três
+   botões na mesma linha mesmo com os cartões tendo textos de tamanhos
+   diferentes. Com space-between, o cartão do meio abria um buraco entre
+   a frase e a lista. */
+.venda-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  height: 100%;
+  padding: 1.5rem 1.35rem;
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  transition: border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+/* as cores são as do site: o grátis no azul, os Premium no verde-menta,
+   e o mensal com o fundo um pouco mais forte, para puxar o olho */
+.venda-card.free {
+  border-color: rgba(31, 111, 209, 0.3);
+  background-color: rgba(31, 111, 209, 0.04);
+}
+
+.venda-card.premium {
+  border-color: rgba(18, 160, 124, 0.3);
+  background-color: rgba(18, 160, 124, 0.04);
+}
+
+.venda-card.destaque {
+  border-color: rgba(18, 160, 124, 0.5);
+  background-color: rgba(18, 160, 124, 0.09);
+}
+
+html[data-tema="escuro"] .venda-card.free {
+  border-color: rgba(79, 163, 255, 0.3);
+  background-color: rgba(79, 163, 255, 0.07);
+}
+
+html[data-tema="escuro"] .venda-card.premium {
+  border-color: rgba(110, 231, 200, 0.28);
+  background-color: rgba(110, 231, 200, 0.06);
+}
+
+html[data-tema="escuro"] .venda-card.destaque {
+  border-color: rgba(110, 231, 200, 0.5);
+  background-color: rgba(110, 231, 200, 0.11);
+}
+
+@media (hover: hover) {
+  .venda-card.free:hover { box-shadow: 0 16px 40px rgba(31, 111, 209, 0.14); }
+  .venda-card.premium:hover { box-shadow: 0 16px 40px rgba(18, 160, 124, 0.14); }
+}
+
+/* --- o topo do cartão: selo, título, preço e a frase curta --- */
+.venda-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: fit-content;
+  margin-bottom: 0.7rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 100px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.venda-card.free .venda-tag {
+  background: rgba(31, 111, 209, 0.12);
+  color: var(--accent-win);
+}
+
+.venda-card.premium .venda-tag {
+  background: rgba(18, 160, 124, 0.12);
+  color: var(--accent-mac);
+}
+
+.venda-card h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  color: var(--text-primary);
+}
+
+.venda-preco {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--text-primary);
+}
+
+.venda-card.premium .venda-preco { color: var(--accent-mac); }
+
+.venda-preco small {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.venda-nota {
+  margin-top: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+/* --- o pé do cartão: os itens e o botão --- */
+.venda-pe {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.venda-pe ul {
+  list-style: none;
+  margin-bottom: 1rem;
+}
+
+.venda-pe li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.venda-card.free li i { color: var(--accent-win); margin-top: 0.2rem; }
+.venda-card.premium li i { color: var(--accent-mac); margin-top: 0.2rem; }
+
+.venda-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: auto;   /* gruda no pé do cartão */
+  padding: 0.75rem 1.25rem;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.venda-card.free .venda-btn {
+  background: transparent;
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+/* --- O HOVER DOS BOTÕES ---------------------------------------------------
+   Cada botão acende no próprio acento do cartão, e o acento já muda com o
+   tema: no claro ele é o azul e o verde fechados (#1f6fd1 / #12a07c), que
+   se leem sobre o branco; no escuro ele é o azul claro e o verde-menta
+   (#4fa3ff / #6ee7c8), que se leem sobre o preto.
+
+   Por que os fundos estão escritos na mão em rgba, e não com o var()?
+   Porque é preciso a MESMA cor com transparência, e não dá para pôr
+   transparência numa variável que já vem em hexadecimal. Por isso cada
+   tema tem o seu par de linhas: os números são os do próprio acento.
+
+   O movimento é o mesmo dos outros botões do site: sobe 2px e ganha uma
+   sombra na cor do acento. */
+.venda-card.free .venda-btn:hover {
+  border-color: var(--accent-win);
+  background: rgba(31, 111, 209, 0.08);
+  color: var(--accent-win);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(31, 111, 209, 0.18);
+}
+
+html[data-tema="escuro"] .venda-card.free .venda-btn:hover {
+  background: rgba(79, 163, 255, 0.14);
+  box-shadow: 0 10px 22px rgba(79, 163, 255, 0.22);
+}
+
+.venda-card.premium:not(.destaque) .venda-btn {
+  background: transparent;
+  border-color: rgba(18, 160, 124, 0.45);
+  color: var(--accent-mac);
+}
+
+html[data-tema="escuro"] .venda-card.premium:not(.destaque) .venda-btn {
+  border-color: rgba(110, 231, 200, 0.45);
+}
+
+.venda-card.premium:not(.destaque) .venda-btn:hover {
+  border-color: var(--accent-mac);
+  background: rgba(18, 160, 124, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(18, 160, 124, 0.18);
+}
+
+html[data-tema="escuro"] .venda-card.premium:not(.destaque) .venda-btn:hover {
+  background: rgba(110, 231, 200, 0.14);
+  box-shadow: 0 10px 22px rgba(110, 231, 200, 0.2);
+}
+
+/* o mensal é a oferta que se quer destacar: botão cheio */
+.venda-card.destaque .venda-btn {
+  background: var(--btn-gradient, linear-gradient(135deg, var(--accent-mac-dark), var(--accent-mac)));
+  border-color: transparent;
+  color: #fff;
+}
+
+html[data-tema="escuro"] .venda-card.destaque .venda-btn { color: #062018; }
+
+/* cheio, não há fundo para acender: o que muda é o brilho e a sombra */
+.venda-card.destaque .venda-btn:hover {
+  filter: brightness(1.06);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(18, 160, 124, 0.3);
+}
+
+html[data-tema="escuro"] .venda-card.destaque .venda-btn:hover {
+  box-shadow: 0 12px 26px rgba(110, 231, 200, 0.3);
+}
+
+/* sem mouse não existe hover, e três cartões não cabem lado a lado */
+@media (max-width: 992px) {
+  .vendas-flex {
+    flex-wrap: wrap;
+  }
+
+  .venda-item {
+    flex: 1 1 calc(50% - 1.25rem);
+  }
+
+  .venda-item:hover {
+    flex-basis: calc(50% - 1.25rem);
+  }
+}
+
+@media (max-width: 680px) {
+  .vendas-flex {
+    flex-direction: column;
+  }
+
+  .venda-item,
+  .venda-item:hover {
+    flex-basis: auto;
+  }
+}
+
+
+/* ==========================================================================
+   2) A ENTRADA DO TÍTULO E DOS CARTÕES
+   --------------------------------------------------------------------------
+   O estado invisível só existe quando o JavaScript já acordou e pôs
+   .js-pronto na seção. Se o script falhar, nada some da tela: a pessoa
+   perde a animação, e só.
+   ========================================================================== */
+.plans-section.js-pronto .entra {
+  opacity: 0;
+  transform: translateY(100px);
+  transition: opacity 1s cubic-bezier(0.165, 0.84, 0.44, 1),
+              transform 1s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.plans-section.js-pronto .entra.apareceu {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.plans-section .entra-1 { transition-delay: 300ms; }
+.plans-section .entra-2 { transition-delay: 400ms; }
+.plans-section .entra-3 { transition-delay: 500ms; }
+
+
+
+/* ==========================================================================
+   3) O PREÇO QUE ROLA
+   --------------------------------------------------------------------------
+   Herda tudo do .plan-price (fonte, tamanho, cor): aqui só entra o que faz
+   o rolo funcionar.
+   ========================================================================== */
+.venda-preco .numero-rolo {
+  display: inline-block;
+  vertical-align: bottom;
+  /* a altura de UM algarismo: a janela e cada algarismo usam este valor */
+  --altura-digito: 1.05em;
+  line-height: var(--altura-digito);
+}
+
+/* a janela só deixa ver um algarismo de cada vez */
+.numero-janela {
+  height: var(--altura-digito);
+  overflow: hidden;
+}
+
+/* as colunas lado a lado */
+.numero-linha {
+  display: flex;
+}
+
+/* 2500ms e esta curva são os da referência: bem devagar no começo, rápido
+   no meio e freando no fim — parece um rolo pesado girando */
+.numero-coluna {
+  transform: translateY(0%);
+  will-change: transform;
+  transition: transform 2500ms cubic-bezier(0.785, 0.135, 0.15, 0.86);
+}
+
+/* a escadinha: as colunas de posição ímpar saem 300ms depois das pares */
+.numero-coluna.atrasada {
+  transition-delay: 300ms;
+}
+
+/* o estado final: subir 90% da própria altura = nove algarismos */
+.numero-rolo.rodou .numero-coluna {
+  transform: translateY(-90%);
+}
+
+/* centralizado para o "1", que é magro, não abrir buraco antes do
+   algarismo seguinte */
+.numero-digito {
+  height: var(--altura-digito);
+  line-height: var(--altura-digito);
+  text-align: center;
+}
+
+
+/* quem pediu menos movimento vê tudo já no lugar */
+@media (prefers-reduced-motion: reduce) {
+  .venda-item,
+  .venda-card,
+  .plans-section.js-pronto .entra,
+  .numero-coluna {
+    transition: none;
+  }
+}

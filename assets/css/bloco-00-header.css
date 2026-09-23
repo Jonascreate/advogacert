@@ -1,0 +1,496 @@
+/* ==========================================================================
+   BLOCO 00  —  HEADER (a barra de menu do topo)
+   --------------------------------------------------------------------------
+   É o bloco 00 porque ele vem ANTES de todos os outros na página.
+
+   COMO ESTE BLOCO É MONTADO (desenho em texto):
+
+   .header ......................... a seção
+     └ .navbar ..................... a barra que fica GRUDADA no topo
+        └ .container ............... a moldura que centraliza
+           └ .navbar-wrapper ....... põe as três partes em uma linha só
+              ├ .brand-logo-wrap ... ESQUERDA: o logo
+              ├ .menu-link-wrap .... MEIO: os links
+              └ .navbar-button-block DIREITA: o selo de "suporte aberto"
+                                     + o botão de menu do celular
+
+   .menu-mobile .................... o painel que abre no celular
+                                     (fica escondido no computador)
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1) A BARRA
+   --------------------------------------------------------------------------
+   position: fixed = "cole no topo da JANELA e nunca saia de lá", mesmo
+   quando a pessoa rola a página. É por isso que ela precisa de z-index
+   alto: para passar por cima de todo o resto do site.
+   ========================================================================== */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+
+  /* Começa TRANSPARENTE. Assim, no topo da página, a barra não corta o
+     hero com uma faixa: o logo e os links parecem flutuar sobre a laca. */
+  background-color: transparent;
+  border-bottom: 1px solid transparent;
+
+  transition: background-color 0.35s ease,
+              border-color 0.35s ease,
+              box-shadow 0.35s ease;
+}
+
+/* --- 1.1) A BARRA DEPOIS QUE A PESSOA ROLA -------------------------------
+   A classe .rolou é colocada e tirada pelo JavaScript (bloco-00-header.js).
+   Quando ela existe, a barra ganha corpo: fundo branco meio transparente,
+   um desfoque por trás e um fio de borda embaixo.
+
+   backdrop-filter: blur() é o que borra O QUE ESTÁ ATRÁS da barra.
+   É o efeito "vidro fosco" — o conteúdo passa por baixo desfocado, e não
+   embolado com o texto do menu.                                          */
+.navbar.rolou {
+  background-color: var(--cor-fundo-vidro);
+  border-bottom-color: var(--cor-linha);
+  box-shadow: 0 1px 20px rgba(14, 14, 12, 0.05);
+
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* --- 1.2) A LINHA ONDE TUDO FICA ---------------------------------------- */
+.navbar-wrapper {
+  display: flex;
+  justify-content: space-between;   /* logo à esquerda, resto à direita  */
+  align-items: center;              /* tudo alinhado pelo meio           */
+  height: var(--altura-nav);        /* a altura vem do base.css          */
+  gap: var(--gap-s);
+}
+
+
+/* ==========================================================================
+   2) O LOGO
+   --------------------------------------------------------------------------
+   Usamos logo-escuro.png, e não logo.png. Motivo: o logo original é
+   BRANCO (foi desenhado para fundo escuro) e sumiria na página branca.
+   O logo-escuro.png é a mesma arte, em preto, já sem o halo de brilho.
+   ========================================================================== */
+.brand-logo-wrap {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;                   /* o logo nunca é espremido          */
+}
+
+.brand-logo {
+  /* Era 38px. Foi para 44px, a pedido.
+
+     ► O TETO É A ALTURA DA BARRA, que são 76px (--altura-nav, no
+       base.css). Passar de uns 52px faz o logo encostar nas beiradas de
+       cima e de baixo e a barra perde o respiro — a sensação vira de
+       logo espremido, não de logo grande.
+
+     ► width: auto é obrigatório junto: sem ele o logo esticaria na
+       largura ao ganhar altura. Os dois andam em par. */
+  /* 56px -> 64px, a pedido. Ainda sobra respiro na barra de 76px porque
+     a própria imagem tem margem branca em volta da arte. */
+  height: 64px;
+  width: auto;
+  transition: opacity 0.3s ease;
+}
+
+.brand-logo-wrap:hover .brand-logo {
+  opacity: 0.65;
+}
+
+
+/* ==========================================================================
+   3) OS LINKS DO MEIO
+   ========================================================================== */
+.navbar-manu-block {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-s);
+}
+
+.menu-link-wrap {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+
+/* --- 3.1) O EFEITO DO LINK: LETRA POR LETRA ------------------------------
+   Este é o efeito exato do site de referência. Os números abaixo não são
+   chute: foram lidos de dentro do próprio site (0,25s por letra, com
+   0,03s de atraso de uma para a outra).
+
+   O truque, em quatro passos:
+
+   1. No HTML, cada link tem o MESMO texto escrito DUAS vezes, um embaixo
+      do outro. Não é erro de digitação — é o efeito.
+   2. O PRÓPRIO .nav-link é a janelinha: ele tem a altura de UMA linha só
+      (20,8px = 16px de fonte × 130% de altura de linha) e overflow:
+      hidden. Então só a primeira cópia aparece; a segunda fica logo
+      abaixo, fora da janela, invisível.
+   3. O JavaScript quebra cada palavra LETRA POR LETRA, cada uma dentro de
+      um <span> próprio.
+   4. No hover, todas as letras sobem 100% da própria altura — mas não ao
+      mesmo tempo: cada uma espera 0,03s a mais que a anterior.
+
+   É esse atraso mínimo que faz a palavra "ondular" em vez de deslizar
+   como um bloco só. Era exatamente isto que faltava na minha versão
+   anterior: eu movia o texto inteiro de uma vez.                        */
+.nav-link {
+  position: relative;
+  display: block;
+
+  /* a altura de exatamente UMA linha. É a conta 16 × 1.3 = 20.8 */
+  height: 20.8px;
+  overflow: hidden;                 /* a janelinha que corta a 2ª cópia  */
+
+  font-size: var(--texto-m);
+  line-height: var(--linha-texto);
+  font-weight: var(--peso-semi);
+  color: var(--cor-texto);
+}
+
+.nav-link-text {
+  display: block;
+  white-space: nowrap;              /* "Como funciona" não pode quebrar  */
+}
+
+/* Cada <span> aqui é UMA letra, criada pelo JavaScript.
+   inline-block é obrigatório: letra normal (inline) não aceita ser
+   movida com transform — o navegador simplesmente ignora. */
+.nav-link-letra {
+  display: inline-block;
+  transition: transform 0.25s ease;
+}
+
+/* O espaço entre palavras também vira um <span>, e um espaço sozinho
+   dentro de um inline-block some. Esta linha o segura no lugar. */
+.nav-link-letra-espaco {
+  white-space: pre;
+}
+
+/* A segunda cópia não pode ser selecionada com o mouse: sem isto, ao
+   arrastar para selecionar o menu, sai "Serviços Serviços" duplicado. */
+.nav-link-text + .nav-link-text {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Quem manda as letras subirem é o JavaScript, que precisa também dar a
+   cada uma o seu atraso. Esta classe é só o destino do movimento. */
+.nav-link.passando .nav-link-letra {
+  transform: translateY(-100%);
+}
+
+/* --- 3.2) O RISQUINHO QUE ATRAVESSA -------------------------------------
+   Aqui também eu tinha errado. O risquinho da referência NÃO cresce de
+   largura: ele é sempre da largura toda e ATRAVESSA o link deslizando.
+
+   O ciclo completo, que é o que dá o acabamento:
+     • parado ...... está inteiro à esquerda, fora da janela (-100%)
+     • mouse entra . desliza até o lugar (0), em 0,4s
+     • mouse sai ... continua para a direita e sai (+100%), em 0,4s
+     • e então volta para a esquerda INSTANTANEAMENTE, pronto para a
+       próxima vez — e ninguém vê essa volta, porque ela acontece fora
+       da janela.
+
+   Ou seja: o traço nunca refaz o próprio caminho de trás para frente.
+   Ele sempre anda para a frente. Quem controla isso é o JavaScript,
+   porque CSS sozinho não sabe distinguir "entrando" de "saindo".        */
+.nav-link-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background-color: currentColor;   /* a mesma cor do texto do link      */
+
+  transform: translateX(-100%);     /* começa escondido, à esquerda      */
+  transition: transform 0.4s ease;
+}
+
+/* contorno para quem navega pelo teclado (tecla Tab) */
+.nav-link:focus-visible {
+  outline: none;                    /* o risquinho já mostra onde está   */
+}
+
+
+/* ==========================================================================
+   4) O LADO DIREITO
+   ========================================================================== */
+.navbar-button-block {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-xxs);
+  flex-shrink: 0;
+}
+
+/* --- 4.1) O BOTÃO DE "SUPORTE ABERTO" ------------------------------------
+   Ele já foi um selo discreto (fundo branco, borda fina), tratado como um
+   AVISO de estado. Virou o contrário, a pedido: é o único botão de AÇÃO da
+   barra — clicar nele abre a conversa no WhatsApp — e agora é a coisa mais
+   visível dela.
+
+   SEM FUNDO, a pedido: ele chegou a ser uma pílula verde cheia, e a mancha
+   de cor puxava a atenção para longe da logo. Agora o que destaca é o
+   CONTORNO verde, a letra verde e o reflexo que atravessa — a barra
+   continua sendo uma faixa de vidro, sem um bloco sólido no canto.
+
+   background-color: transparent é declarado na unha porque o valor de
+   fábrica é "sem fundo", mas esta regra precisa DESFAZER o fundo branco
+   que ela mesma tinha antes; quem só apagasse a linha veria o branco
+   voltar pelo --cor-fundo-claro em telas com estilo herdado.
+
+   position: relative + overflow: hidden existem por causa do reflexo que
+   passa por cima (item 4.2): é o overflow que apara o brilho no contorno
+   da pílula, senão ele vazaria em volta como um retângulo.               */
+.nav-status {
+  position: relative;
+  overflow: hidden;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+
+  padding: 10px 18px;
+  border: 1px solid rgba(37, 211, 102, 0.55);
+  border-radius: var(--raio-pilula);
+  background-color: transparent;
+  background-image: none;
+  box-shadow: 0 4px 16px rgba(31, 168, 96, 0.16);
+
+  font-size: var(--texto-p);
+  font-weight: var(--peso-semi);
+  color: #1b8f54;
+  white-space: nowrap;              /* não deixa a frase quebrar em duas */
+
+  transition: transform 0.3s ease, box-shadow 0.3s ease,
+              border-color 0.3s ease;
+}
+
+/* no escuro o verde escuro sumiria: entra o verde aceso do WhatsApp */
+html[data-tema="escuro"] .nav-status {
+  border-color: rgba(37, 211, 102, 0.5);
+  color: #3ee07d;
+  box-shadow: 0 4px 16px rgba(37, 211, 102, 0.18);
+}
+
+/* o texto e o ícone precisam ficar ACIMA do reflexo.
+   z-index só funciona em elemento posicionado — daí o position: relative
+   nos dois, que sem isso o brilho passaria por cima das letras. */
+.nav-status > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* o ícone do WhatsApp continua no verde dele (#25d366, declarado na
+   própria página) — sem fundo, ele não precisa de ajuste nenhum. */
+
+.nav-status:hover {
+  transform: translateY(-2px);
+  border-color: rgba(37, 211, 102, 0.9);
+  box-shadow: 0 10px 26px rgba(31, 168, 96, 0.28);
+}
+
+html[data-tema="escuro"] .nav-status:hover {
+  box-shadow: 0 10px 26px rgba(37, 211, 102, 0.3);
+}
+
+/* --- 4.2) O REFLEXO QUE ATRAVESSA O BOTÃO --------------------------------
+   Uma faixa clara e inclinada que cruza a pílula depressa, de tempos em
+   tempos — como a luz correndo por uma superfície polida.
+
+   TRÊS DECISÕES QUE FAZEM A DIFERENÇA:
+
+   ► Quem anda é o transform, não a propriedade "left". Mexer em "left"
+     obriga o navegador a refazer a conta do layout a cada quadro; o
+     transform ele resolve na placa de vídeo, sem tocar no resto da página.
+
+   ► A passagem ocupa só o começo do ciclo (até os 22% dos 4,5s). O resto
+     é pausa. Brilho passando sem parar vira pisca-pisca de vitrine e
+     cansa em dez segundos; espaçado, o olho é pego de novo a cada volta.
+
+   ► skewX inclina a faixa. Reflexo reto parece uma barra de carregamento;
+     inclinado, parece luz.
+
+   O brilho é VERDE, e não branco. Branco só aparece sobre fundo colorido;
+   sem fundo, ele passaria por cima da barra clara sem ninguém ver.       */
+.nav-status::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  bottom: -50%;
+  left: -40%;
+  width: 45%;
+
+  background-image: linear-gradient(
+    100deg,
+    rgba(37, 211, 102, 0) 0%,
+    rgba(37, 211, 102, 0.32) 50%,
+    rgba(37, 211, 102, 0) 100%
+  );
+
+  pointer-events: none;             /* o brilho não rouba o clique       */
+  animation: nav-status-reflexo 4.5s ease-in-out infinite;
+}
+
+@keyframes nav-status-reflexo {
+  0%   { transform: translateX(0) skewX(-22deg);     opacity: 0; }
+  4%   {                                             opacity: 1; }
+  22%  { transform: translateX(560%) skewX(-22deg);  opacity: 0; }
+  100% { transform: translateX(560%) skewX(-22deg);  opacity: 0; }
+}
+
+/* quem pediu menos movimento no sistema fica com o botão parado — o
+   destaque continua todo lá, é só o brilho que não corre. */
+@media (prefers-reduced-motion: reduce) {
+  .nav-status::before {
+    animation: none;
+  }
+}
+
+/* a bolinha verde que pisca: "tem gente do outro lado agora" */
+.nav-status-dot {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--cor-ok);
+  flex-shrink: 0;
+}
+
+/* o anel que sai da bolinha e se dissolve, como um radar.
+   ::after cria um segundo círculo em cima do primeiro. */
+.nav-status-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;                         /* mesmo tamanho e lugar da bolinha  */
+  border-radius: 50%;
+  background-color: var(--cor-ok);
+  animation: radar 2s ease-out infinite;
+}
+
+@keyframes radar {
+  0%   { transform: scale(1);   opacity: 0.6; }
+  100% { transform: scale(2.6); opacity: 0;   }
+}
+
+
+/* ==========================================================================
+   5) O BOTÃO DE MENU DO CELULAR (o "hambúrguer")
+   --------------------------------------------------------------------------
+   Fica ESCONDIDO no computador e só aparece em tela pequena (item 7).
+   ========================================================================== */
+.menu-open-block {
+  display: none;                    /* escondido por padrão              */
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+
+  width: 44px;
+  height: 44px;
+  padding: 12px;
+  border-radius: var(--raio-p);
+}
+
+/* os dois risquinhos do hambúrguer */
+.menu-open-bar {
+  display: block;
+  width: 20px;
+  height: 1.5px;
+  border-radius: 2px;
+  background-color: var(--cor-texto);
+  transition: transform 0.35s ease, opacity 0.25s ease;
+}
+
+/* quando o menu está aberto, os dois risquinhos viram um "X":
+   um gira 45 graus para um lado, o outro 45 para o outro. */
+.menu-open-block.aberto .menu-open-bar:nth-child(1) {
+  transform: translateY(3.25px) rotate(45deg);
+}
+.menu-open-block.aberto .menu-open-bar:nth-child(2) {
+  transform: translateY(-3.25px) rotate(-45deg);
+}
+
+
+/* ==========================================================================
+   6) O PAINEL DE MENU DO CELULAR
+   --------------------------------------------------------------------------
+   Ele existe sempre no HTML, mas fica invisível e "desligado" até o
+   JavaScript colocar a classe .aberto nele.
+
+   visibility: hidden + opacity: 0 (em vez de display: none) é o que
+   permite que ele apareça com uma animação suave em vez de num susto.
+   ========================================================================== */
+.menu-mobile {
+  position: fixed;
+  inset: 0;                         /* cobre a tela inteira              */
+  z-index: 99;                      /* logo abaixo da barra (100)        */
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--gap-s);
+  padding: var(--altura-nav) var(--gap-s) var(--gap-2xl);
+
+  background-color: var(--cor-fundo);
+
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+
+.menu-mobile.aberto {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* os links dentro do painel: bem grandes, fáceis de acertar com o dedo */
+.menu-mobile-link {
+  font-size: 2rem;
+  font-weight: var(--peso-semi);
+  letter-spacing: -0.02em;
+  color: var(--cor-texto);
+
+  padding-bottom: var(--gap-xxs);
+  border-bottom: 1px solid var(--cor-linha);
+}
+
+/* trava a rolagem do site enquanto o painel está aberto, senão a página
+   de trás rola junto com o dedo. Esta classe o JavaScript põe no <body>. */
+body.menu-travado {
+  overflow: hidden;
+}
+
+
+/* ==========================================================================
+   7) TELAS MENORES
+   ========================================================================== */
+
+/* --- Tablet e notebook pequeno (até 991px) ---
+   Os links do meio e o selo saem; entra o hambúrguer. */
+@media (max-width: 991px) {
+  .menu-link-wrap,
+  .nav-status {
+    display: none;
+  }
+
+  .menu-open-block {
+    display: flex;
+  }
+}
+
+/* --- Celular (até 600px) --- */
+@media (max-width: 600px) {
+  /* o logo do celular acompanha o aumento do desktop na mesma
+     proporção: 32 -> 37px, os mesmos ~16% a mais */
+  .brand-logo {
+    height: 48px;
+  }
+}

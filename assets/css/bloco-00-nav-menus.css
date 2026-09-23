@@ -1,0 +1,469 @@
+/* ==========================================================================
+   BLOCO 00 — MENUS SUSPENSOS DA BARRA
+   --------------------------------------------------------------------------
+   Complemento do bloco-00-header.css. Aqui moram as "abas suspensas": os
+   painéis que descem da barra quando se CLICA em Downloads, Curso, Quem sou
+   eu ou Contato.
+
+   POR QUE CLIQUE, E NÃO PASSAR O MOUSE:
+   menu que abre sozinho ao passar o mouse dispara sem querer o tempo todo,
+   e no celular não existe "passar o mouse" — o dedo toca e pronto. Com
+   clique, o mesmo código serve para os dois, e quem abriu foi a pessoa.
+
+   COMO ESTE BLOCO É MONTADO:
+
+   .nav-item ......................... a vaga de UM item com menu
+     ├ button.nav-link ............... o gatilho (o mesmo efeito de letras
+     │                                 dos links normais)
+     ├ .nav-seta ..................... a setinha que vira de cabeça para baixo
+     └ .nav-drop ..................... O PAINEL que desce
+         ├ .nav-drop-rotulo .......... a legendinha de cima, em maiúsculas
+         ├ .nav-drop-lista
+         │   └ a.nav-drop-item ....... ícone + título + descrição
+         └ .nav-drop-pe .............. a faixa de baixo (só em alguns)
+
+   A classe .aberto no .nav-item é o interruptor: quem a põe e a tira é o
+   bloco-00-nav-menus.js. Todo o resto — abrir, escalonar, virar a seta —
+   é CSS reagindo a ela.
+   ========================================================================== */
+
+
+/* ==========================================================================
+   0) AS CORES QUE SÓ ESTE BLOCO USA
+   --------------------------------------------------------------------------
+   Vão presas ao .header, junto com as outras variáveis da barra, para não
+   vazarem para o resto da página. São as mesmas cores de destaque do site
+   (o azul do Windows nos cards), uma para cada tema.
+   ========================================================================== */
+.header {
+  --cor-acento: #1f6fd1;
+  --cor-acento-fraco: rgba(31, 111, 209, 0.12);
+  --cor-item-hover: rgba(14, 14, 12, 0.05);
+  --sombra-drop: 0 24px 60px rgba(14, 14, 12, 0.14),
+                 0 2px 10px rgba(14, 14, 12, 0.06);
+}
+
+html[data-tema="escuro"] .header {
+  --cor-acento: #4fa3ff;
+  --cor-acento-fraco: rgba(79, 163, 255, 0.16);
+  --cor-item-hover: rgba(255, 255, 255, 0.07);
+  --sombra-drop: 0 24px 60px rgba(0, 0, 0, 0.55),
+                 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+
+/* ==========================================================================
+   1) A VAGA DO ITEM E A SETINHA
+   --------------------------------------------------------------------------
+   position: relative aqui é o que prende o painel a ESTE item. Sem ele o
+   painel se penduraria na página inteira e abriria no canto errado.
+
+   A setinha fica FORA do botão de propósito: o .nav-link tem a altura de
+   uma linha só e overflow: hidden (é assim que o efeito das letras
+   funciona), então qualquer coisa dentro dele seria cortada.
+   ========================================================================== */
+.nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-seta {
+  font-size: 0.58rem;
+  color: var(--cor-texto);
+  opacity: 0.45;
+
+  /* o clique atravessa a seta e cai no .nav-item, que é quem escuta.
+     Sem isto, clicar bem em cima da seta não abriria nada. */
+  pointer-events: none;
+
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              opacity 0.25s ease;
+}
+
+.nav-item.aberto .nav-seta {
+  transform: rotate(180deg);
+  opacity: 1;
+}
+
+/* o gatilho é um <button>, não um <a>: ele não leva a lugar nenhum, só
+   abre e fecha. text-align corrige o centralizado que o botão traz de
+   fábrica e que desalinharia as letras. */
+button.nav-link {
+  padding: 0;                       /* o botão vem com recuo de fábrica e
+                                       ele desalinharia a palavra          */
+  text-align: left;
+  cursor: pointer;
+}
+
+
+/* ==========================================================================
+   2) O PAINEL
+   --------------------------------------------------------------------------
+   top: calc(100% + 24px) põe o topo do painel rente à borda de baixo da
+   barra: o item tem 20,8px de altura e fica centrado nos 76px da barra,
+   então sobram ~27px até o fim dela.
+
+   visibility (e não display: none) é o que permite a entrada animada:
+   display não anima, e o painel apareceria num susto.
+   ========================================================================== */
+.nav-drop {
+  position: absolute;
+  top: calc(100% + 24px);
+  left: 0;
+  z-index: 101;
+
+  width: max-content;
+  min-width: 288px;
+  max-width: min(340px, calc(100vw - 3rem));
+  padding: 8px;
+
+  border: 1px solid var(--cor-linha);
+  border-radius: 18px;
+  background-color: var(--cor-fundo-vidro);
+  box-shadow: var(--sombra-drop);
+
+  /* o mesmo vidro fosco da barra rolada, um pouco mais forte: o painel
+     tem texto pequeno por cima do site inteiro e precisa do contraste */
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  backdrop-filter: blur(20px) saturate(150%);
+
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px) scale(0.97);
+  transform-origin: top left;
+
+  transition: opacity 0.25s ease,
+              transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+              visibility 0.38s;
+}
+
+.nav-item.aberto .nav-drop {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+/* O ÚLTIMO ITEM DA BARRA abre para o outro lado.
+   Preso pela esquerda, o painel do "Contato" passaria da borda direita da
+   janela e criaria arrasto lateral na página inteira. */
+.nav-drop._fim {
+  left: auto;
+  right: 0;
+  transform-origin: top right;
+}
+
+/* --- 2.1) A legendinha de cima ------------------------------------------ */
+.nav-drop-rotulo {
+  display: block;
+  padding: 8px 12px 6px;
+
+  font-size: 0.68rem;
+  font-weight: var(--peso-semi);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cor-texto);
+  opacity: 0.4;
+}
+
+.nav-drop-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+
+/* ==========================================================================
+   3) CADA LINHA DO PAINEL
+   ========================================================================== */
+.nav-drop-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+
+  padding: 9px 11px;
+  border-radius: 12px;
+  color: var(--cor-texto);
+
+  /* A ENTRADA ESCALONADA.
+     Cada linha nasce apagada e 8px mais baixa; o atraso de cada uma vem
+     do item 3.3, e é ele que faz o painel "montar" de cima para baixo em
+     vez de aparecer inteiro de uma vez.
+
+     transition-delay: 0s aqui, e só no estado aberto ele ganha valor —
+     assim o painel ABRE escalonado e FECHA de uma vez, que é o certo:
+     ninguém quer esperar a animação para fechar um menu. */
+  opacity: 0;
+  transform: translateY(8px);
+  transition-delay: 0s;
+  transition-property: opacity, transform, background-color;
+  transition-duration: 0.3s, 0.3s, 0.2s;
+  transition-timing-function: ease;
+}
+
+.nav-item.aberto .nav-drop-item {
+  opacity: 1;
+  transform: none;
+}
+
+.nav-drop-item:hover,
+.nav-drop-item:focus-visible {
+  background-color: var(--cor-item-hover);
+  outline: none;
+}
+
+/* --- 3.1) O quadradinho do ícone ---------------------------------------- */
+.nav-drop-icone {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background-color: var(--cor-acento-fraco);
+  color: var(--cor-acento);
+  font-size: 0.92rem;
+
+  /* a curva com "volta" (o 1.56) dá aquele pulinho de mola no hover */
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.nav-drop-item:hover .nav-drop-icone,
+.nav-drop-item:focus-visible .nav-drop-icone {
+  transform: scale(1.09) rotate(-5deg);
+}
+
+/* --- 3.2) O texto -------------------------------------------------------- */
+.nav-drop-texto {
+  display: block;
+  min-width: 0;                     /* deixa o texto encolher em vez de
+                                       estourar a largura do painel      */
+}
+
+.nav-drop-titulo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 0.9rem;
+  font-weight: var(--peso-semi);
+  line-height: 1.25;
+}
+
+.nav-drop-desc {
+  display: block;
+  margin-top: 2px;
+
+  font-size: 0.775rem;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--cor-texto);
+  opacity: 0.6;
+}
+
+/* a setinha dos links que abrem em outra aba: some até o hover, para não
+   poluir a lista com quatro setas paradas */
+.nav-drop-fora {
+  font-size: 0.6rem;
+  opacity: 0;
+  transform: translate(-2px, 2px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.nav-drop-item:hover .nav-drop-fora,
+.nav-drop-item:focus-visible .nav-drop-fora {
+  opacity: 0.55;
+  transform: none;
+}
+
+/* --- 3.3) Os atrasos da entrada ------------------------------------------
+   0,04s de uma linha para a outra. É o mesmo princípio das letras dos
+   links da barra: o atraso mínimo é o que faz a coisa ondular.
+   Seis linhas é o teto dos painéis de hoje; se um dia um deles crescer,
+   basta acrescentar o nth-child seguinte. */
+.nav-item.aberto .nav-drop-item:nth-child(1) { transition-delay: 0.03s; }
+.nav-item.aberto .nav-drop-item:nth-child(2) { transition-delay: 0.07s; }
+.nav-item.aberto .nav-drop-item:nth-child(3) { transition-delay: 0.11s; }
+.nav-item.aberto .nav-drop-item:nth-child(4) { transition-delay: 0.15s; }
+.nav-item.aberto .nav-drop-item:nth-child(5) { transition-delay: 0.19s; }
+.nav-item.aberto .nav-drop-item:nth-child(6) { transition-delay: 0.23s; }
+
+
+/* ==========================================================================
+   4) A FAIXA DE BAIXO
+   --------------------------------------------------------------------------
+   Só dois painéis têm: é o empurrãozinho para quem chegou ali e não achou
+   o que queria.
+   ========================================================================== */
+.nav-drop-pe {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin-top: 6px;
+  padding: 11px 12px 5px;
+  border-top: 1px solid var(--cor-linha);
+
+  font-size: 0.775rem;
+  font-weight: 500;
+  color: var(--cor-texto);
+  opacity: 0.72;
+
+  transition: opacity 0.2s ease;
+}
+
+.nav-drop-pe:hover {
+  opacity: 1;
+}
+
+.nav-drop-pe i {
+  color: var(--cor-acento);
+}
+
+
+/* ==========================================================================
+   4.1) O APERTO ENTRE 992px E 1100px
+   --------------------------------------------------------------------------
+   A barra passou de quatro para cinco palavras, cada uma com a sua setinha,
+   e o botão do WhatsApp ao lado ficou maior. No notebook de tela estreita
+   (a faixa logo acima do ponto em que os links dão lugar ao hambúrguer) a
+   soma encosta na borda do container.
+
+   Encostar não é só feio: quando passa, a página inteira ganha arrasto
+   lateral — a mesma armadilha que já apareceu na seção de como funciona.
+   Aqui o respiro entre os links diminui antes que isso aconteça.
+   ========================================================================== */
+@media (max-width: 1100px) {
+  .menu-link-wrap {
+    gap: 20px;
+  }
+}
+
+
+/* ==========================================================================
+   5) OS MESMOS MENUS NO CELULAR
+   --------------------------------------------------------------------------
+   Na tela estreita os links do meio somem e entra o painel do hambúrguer.
+   Lá os menus viram SANFONAS: o item abre e a lista desce empurrando o
+   resto, em vez de flutuar por cima.
+
+   O conteúdo NÃO é escrito duas vezes no HTML: o JavaScript copia a lista
+   do painel do computador para dentro da sanfona. Assim só existe uma
+   fonte da verdade, e mexer num link não deixa o outro para trás.
+   ========================================================================== */
+
+/* uma caixa em volta dos links, para o painel poder rolar quando uma
+   sanfona aberta não couber na tela. É o "margin: auto 0" dela que
+   centraliza — centralizar pelo pai cortaria o topo ao rolar. */
+.menu-mobile-inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-s);
+  width: 100%;
+  margin: auto 0;
+}
+
+.menu-mobile {
+  overflow-y: auto;
+}
+
+.menu-mobile-item {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--cor-linha);
+}
+
+/* o gatilho da sanfona tem a mesma cara do link grande ao lado, mas é um
+   botão de largura inteira com a seta na ponta direita */
+button.menu-mobile-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-xxs);
+
+  width: 100%;
+  text-align: left;
+  border-bottom: none;              /* a borda passou para o .menu-mobile-item */
+  cursor: pointer;
+}
+
+.menu-mobile-link .nav-seta {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.menu-mobile-item.aberto .nav-seta {
+  transform: rotate(180deg);
+  opacity: 1;
+}
+
+/* A SANFONA.
+   grid-template-rows de 0fr para 1fr é o jeito moderno de animar uma
+   altura que ninguém sabe qual é. O jeito antigo (max-height: 500px) ou
+   corta o conteúdo, ou deixa a animação lenta e vazia no fim.
+
+   O filho precisa de min-height: 0, senão ele se recusa a encolher
+   abaixo do próprio conteúdo e a sanfona nasce aberta. */
+.menu-mobile-sub {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+              opacity 0.3s ease;
+}
+
+.menu-mobile-item.aberto .menu-mobile-sub {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.menu-mobile-sub > * {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.menu-mobile-item.aberto .menu-mobile-sub > * {
+  padding-bottom: var(--gap-xxs);
+}
+
+/* as linhas copiadas do painel do computador nascem apagadas (é a entrada
+   escalonada do item 3). Dentro da sanfona quem manda aparecer é a classe
+   do .menu-mobile-item, e sem escalonamento: a própria sanfona já está
+   descendo, duas animações ao mesmo tempo embolam. */
+.menu-mobile-item.aberto .nav-drop-item {
+  opacity: 1;
+  transform: none;
+}
+
+.menu-mobile-sub .nav-drop-item {
+  padding: 8px 4px;
+}
+
+.menu-mobile-sub .nav-drop-titulo {
+  font-size: 1rem;
+}
+
+
+/* ==========================================================================
+   6) QUEM PEDIU MENOS MOVIMENTO
+   --------------------------------------------------------------------------
+   Há quem sinta enjoo com animação na tela, e o sistema operacional tem
+   uma opção para avisar os sites. Aqui o menu continua abrindo e fechando
+   igual — só deixa de deslizar e de escalonar.
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .nav-drop,
+  .nav-drop-item,
+  .nav-seta,
+  .nav-drop-icone,
+  .menu-mobile-sub {
+    transition-duration: 0.01ms;
+    transition-delay: 0s;
+  }
+
+  .nav-drop-item {
+    transform: none;
+  }
+}
