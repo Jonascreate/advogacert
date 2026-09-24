@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light">
-    <title>Seu código de acesso — Suporte AdvogaCert</title>
+    <title>Seu atendimento está marcado — Suporte AdvogaCert</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&display=swap" rel="stylesheet">
     <!-- O degradê do título é o mesmo de "suporte contínuo" na index (verde
          cana ao azul, nos tons do tema claro, que se leem sobre o branco).
@@ -25,9 +25,9 @@
     </style>
 </head>
 <!--
-    Código de acesso (login sem senha). Montado por htmlCodigoOtp() no
-    server.js, que troca {{EMAIL}} e {{CODIGO}}. A logo era uma imagem no
-    Google Drive; agora é a logo preta do próprio site.
+    Sai quando a equipe marca (/admin/agendar) ou troca (/admin/remarcar) o
+    horário no painel. O horário já vem conferido por horarioValido() — este
+    e-mail só anuncia o que foi gravado, nunca oferece escolha.
 
     Padrão visual de todos os e-mails: cartão branco sobre fundo cinza-claro,
     logo preta e título em Inter Display (1ª linha normal, 2ª com o degradê da index) na metade esquerda do topo, o token em pé
@@ -49,7 +49,7 @@
                                 <td valign="middle" width="300" style="width:300px;padding:36px 0 0 40px;">
                                     <img src="https://www.agentej.us/assets/img/logo-escuro.png" alt="Suporte AdvogaCert" width="190" style="display:block;width:190px;max-width:190px;height:auto;border:0;">
                                     <h1 style="margin:30px 0 0 0;color:#0e0e0c;font-family:'Inter Display','Inter','Segoe UI',Arial,sans-serif;font-size:36px;font-weight:600;line-height:1.02;letter-spacing:-0.02em;">
-                                        Seu código<br><span class="degrade">de acesso</span>
+                                        Atendimento<br><span class="degrade">marcado</span>
                                     </h1>
                                 </td>
                                 <td valign="middle" align="center" width="300" style="width:300px;padding:36px 0 0 0;">
@@ -62,18 +62,20 @@
 
                 <tr>
                     <td style="padding:26px 40px 34px 40px;">
-                        <p style="margin:0 0 12px 0;color:#0e0e0c;font-size:16px;font-weight:600;line-height:1.5;">Olá, {{EMAIL}},</p>
-                        <p style="margin:0 0 14px 0;color:#26262b;font-size:15px;font-weight:500;line-height:1.65;">Digite o código abaixo na tela de entrada. Ele substitui a senha.</p>
+                        <p style="margin:0 0 12px 0;color:#0e0e0c;font-size:16px;font-weight:600;line-height:1.5;">Olá, {{NOME}},</p>
+                        <p style="margin:0 0 14px 0;color:#26262b;font-size:15px;font-weight:500;line-height:1.65;">Conferimos a inscrição <strong style="color:#0e0e0c;font-weight:600;">{{INSCRICAO}}</strong> e marcamos o seu atendimento:</p>
                         <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f8fe" style="margin:8px 0 18px 0;background-color:#f4f8fe;border:1px solid #cfe0f7;border-radius:12px;">
                             <tr>
                                 <td style="padding:22px 24px;text-align:center;">
-                                    <!-- user-select: all faz um toque selecionar o código inteiro nos webmails -->
-                                    <p style="margin:0;color:#0e0e0c;font-family:'SFMono-Regular',Consolas,'Liberation Mono','Courier New',monospace;font-size:38px;font-weight:700;letter-spacing:12px;text-indent:12px;line-height:1.1;"><span style="-webkit-user-select:all;-moz-user-select:all;-ms-user-select:all;user-select:all;">{{CODIGO}}</span></p>
-                                    <p style="margin:10px 0 0 0;color:#55555c;font-size:12px;font-weight:600;">Vale por 5 minutos e só pode ser usado uma vez</p>
+                                    <p style="margin:0 0 6px 0;color:#0c6ce4;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">{{DIA_SEMANA}}</p>
+                                    <p style="margin:0 0 2px 0;color:#0e0e0c;font-family:'Inter Display','Inter','Segoe UI',Arial,sans-serif;font-size:28px;font-weight:600;line-height:1.2;">{{DATA}}</p>
+                                    <p style="margin:0;color:#0c6ce4;font-family:'Inter Display','Inter','Segoe UI',Arial,sans-serif;font-size:28px;font-weight:600;letter-spacing:0.02em;">{{HORA}}</p>
+                                    <p style="margin:10px 0 0 0;color:#55555c;font-size:12px;font-weight:600;">Horário de Brasília &middot; até 1 hora de atendimento</p>
                                 </td>
                             </tr>
                         </table>
-                        <p style="margin:0 0 14px 0;color:#26262b;font-size:15px;font-weight:500;line-height:1.65;margin:0;color:#6b6b70;font-size:14px;">Não pediu este código? Ignore este e-mail. Nós nunca pedimos o código por telefone, WhatsApp ou e-mail.</p>
+                        <p style="margin:0 0 14px 0;color:#26262b;font-size:15px;font-weight:500;line-height:1.65;">Deixe em mãos o seu certificado digital, a senha dele e o computador que você usa para peticionar. No horário marcado, nós chamamos você.</p>
+                        <p style="margin:0 0 14px 0;color:#26262b;font-size:15px;font-weight:500;line-height:1.65;margin:0;color:#6b6b70;">O horário não serve? Responda este e-mail que a gente remarca.</p>
                     </td>
                 </tr>
 
@@ -93,7 +95,8 @@
                 <tr>
                     <td bgcolor="#f6f7f8" style="background-color:#f6f7f8;padding:20px 40px;">
                         <p style="margin:0;color:#44444a;font-size:12px;font-weight:500;line-height:1.7;text-align:center;">
-                            E-mail automático do <strong style="color:#0e0e0c;font-weight:600;">Suporte AdvogaCert</strong>. Não é preciso responder.
+                            Você recebeu este e-mail porque pediu suporte ao <strong style="color:#0e0e0c;font-weight:600;">Suporte AdvogaCert</strong>.<br>
+                            Dúvidas? Responda este e-mail ou fale com a gente pelo WhatsApp.
                         </p>
                     </td>
                 </tr>

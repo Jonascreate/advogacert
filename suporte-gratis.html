@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suporte grátis | AdvogaCert</title>
+
+    <!-- Fontes Google -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+    <!-- CSS Principal -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/login.css?v=1">
+    <link rel="stylesheet" href="assets/css/suporte-gratis.css?v=3">
+</head>
+<body class="pagina-free">
+    <!-- Blush effect -->
+    <div class="blush-container">
+        <div class="blush blush-1" id="blush1"></div>
+        <div class="blush blush-2" id="blush2"></div>
+        <div class="blush blush-3" id="blush3"></div>
+    </div>
+
+    <section class="login-page">
+        <div class="login-container" id="suporte-free-page" aria-labelledby="free-titulo">
+            <h2 id="free-titulo">Cadastro</h2>
+            <p class="free-titulo-sub">Suporte grátis</p>
+            <!-- vazio de início; o script escreve aqui nos passos seguintes -->
+            <p class="free-sub" id="free-sub"></p>
+            <form id="free-form-id" novalidate>
+                <div class="form-group free-grupo">
+                    <label for="free-nome">Como gosta de ser chamado</label>
+                    <input id="free-nome" placeholder="Seu nome" autocomplete="given-name" required>
+                </div>
+                <div class="form-row free-linha">
+                    <div class="form-group free-grupo">
+                        <label for="free-inscricao">Número da inscrição</label>
+                        <input id="free-inscricao" inputmode="numeric" placeholder="123456" autocomplete="off" required>
+                    </div>
+                    <div class="form-group free-grupo free-uf">
+                        <label for="free-uf">Seccional</label>
+                        <select id="free-uf"></select>
+                    </div>
+                </div>
+                <div class="form-group free-grupo">
+                    <label for="free-whats">WhatsApp</label>
+                    <input id="free-whats" inputmode="tel" placeholder="(DDD) 99999-9999" autocomplete="tel" required>
+                </div>
+                <div class="form-group free-grupo">
+                    <label for="free-email">E-mail</label>
+                    <input id="free-email" type="email" placeholder="seu@email.com" autocomplete="email" required>
+                </div>
+                <button type="submit" class="login-btn free-btn" id="free-enviar-id">Continuar</button>
+            </form>
+
+            <form id="free-form-agenda" novalidate style="display:none;">
+                <div class="free-rotulo">Escolha o dia</div>
+                <div class="free-dias" id="free-dias"></div>
+                <div class="free-rotulo">Escolha o horário</div>
+                <div class="free-horas" id="free-horas"></div>
+                <button type="submit" class="login-btn free-btn" id="free-enviar-agenda">Marcar meu atendimento</button>
+            </form>
+
+            <div id="free-espera" style="display:none;"></div>
+            <div class="free-msg" id="free-msg" role="status" aria-live="polite"></div>
+        </div>
+    </section>
+
+    <!-- a barra ganha fundo ao rolar (a classe .rolou) -->
+    <script src="assets/js/bloco-00-header.js?v=1"></script>
+    <script src="assets/js/api.js?v=9"></script>
+    <script src="assets/js/telemetria.js?v=2"></script>
+
+    <script src="assets/js/script.js?v=23"></script>
+    <script src="assets/js/suporte-gratis.js?v=3"></script>
+</body>
+</html>

@@ -1,15 +1,12 @@
 /* ==========================================================
    admin/triagem.js — o meio do caminho
    ==========================================================
-   Depois que você confere a OAB, a pessoa não vira chamado na hora: ela
-   ainda precisa escolher o horário. Sem esta aba, quem é liberado sai da
-   fila de verificação e some do painel — você não saberia que existe
-   alguém autorizado que nunca voltou para marcar.
+   Depois que a OAB é conferida, o pedido para aqui até alguém marcar o
+   horário. Uma lista só, com todos os pedidos — grátis, dia e mensal —
+   e todos chegam como "Aguardando conferência".
 
-   São duas listas, e a diferença entre elas é de quem é a vez:
-
-     Aguardando marcar — a bola está com o cliente
-     Marcados          — a bola está com você
+   Marcar o horário já abre o chamado: o pedido sai da triagem e passa
+   para a aba Chamados. Não há etapa de "revisar e confirmar" no meio.
    ========================================================== */
 (function (global) {
     'use strict';
@@ -21,59 +18,57 @@
     var estado = { pendentes: [], aguardando: [], marcados: [], atrasados: 0 };
     var alvo;
 
-    /** Grátis ou Premium — a etiqueta acompanha a pessoa por toda a esteira. */
+    /** Grátis, Dia (R$59) ou Mensal (R$199) — o mesmo plano da fila de verificação. */
     function selo(tipo) {
-        return D.tag(tipo === 'premium' ? 'Premium' : 'Grátis',
-                     tipo === 'premium' ? 'ativa' : 'livre');
+        if (tipo === 'plus') return D.tag('Mensal', 'plus');
+        if (tipo === 'premium') return D.tag('Dia', 'ativa');
+        return D.tag('Grátis', 'livre');
+    }
+
+    /** Nome, inscrição e WhatsApp: o que o funcionário precisa para ligar. */
+    function quemPediu(item, linhaDeCima) {
+        return el('div', {}, [
+            linhaDeCima,
+            el('div.triagem-inscricao', { texto: 'OAB ' + item.inscricao }),
+            el('div.fraco', { texto: item.nome || '—' }),
+            item.contato ? el('div.fraco', { texto: 'WhatsApp ' + item.contato }) : null
+        ]);
     }
 
     /**
-     * Etapa 2: OAB conferida, sem horário ainda.
+     * Pedido com a OAB conferida e sem horário.
      *
-     * Sem este cartão a pessoa liberada some da tela: ela saiu da fila de
-     * verificação e ainda não entrou em "marcados". Era exatamente o buraco
-     * que deixava a Triagem em branco com gente esperando dentro dela.
-     *
-     * Mesmos dois botões do cartão de quem já tem hora: "Remarcar" abre a
-     * agenda, "Abrir chamado" fecha a triagem. A diferença é que aqui não há
-     * horário ainda, então "Abrir chamado" abre a agenda antes e emenda o
-     * resto sozinho — marcar, confirmar e promover — em vez de recusar o
-     * clique com um aviso.
+     * "Marcar horário" abre a agenda e, marcado, já abre o chamado.
+     * "Atender agora" abre o chamado sem hora combinada.
      */
     function cartaoAguardando(item) {
-        // Liberado há muito tempo e ninguém marcou: a bola está com o
-        // cliente, mas passou do razoável e vale aparecer em destaque.
+        // Conferido há muito tempo e ninguém marcou: vale destacar.
         var esquecido = Number(item.horas_desde || 0) >= VERIFICACAO_HORAS;
 
         return el('article.triagem-card.aguardando' + (esquecido ? '.critico' : ''), {}, [
             el('div.triagem-topo', {}, [
-                el('div', {}, [
-                    el('span.triagem-quando' + (esquecido ? '.critico' : ''), {
-                        texto: 'Liberado há ' + D.fmtEspera(item.horas_desde)
-                    }),
-                    el('div.triagem-inscricao', { texto: item.inscricao }),
-                    el('div.fraco', { texto: item.nome || '—' }),
-                    item.contato ? el('div.fraco', { texto: item.contato }) : null
-                ]),
+                quemPediu(item, el('span.triagem-quando' + (esquecido ? '.critico' : ''), {
+                    texto: 'Aguardando conferência · chegou há ' + D.fmtEspera(item.horas_desde)
+                })),
                 el('div.triagem-lado', {}, [
                     selo(item.tipo),
-                    esquecido ? D.tag('Sem marcar', 'atrasada') : null
+                    esquecido ? D.tag('Parado há mais de 1 dia', 'atrasada') : null
                 ])
             ]),
             el('div.triagem-acoes', {}, [
                 el('button.acao.acao-promover', {
                     type: 'button',
-                    texto: 'Abrir chamado',
-                    // Abre o chamado na hora, sem passar pelo calendário: o
-                    // atendimento é agora, não numa data futura. O servidor
-                    // cria o agendamento com sem_horario, do mesmo jeito que
-                    // o Premium já fazia.
-                    aoClicar: function () { abrirChamadoDireto(item); }
+                    texto: 'Marcar horário',
+                    aoClicar: function (e) {
+                        abrirAgenda(item, e.target, false, function (agendamentoId) {
+                            promoverDireto(item, agendamentoId);
+                        });
+                    }
                 }),
                 el('button.acao', {
                     type: 'button',
-                    texto: 'Remarcar',
-                    aoClicar: function (e) { abrirAgenda(item, e.target, false); }
+                    texto: 'Atender agora (sem horário)',
+                    aoClicar: function () { abrirChamadoDireto(item); }
                 })
             ])
         ]);
@@ -87,9 +82,9 @@
      * para isto — é o mesmo caminho do Premium, que também não marca hora.
      */
     function abrirChamadoDireto(item) {
-        if (!confirm('Abrir chamado para ' + item.inscricao + ' agora?\n\n' +
-                     'O atendimento entra na fila sem hora marcada. ' +
-                     'Se preferir combinar um horário antes, use "Remarcar".')) return;
+        if (!confirm('Atender ' + item.inscricao + ' agora?\n\n' +
+                     'O chamado é aberto sem hora marcada. ' +
+                     'Se preferir combinar um horário antes, use "Marcar horário".')) return;
 
         return global.AdminApi.agendarSemHorario(item.verificacao_id)
             .then(function (r) {
@@ -124,49 +119,41 @@
     }
 
     /**
-     * Etapa 3: hora marcada, esperando sua decisão.
-     *
-     * É aqui que a triagem deixa de ser lista e vira sala de decisão. Você
-     * confere se o horário ainda serve, remarca se houver força maior, e só
-     * então passa para chamado — que é quando o prazo começa a correr.
+     * Pedido que chegou com agendamento já criado: o cliente escolheu a hora
+     * no site, ou o Premium pediu atendimento sem hora. Também chega como
+     * "Aguardando conferência" — quem decide o horário final é você.
      */
     function cartaoMarcado(item) {
         var atrasado = item.passou;
 
-        // Premium sem_horario não tem hora real: mostra "pedido direto" em
-        // vez de uma data que pareceria um horário marcado de verdade.
-        var quando = item.sem_horario
-            ? el('span.triagem-quando', { texto: 'Pedido direto (sem horário)' })
-            : el('span.triagem-quando' + (atrasado ? '.critico' : ''), { texto: D.fmtData(item.inicio) });
+        var status = item.sem_horario
+            ? 'Aguardando conferência · pediu atendimento sem horário'
+            : 'Aguardando conferência · horário pedido: ' + D.fmtData(item.inicio);
 
         return el('article.triagem-card.marcado' + (atrasado ? '.critico' : ''), {}, [
             el('div.triagem-topo', {}, [
-                el('div', {}, [
-                    quando,
-                    el('div.triagem-inscricao', { texto: item.inscricao }),
-                    el('div.fraco', { texto: item.nome || '—' })
-                ]),
+                quemPediu(item, el('span.triagem-quando' + (atrasado ? '.critico' : ''), { texto: status })),
                 el('div.triagem-lado', {}, [
                     selo(item.tipo),
-                    atrasado ? D.tag('Passou da hora', 'atrasada') : null
+                    atrasado ? D.tag('Horário já passou', 'atrasada') : null
                 ])
             ]),
             el('div.triagem-acoes', {}, [
-                // O botão que fecha a triagem: confirma o horário e já abre
-                // o chamado. Encerrar o atendimento é depois, na aba
-                // Chamados, mudando o status para "Fechado".
+                // Marcar (ou trocar) o horário também abre o chamado.
                 el('button.acao.acao-promover', {
                     type: 'button',
-                    texto: 'Abrir chamado',
-                    aoClicar: function () { confirmar(item); }
+                    texto: item.sem_horario ? 'Marcar horário' : 'Trocar horário',
+                    aoClicar: function (e) {
+                        abrirAgenda(item, e.target, true, function () {
+                            promoverDireto(item, item.id);
+                        });
+                    }
                 }),
-                // Vale para os dois casos: quem tem hora troca de hora, e quem
-                // entrou sem hora combinada (Premium, ou grátis atendido na
-                // hora) ganha uma. A rota é a mesma; muda só o rótulo.
+                // Mantém o que já está e abre o chamado assim mesmo.
                 el('button.acao', {
                     type: 'button',
-                    texto: item.sem_horario ? 'Marcar horário' : 'Remarcar',
-                    aoClicar: function (e) { abrirAgenda(item, e.target, true); }
+                    texto: item.sem_horario ? 'Atender agora (sem horário)' : 'Manter horário e abrir chamado',
+                    aoClicar: function () { confirmar(item); }
                 })
             ])
         ]);
@@ -179,8 +166,8 @@
      */
     function confirmar(item) {
         if (!confirm('Abrir chamado para ' + item.inscricao + '?\n\n' +
-                     'O horário é confirmado e o atendimento entra na fila de chamados. ' +
-                     'Para encerrar depois, é na aba Chamados.')) return;
+                     'O atendimento entra na aba Chamados. ' +
+                     'Para encerrar depois, é lá que se muda o status.')) return;
 
         return global.AdminApi.confirmar(item.id)
             .then(function (r) {
@@ -282,8 +269,9 @@
             function confirmar(h) {
                 var verbo = remarcando ? 'Remarcar' : 'Marcar';
                 if (!confirm(verbo + ' ' + item.inscricao + ' para ' +
-                             diaAtual.rotulo + ' às ' + h.rotulo + '?' +
-                             (remarcando ? '\n\nO cliente será avisado do novo horário.' : ''))) return;
+                             diaAtual.rotulo + ' às ' + h.rotulo + '?\n\n' +
+                             'O cliente recebe o horário por e-mail' +
+                             (aoMarcar ? ' e o chamado é aberto em seguida.' : '.'))) return;
 
                 aviso.textContent = remarcando ? 'Remarcando...' : 'Marcando...';
                 var chamada = remarcando
@@ -315,27 +303,21 @@
     }
 
     function desenhar() {
+        // Uma lista só: grátis, dia e mensal juntos. Os sem agendamento vêm
+        // primeiro (o mais antigo no topo), depois os que já pediram horário.
+        var cartoes = estado.aguardando.map(cartaoAguardando)
+            .concat(estado.marcados.map(cartaoMarcado));
+
         var blocos = [
             el('div.bloco-topo', {}, el('div', {}, [
                 el('h2', { texto: 'Triagem' })
             ])),
-
-            // Primeira lista: a bola está com o cliente (liberado, sem hora).
             el('h3.ind-sub', {
-                texto: 'Liberado — falta marcar o horário (' + estado.aguardando.length + ')'
+                texto: 'Pedidos aguardando conferência (' + cartoes.length + ')'
             }),
-            estado.aguardando.length
-                ? el('div.triagem-lista', {}, estado.aguardando.map(cartaoAguardando))
-                : el('div.vazio', { texto: 'Ninguém esperando horário.' }),
-
-            // Segunda lista: a bola está com você.
-            el('h3.ind-sub', {
-                texto: 'Horário marcado — revise e confirme (' + estado.marcados.length +
-                       (estado.atrasados ? ' · ' + estado.atrasados + ' passaram da hora' : '') + ')'
-            }),
-            estado.marcados.length
-                ? el('div.triagem-lista', {}, estado.marcados.map(cartaoMarcado))
-                : el('div.vazio', { texto: 'Nada esperando confirmação.' })
+            cartoes.length
+                ? el('div.triagem-lista', {}, cartoes)
+                : el('div.vazio', { texto: 'Nenhum pedido esperando.' })
         ];
 
         D.trocar(alvo, blocos);

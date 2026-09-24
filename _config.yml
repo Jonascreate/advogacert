@@ -7,6 +7,12 @@
 exclude:
   - admin.html
   - server.js
+  # Corpos de e-mail: quem os le e o servidor, via montarEmail(). No Pages
+  # virariam paginas publicas em www.agentej.us/email-....html.
+  - email-otp.html
+  - email-boasvindas.html
+  - email-pedido-recebido.html
+  - email-atendimento-marcado.html
   - db_config.php
   - gpt.php
   - login.php
@@ -15,6 +21,8 @@ exclude:
   - package.json
   - package2.json
   - iniciar-servidor.bat
+  - iniciar-servidor.ps1
+  - CLAUDE.md
   - claudeignore
   - supabase_schema.sql
   - migrar_para_supabase.js

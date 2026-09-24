@@ -59,7 +59,7 @@ if (!BREVO_API_KEY) {
  */
 async function enviarEmailBrevo(paraEmail, assunto, htmlBody, textoAlt = '') {
     const payload = JSON.stringify({
-        sender: { name: 'AgenteJ.us', email: 'advogare@agentej.us' },
+        sender: { name: 'Suporte AdvogaCert', email: 'advogare@agentej.us' },
         to: [{ email: paraEmail, name: paraEmail }],
         subject: assunto,
         htmlContent: htmlBody,
@@ -91,6 +91,81 @@ async function enviarEmailBrevo(paraEmail, assunto, htmlBody, textoAlt = '') {
         console.error(`❌ Erro ao conectar com Brevo: ${err.message}`);
         return false;
     }
+}
+
+/**
+ * Monta um e-mail a partir de um arquivo `email-*.html` da raiz, trocando
+ * cada {{CHAVE}} pelo valor correspondente.
+ *
+ * Existe porque o corpo do e-mail escrito em `<p>` solto dentro da rota não
+ * tem logo, não tem o tema do site e não dá para revisar sem mexer no
+ * servidor. Aqui o texto vive num arquivo que se abre no navegador.
+ *
+ * Devolve `null` quando o arquivo não existe — e RECLAMA no log. Foi
+ * exatamente este caso, silencioso, que deixou o e-mail de boas-vindas
+ * meses sem sair: o `if (fs.existsSync(...))` pulava o envio sem dizer nada
+ * e a rota respondia "sucesso" do mesmo jeito. Quem chama é obrigado a
+ * decidir o que fazer com o null.
+ */
+const cacheTemplates = new Map();
+
+/**
+ * Primeiro nome, para o e-mail cumprimentar como gente.
+ *
+ * O cadastro pede o nome completo como está na inscrição, e "Olá, Maria
+ * Fernanda Albuquerque Dias" num e-mail soa como cobrança de banco.
+ */
+function primeiroNome(nomeCompleto) {
+    const limpo = String(nomeCompleto || '').trim();
+    if (!limpo) return 'tudo bem';
+    return limpo.split(/\s+/)[0];
+}
+
+/**
+ * Quebra um instante nas três partes que o e-mail mostra separadas:
+ * dia da semana, data por extenso e hora.
+ *
+ * Sempre em horário de Brasília. O Render roda em UTC, e sem o fuso o
+ * atendimento das 19h chegaria ao cliente marcado para as 22h.
+ */
+function partesDoHorario(quando) {
+    const emBR = opcoes => quando.toLocaleString('pt-BR',
+        { timeZone: 'America/Sao_Paulo', ...opcoes });
+
+    return {
+        DIA_SEMANA: emBR({ weekday: 'long' }),
+        DATA: emBR({ day: '2-digit', month: 'long' }),
+        HORA: emBR({ hour: '2-digit', minute: '2-digit' })
+    };
+}
+
+function montarEmail(arquivo, variaveis = {}) {
+    let bruto = cacheTemplates.get(arquivo);
+
+    if (bruto === undefined) {
+        try {
+            bruto = fs.readFileSync(path.join(__dirname, arquivo), 'utf-8');
+            cacheTemplates.set(arquivo, bruto);
+        } catch {
+            // de propósito fora do cache: o aviso reaparece a cada tentativa
+            // de envio, em vez de sumir depois da primeira
+            console.error(`❌ Template de e-mail ausente: ${arquivo}`);
+            console.error('   O e-mail NÃO foi enviado. Confira se o arquivo está na raiz');
+            console.error('   do projeto e se o deploy o publicou.');
+            return null;
+        }
+    }
+
+    // Escapa o valor: nome e inscrição vêm digitados pelo cliente, e um
+    // "<script>" no campo nome viraria HTML dentro do e-mail.
+    const escapar = v => String(v == null ? '' : v)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+
+    return bruto.replace(/\{\{(\w+)\}\}/g, (achado, chave) =>
+        Object.prototype.hasOwnProperty.call(variaveis, chave)
+            ? escapar(variaveis[chave])
+            : achado);
 }
 
 // ============================================================
@@ -441,7 +516,7 @@ async function enviarCodigoOtp(tipo, valor, codigo) {
     if (tipo === 'email') {
         return enviarEmailBrevo(
             valor,
-            `${codigo} é o seu código de acesso - AdvogaCert`,
+            `${codigo} é o seu código de acesso — Suporte AdvogaCert`,
             htmlCodigoOtp(valor, codigo),
             `Seu código de acesso AdvogaCert é ${codigo}. Vale por 5 minutos e só pode ser usado uma vez. Não compartilhe com ninguém.`
         );
@@ -1774,8 +1849,10 @@ const server = http.createServer((req, res) => {
                 }
 
                 const nome = String(entrada.nome || '').trim();
-                if (nome.length < 5) {
-                    responder(400, { success: false, error: 'Informe seu nome completo, como está na inscrição.' });
+                // O campo agora pede como a pessoa gosta de ser chamada, não o
+                // nome da inscrição: "Ana" ou "Zé" precisam passar.
+                if (nome.length < 2) {
+                    responder(400, { success: false, error: 'Diga como gosta de ser chamado.' });
                     return;
                 }
 
@@ -1860,11 +1937,49 @@ const server = http.createServer((req, res) => {
                 saveJsonDb(db);
 
                 console.log(`🔎 Verificação pedida: OAB ${norma.rotulo} — ${nome}`);
+
+                // Aviso de que o pedido chegou. Sem ele a pessoa preenchia a
+                // tela, via "recebemos" e nunca mais tinha notícia — o pedido
+                // ficava parado na fila e ela não sabia se restava algo a fazer.
+                //
+                // Não trava a resposta: o cliente não precisa esperar a Brevo.
+                const corpoPedido = montarEmail('email-pedido-recebido.html', {
+                    NOME: primeiroNome(nome),
+                    INSCRICAO: norma.rotulo
+                });
+                if (corpoPedido) {
+                    enviarEmailBrevo(
+                        email,
+                        'Cadastro efetivado — Suporte AdvogaCert',
+                        corpoPedido,
+                        `Olá, ${primeiroNome(nome)}. Obrigado! Seu cadastro foi efetivado com ` +
+                        `sucesso. Você receberá por e-mail as instruções de como acessar o chat.`
+                    ).catch(e => console.error('Aviso de pedido recebido não saiu:', e.message));
+                }
+
+                // Avisa você que há inscrição nova esperando conferência. A
+                // fila só anda quando alguém abre o painel, e ninguém abre o
+                // painel sem motivo.
+                if (MP.emailAviso) {
+                    enviarEmailBrevo(
+                        MP.emailAviso,
+                        `🔎 Suporte grátis pedido — OAB ${norma.rotulo}`,
+                        `<p><strong>Pedido de suporte gratuito na fila.</strong></p>
+                         <p>Nome: ${nome}<br>
+                         Inscrição: ${norma.rotulo}<br>
+                         WhatsApp: ${contato}<br>
+                         E-mail: ${email}</p>
+                         <p>Confira a OAB e marque o horário no painel:
+                         ${OAUTH.baseUrl.replace(/\/$/, '')}/admin.html</p>`,
+                        `Suporte grátis pedido — OAB ${norma.rotulo} — ${nome}`
+                    ).catch(e => console.error('Aviso interno de verificação não saiu:', e.message));
+                }
+
                 responder(200, {
                     success: true,
                     situacao: 'pendente',
                     verificacao_id: registro.id,
-                    msg: 'Recebemos seu pedido. Assim que confirmarmos seu cadastro, você recebe um e-mail para escolher o horário — costuma levar poucas horas.'
+                    msg: 'Recebemos seu pedido. Nossa equipe vai conferir sua inscrição na OAB e entrar em contato com o dia e a hora do atendimento. Enviamos um aviso para o seu e-mail.'
                 });
 
             } catch (err) {
@@ -3144,31 +3259,12 @@ const server = http.createServer((req, res) => {
 
                 console.log(`⚖️  Verificação ${v.inscricao}/${v.uf}: ${antes} -> ${decisao}`);
 
-                // O aviso por e-mail não pode derrubar a decisão: se a Brevo
-                // falhar, a decisão já está gravada e você não perde o trabalho.
-                if (v.email) {
-                    const liberado = decisao === 'confere';
-                    const assunto = liberado
-                        ? 'Sua inscrição foi confirmada — AdvogaCert'
-                        : 'Sobre seu pedido de atendimento — AdvogaCert';
-                    const corpo = liberado
-                        ? `<p>Olá, ${v.nome_declarado}.</p>
-                           <p>Confirmamos sua inscrição <strong>${v.inscricao}/${v.uf}</strong>.
-                           Seu atendimento gratuito está liberado.</p>
-                           <p><a href="https://www.agentej.us/index.html#planos">Escolher o horário</a></p>`
-                        : `<p>Olá, ${v.nome_declarado}.</p>
-                           <p>Não conseguimos confirmar a inscrição
-                           <strong>${v.inscricao}/${v.uf}</strong> no cadastro da OAB.</p>
-                           <p>Se acha que houve engano, responda este e-mail ou fale
-                           conosco pelo WhatsApp que a gente confere de novo.</p>`;
-
-                    enviarEmailBrevo(v.email, assunto, corpo)
-                        .catch(e => console.error('Aviso de verificação não saiu:', e.message));
-                }
+                // A decisão não manda e-mail ao cliente: ele só recebe o
+                // agradecimento do cadastro e, depois, o horário marcado.
 
                 responder(200, {
                     success: true,
-                    msg: decisao === 'confere' ? 'Liberado e avisado por e-mail.' : 'Registrado.',
+                    msg: decisao === 'confere' ? 'Liberado.' : 'Registrado.',
                     status: decisao
                 });
 
@@ -3209,9 +3305,12 @@ const server = http.createServer((req, res) => {
             const dono = (db.usuarios || []).find(u =>
                 (v.email && String(u.email || '').toLowerCase() === String(v.email).toLowerCase()) ||
                 (v.contato && soDigitos(u.telefone) === soDigitos(v.contato)));
-            const iniciouPlano = dono && (db.auditoria || []).some(a =>
-                a.acao === 'checkout_iniciado' && String(a.alvo) === String(dono.id));
-            return dono && (assinaturaAtiva(db, dono.id) || iniciouPlano) ? 'premium' : 'free';
+            // Só assinatura valendo conta, como na fila de verificação. Contar
+            // checkout iniciado punha a cápsula Premium em quem abriu o
+            // pagamento e desistiu.
+            // 'plus' (mensal) | 'premium' (dia) | 'free' — as mesmas chaves da
+            // fila de verificação.
+            return (dono && chaveDoPlano(assinaturaAtiva(db, dono.id))) || 'free';
         }
 
         const resumir = v => ({
@@ -3263,7 +3362,7 @@ const server = http.createServer((req, res) => {
                     contato: v ? v.contato : (dono ? dono.telefone : ''),
                     inicio: a.inicio,
                     fim: a.fim,
-                    tipo: dono && assinaturaAtiva(db, dono.id) ? 'premium' : 'free',
+                    tipo: (dono && chaveDoPlano(assinaturaAtiva(db, dono.id))) || 'free',
                     // Premium sem_horario não tem hora real marcada — nunca
                     // "passa da hora", e o painel mostra "pedido direto" em
                     // vez de uma data que confundiria com agendamento de fato
@@ -3380,18 +3479,29 @@ const server = http.createServer((req, res) => {
 
                 // Avisa quem foi marcado: ele não escolheu, então precisa saber.
                 // Sem hora combinada não há o que avisar — o atendimento é agora.
+                //
+                // É este o e-mail que fecha o fluxo do gratuito: o cliente pede,
+                // você confere e marca aqui, e o dia e a hora saem daqui para a
+                // caixa de entrada dele.
                 if (v.email && !semHorario) {
-                    const quandoTexto = vaga.quando.toLocaleString('pt-BR', {
-                        weekday: 'long', day: '2-digit', month: '2-digit',
-                        hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo'
+                    const partes = partesDoHorario(vaga.quando);
+                    const corpo = montarEmail('email-atendimento-marcado.html', {
+                        NOME: primeiroNome(v.nome_declarado),
+                        INSCRICAO: rotulo,
+                        ...partes
                     });
-                    enviarEmailBrevo(
-                        v.email,
-                        'Seu atendimento foi marcado — AdvogaCert',
-                        `<p>Olá, ${v.nome_declarado}.</p>
-                         <p>Seu atendimento ficou marcado para <strong>${quandoTexto}</strong>.</p>
-                         <p>Se o horário não servir, responda este e-mail que a gente remarca.</p>`
-                    ).catch(e => console.error('Aviso de agendamento não saiu:', e.message));
+
+                    if (corpo) {
+                        enviarEmailBrevo(
+                            v.email,
+                            `Atendimento marcado: ${partes.DATA} às ${partes.HORA} — Suporte AdvogaCert`,
+                            corpo,
+                            `Olá, ${primeiroNome(v.nome_declarado)}. Seu atendimento gratuito ficou ` +
+                            `marcado para ${partes.DIA_SEMANA}, ${partes.DATA}, às ${partes.HORA} ` +
+                            `(horário de Brasília). Deixe o certificado e a senha em mãos. ` +
+                            `Se o horário não servir, responda este e-mail que a gente remarca.`
+                        ).catch(e => console.error('Aviso de agendamento não saiu:', e.message));
+                    }
                 }
 
                 responder(200, {
@@ -3479,19 +3589,28 @@ const server = http.createServer((req, res) => {
                 saveJsonDb(db);
 
                 const v = (db.verificacoes_oab || []).find(x => x.id === a.verificacao_id);
+                // Mesmo e-mail da marcação, com dia, data e hora em Brasília.
+                // Quem entrou sem hora combinada recebe aqui o primeiro
+                // horário; quem já tinha, recebe o novo.
                 if (v && v.email) {
-                    const quando = vaga.quando.toLocaleString('pt-BR', {
-                        weekday: 'long', day: '2-digit', month: '2-digit',
-                        hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo'
+                    const partes = partesDoHorario(vaga.quando);
+                    const corpo = montarEmail('email-atendimento-marcado.html', {
+                        NOME: primeiroNome(v.nome_declarado),
+                        INSCRICAO: a.oab,
+                        ...partes
                     });
-                    enviarEmailBrevo(
-                        v.email,
-                        'Seu atendimento foi remarcado — AdvogaCert',
-                        `<p>Olá, ${v.nome_declarado}.</p>
-                         <p>Precisamos remarcar seu atendimento. O novo horário é
-                         <strong>${quando}</strong>.</p>
-                         <p>Se não puder, responda este e-mail que a gente ajusta.</p>`
-                    ).catch(e => console.error('Aviso de remarcação não saiu:', e.message));
+
+                    if (corpo) {
+                        enviarEmailBrevo(
+                            v.email,
+                            `${eraSemHorario ? 'Atendimento marcado' : 'Atendimento remarcado'}: ` +
+                            `${partes.DATA} às ${partes.HORA} — Suporte AdvogaCert`,
+                            corpo,
+                            `Olá, ${primeiroNome(v.nome_declarado)}. Seu atendimento ficou ` +
+                            `marcado para ${partes.DIA_SEMANA}, ${partes.DATA}, às ${partes.HORA} ` +
+                            `(horário de Brasília). Se não puder, responda este e-mail que a gente ajusta.`
+                        ).catch(e => console.error('Aviso de remarcação não saiu:', e.message));
+                    }
                 }
 
                 responder(200, { success: true, msg: 'Remarcado e cliente avisado.' });
@@ -4462,18 +4581,27 @@ const server = http.createServer((req, res) => {
                     const freeDisponivel = oab ? !freeUsadoPelaOab(db, oab) : true;
 
                     // ================== ENVIO REAL DE E-MAIL DE BOAS-VINDAS ==================
-                    const templatePath = path.join(__dirname, 'email-boasvindas.html');
-                    if (!cadastroCheckout && fs.existsSync(templatePath)) {
-                        let htmlTemplate = fs.readFileSync(templatePath, 'utf-8');
-                        htmlTemplate = htmlTemplate.replace('{{EMAIL}}', email);
-                        
-                        console.log(`📧 Enviando e-mail REAL de boas-vindas para ${email}...`);
-                        await enviarEmailBrevo(
-                            email,
-                            '🎉 Bem-vindo ao AgenteJ.us - Conta criada com sucesso!',
-                            htmlTemplate,
-                            `Olá ${email},\n\nSua conta no AgenteJ.us foi criada com sucesso!\n\nAcesse: https://www.agentej.us\n\nBem-vindo! 🚀`
-                        );
+                    // Antes isto era um `if (fs.existsSync(...))` mudo: o
+                    // arquivo não existia, o envio era pulado sem uma linha no
+                    // log e a resposta saía "Conta criada com sucesso!" do
+                    // mesmo jeito. montarEmail() reclama quando o template some.
+                    if (!cadastroCheckout) {
+                        const corpo = montarEmail('email-boasvindas.html', {
+                            NOME: primeiroNome(novo.nome),
+                            EMAIL: email
+                        });
+                        if (corpo) {
+                            console.log(`📧 Enviando e-mail de boas-vindas para ${email}...`);
+                            await enviarEmailBrevo(
+                                email,
+                                'Sua conta no Suporte AdvogaCert está pronta',
+                                corpo,
+                                `Olá, ${primeiroNome(novo.nome)}. Sua conta no Suporte AdvogaCert foi criada ` +
+                                `com o endereço ${email}. Não há senha: na hora de entrar, mandamos ` +
+                                `um código de 6 dígitos para este mesmo endereço. Acesse ` +
+                                `https://www.agentej.us`
+                            );
+                        }
                     }
 
                     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -4651,10 +4779,20 @@ e mandam o cliente para uma tela de erro.
    - https://www.agentej.us/index.html#sobre
      "Desenvolvido por quem vive a rotina jurídica de perto".
    - https://www.agentej.us/index.html#planos
-     "Ao assinar, você garante suporte contínuo". Tem exatamente DOIS planos:
-       • "1 chamado grátis" — R$0, botão "Quero testar grátis", leva para a página de contato.
-       • "Plano Premium" — R$59 por mês, chamados ilimitados e atendimento prioritário,
-         botão "Assinar agora", que abre a tela de pagamento ali mesmo.
+     "Ao assinar, você garante suporte contínuo". Tem exatamente TRÊS planos:
+       • "1 chamado grátis" — R$0, um chamado de teste, atendimento em até 2 horas,
+         sem cartão e sem fidelidade. Botão "1 suporte grátis. Usar?".
+       • "Premium avulso" — R$59 POR DIA, não por mês. É o "só quando precisar":
+         sem mensalidade, paga quando usar, com a mesma prioridade no atendimento
+         (espera de no máximo 30 minutos) e checklist antifraude incluso.
+         Botão "Atendimento".
+       • "Premium mensal" — R$199 POR MÊS, o melhor custo-benefício: chamados
+         ILIMITADOS no mês, atendimento prioritário em no máximo 30 minutos,
+         checklist antifraude, sem fidelidade. Botão "Assinar agora".
+     Os dois Premium abrem a tela de pagamento ali mesmo.
+     ATENÇÃO: os dois valores existem e são coisas diferentes. R$59 é a diária
+     avulsa e R$199 é a mensalidade. Nunca diga que um deles não existe, e nunca
+     troque o período de um pelo do outro.
      O pagamento NÃO exige login nem criar conta: o botão abre o checkout direto.
 
 2) CONTATO — https://www.agentej.us/contato.html
@@ -4684,7 +4822,8 @@ Para orientar o cliente a fazer algo, use SEMPRE este formato de passos,
 com a linha de traços e o link da seção logo abaixo:
 
 Passo 1 _________________________________________
-Escolha o plano que atende você: 1 chamado grátis (R$0) ou Plano Premium (R$59/mês).
+Escolha o plano que atende você: 1 chamado grátis (R$0), Premium avulso (R$59 o dia)
+ou Premium mensal (R$199 por mês, chamados ilimitados).
 👉 https://www.agentej.us/index.html#planos
 
 Passo 2 _________________________________________
