@@ -4523,13 +4523,8 @@ const server = http.createServer((req, res) => {
                     const exists = db.usuarios.find(u => u.email === email);
                     if (exists) {
                         if (cadastroCheckout) {
-                            const telefoneDeOutro = db.usuarios.find(u =>
-                                u.id !== exists.id && u.telefone === whatsapp);
-                            if (telefoneDeOutro) {
-                                res.writeHead(200, { 'Content-Type': 'application/json' });
-                                res.end(JSON.stringify({ success: false, error: 'Este WhatsApp já está cadastrado em outra conta' }));
-                                return;
-                            }
+                            // Quem paga não é barrado por WhatsApp repetido:
+                            // essa trava só faz sentido no gratuito.
                             // A confirmação por OTP vem logo depois. Atualizar
                             // aqui permite que um cliente antigo complete os
                             // dados que faltavam sem criar conta duplicada.
@@ -4551,8 +4546,10 @@ const server = http.createServer((req, res) => {
                         return;
                     }
 
-                    // Numero repetido quebraria a busca por WhatsApp la na frente
-                    const telefoneEmUso = db.usuarios.find(u => u.telefone === whatsapp);
+                    // Numero repetido quebraria a busca por WhatsApp la na frente.
+                    // No cadastro de quem paga a trava não vale: só no gratuito.
+                    const telefoneEmUso = !cadastroCheckout &&
+                        db.usuarios.find(u => u.telefone === whatsapp);
                     if (telefoneEmUso) {
                         res.writeHead(200, { 'Content-Type': 'application/json' });
                         res.end(JSON.stringify({ success: false, error: 'Este WhatsApp já está cadastrado em outra conta' }));
