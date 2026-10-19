@@ -27,6 +27,18 @@
                 -webkit-text-fill-color: transparent;
             }
         }
+        /* Celular: o topo deixa de ser duas colunas (logo e título em cima,
+           token embaixo, centralizado) e as margens laterais encolhem. Sem
+           isto o e-mail ficava com 600px fixos, mais largo que a tela, e o
+           código, centrado nos 600px, encostava na lateral. */
+        @media only screen and (max-width: 600px) {
+            .col { display: block !important; width: 100% !important; box-sizing: border-box; }
+            .col-esq { padding: 28px 24px 0 24px !important; }
+            .col-token { padding: 20px 24px 0 24px !important; }
+            .col-token img { width: 180px !important; }
+            .pad { padding-left: 24px !important; padding-right: 24px !important; }
+            .codigo { font-size: 32px !important; letter-spacing: 8px !important; padding-left: 8px !important; }
+        }
     </style>
 </head>
 <!--
@@ -45,15 +57,15 @@
 <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#eef3f6" style="background-color:#eef3f6;padding:40px 12px;">
     <tr>
         <td align="center">
-            <table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="width:600px;max-width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;">
+            <table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="width:100%;max-width:600px;background-color:#ffffff;border-radius:12px;overflow:hidden;">
 
                 <!-- topo em duas metades: logo e título à esquerda, o token em pé à direita -->
                 <tr>
                     <td style="padding:0;">
                         <table width="100%" cellpadding="0" cellspacing="0" border="0">
                             <tr>
-                                <td valign="middle" width="300" style="width:300px;padding:36px 0 0 40px;">
-                                    <img src="https://www.agentej.us/assets/img/logo-escuro.png" alt="Suporte AdvogaCert" width="190" style="display:block;width:190px;max-width:190px;height:auto;border:0;">
+                                <td class="col col-esq" valign="middle" width="50%" style="width:50%;padding:36px 0 0 40px;">
+                                    <img src="https://www.agentej.us/assets/img/logo-escuro.png" alt="Suporte AdvogaCert" width="190" style="display:block;width:190px;max-width:100%;height:auto;border:0;">
                                     <!-- Montserrat 800. Onde ela não carrega (Gmail), cai em
                                          Helvetica/Arial no mesmo peso. A cor inline do span é a
                                          reserva: sem o degradê, "de acesso" fica azul em vez de preta. -->
@@ -61,8 +73,8 @@
                                         seu código<br><span class="degrade" style="color:#1f6fd1;">de acesso</span>
                                     </h1>
                                 </td>
-                                <td valign="middle" align="center" width="300" style="width:300px;padding:36px 0 0 0;">
-                                    <img src="https://www.agentej.us/assets/img/email/tokens-email.png" alt="" width="232" style="display:block;margin:0 auto;width:232px;max-width:232px;height:auto;border:0;">
+                                <td class="col col-token" valign="middle" align="center" width="50%" style="width:50%;padding:36px 0 0 0;">
+                                    <img src="https://www.agentej.us/assets/img/email/tokens-email.png" alt="" width="232" style="display:block;margin:0 auto;width:232px;max-width:100%;height:auto;border:0;">
                                 </td>
                             </tr>
                         </table>
@@ -70,7 +82,7 @@
                 </tr>
 
                 <tr>
-                    <td style="padding:26px 40px 34px 40px;">
+                    <td class="pad" style="padding:26px 40px 34px 40px;">
                         <p style="margin:0 0 12px 0;color:#0e0e0c;font-size:16px;font-weight:600;line-height:1.5;">Olá, {{EMAIL}},</p>
                         <p style="margin:0 0 14px 0;color:#26262b;font-size:15px;font-weight:500;line-height:1.65;">Digite o código abaixo na tela de entrada. Ele substitui a senha.</p>
                         <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f8fe" style="margin:8px 0 18px 0;background-color:#f4f8fe;border:1px solid #cfe0f7;border-radius:12px;">
@@ -80,7 +92,7 @@
                                          O letter-spacing deixa um espaço depois do último dígito; o
                                          padding-left do mesmo tamanho o compensa e o código fica no
                                          centro (text-indent, usado antes, não é respeitado em todo cliente). -->
-                                    <p align="center" style="margin:0;padding:0 0 0 10px;text-align:center;color:#0e0e0c;font-family:'SFMono-Regular',Consolas,'Liberation Mono','Courier New',monospace;font-size:38px;font-weight:700;letter-spacing:10px;line-height:1.1;"><span style="-webkit-user-select:all;-moz-user-select:all;-ms-user-select:all;user-select:all;">{{CODIGO}}</span></p>
+                                    <p class="codigo" align="center" style="margin:0;padding:0 0 0 10px;text-align:center;color:#0e0e0c;font-family:'SFMono-Regular',Consolas,'Liberation Mono','Courier New',monospace;font-size:38px;font-weight:700;letter-spacing:10px;line-height:1.1;"><span style="-webkit-user-select:all;-moz-user-select:all;-ms-user-select:all;user-select:all;">{{CODIGO}}</span></p>
                                     <p style="margin:10px 0 0 0;color:#55555c;font-size:12px;font-weight:600;">Vale por 5 minutos e só pode ser usado uma vez</p>
                                 </td>
                             </tr>
@@ -91,7 +103,7 @@
 
                 <!-- redes -->
                 <tr>
-                    <td align="center" style="padding:6px 40px 30px 40px;">
+                    <td class="pad" align="center" style="padding:6px 40px 30px 40px;">
                         <table cellpadding="0" cellspacing="0" border="0">
                             <tr>
                                 <!-- só o símbolo, na cor de cada rede, sem o círculo em volta -->
@@ -104,7 +116,7 @@
                 </tr>
 
                 <tr>
-                    <td bgcolor="#f6f7f8" style="background-color:#f6f7f8;padding:20px 40px;">
+                    <td class="pad" bgcolor="#f6f7f8" style="background-color:#f6f7f8;padding:20px 40px;">
                         <p style="margin:0;color:#44444a;font-size:12px;font-weight:500;line-height:1.7;text-align:center;">
                             E-mail automático do <strong style="color:#0e0e0c;font-weight:600;">Suporte AdvogaCert</strong>. Não é preciso responder.
                         </p>

@@ -3,15 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="light">
+    <!-- "light only": pede ao cliente de e-mail que não escureça o layout no
+         modo escuro do aparelho. Apple Mail e Outlook respeitam; o app do
+         Gmail decide sozinho e pode escurecer mesmo assim. -->
+    <meta name="color-scheme" content="light only">
+    <meta name="supported-color-schemes" content="light only">
     <title>Seu atendimento está marcado — Suporte AdvogaCert</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&family=Montserrat:wght@800&display=swap" rel="stylesheet">
     <!-- O degradê do título é o mesmo de "suporte contínuo" na index (verde
          cana ao azul, nos tons do tema claro, que se leem sobre o branco).
          Fica dentro de @supports de propósito: cliente que não entende
          (Gmail, Outlook) descarta o bloco inteiro e mostra o título preto.
          Solto, ele poderia apagar a cor do texto sem desenhar o degradê. -->
     <style>
+        :root { color-scheme: light only; supported-color-schemes: light only; }
         @font-face { font-family: 'Inter Display'; src: url('https://www.agentej.us/assets/fonts/InterDisplay-Medium.ttf') format('truetype'); font-weight: 500; }
         @font-face { font-family: 'Inter Display'; src: url('https://www.agentej.us/assets/fonts/InterDisplay-SemiBold.ttf') format('truetype'); font-weight: 600; }
         @supports (-webkit-background-clip: text) {
@@ -22,6 +27,16 @@
                 -webkit-text-fill-color: transparent;
             }
         }
+        /* Celular: o topo deixa de ser duas colunas (logo e título em cima,
+           token embaixo, centralizado) e as margens laterais encolhem. Sem
+           isto o e-mail ficava com 600px fixos, mais largo que a tela. */
+        @media only screen and (max-width: 600px) {
+            .col { display: block !important; width: 100% !important; box-sizing: border-box; }
+            .col-esq { padding: 28px 24px 0 24px !important; }
+            .col-token { padding: 20px 24px 0 24px !important; }
+            .col-token img { width: 180px !important; }
+            .pad { padding-left: 24px !important; padding-right: 24px !important; }
+        }
     </style>
 </head>
 <!--
@@ -30,8 +45,8 @@
     e-mail só anuncia o que foi gravado, nunca oferece escolha.
 
     Padrão visual de todos os e-mails: cartão branco sobre fundo cinza-claro,
-    logo preta e título em Inter Display (1ª linha normal, 2ª com o degradê da index) na metade esquerda do topo, o token em pé
-    (assets/img/email/tokens.png) na metade direita, botão azul-claro, ícones
+    logo preta e título em Montserrat (1ª linha normal, 2ª com o degradê da index) na metade esquerda do topo, o token em pé
+    (assets/img/email/tokens-email.png, com o furo do chaveiro transparente) na metade direita, botão azul-claro, ícones
     das redes e faixa cinza no pé. Regras de e-mail: layout em <table>, estilo inline,
     imagens por URL absoluta do site, largura de 600px.
 -->
@@ -39,21 +54,24 @@
 <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#eef3f6" style="background-color:#eef3f6;padding:40px 12px;">
     <tr>
         <td align="center">
-            <table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="width:600px;max-width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;">
+            <table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="width:100%;max-width:600px;background-color:#ffffff;border-radius:12px;overflow:hidden;">
 
                 <!-- topo em duas metades: logo e título à esquerda, o token em pé à direita -->
                 <tr>
                     <td style="padding:0;">
                         <table width="100%" cellpadding="0" cellspacing="0" border="0">
                             <tr>
-                                <td valign="middle" width="300" style="width:300px;padding:36px 0 0 40px;">
-                                    <img src="https://www.agentej.us/assets/img/logo-escuro.png" alt="Suporte AdvogaCert" width="190" style="display:block;width:190px;max-width:190px;height:auto;border:0;">
-                                    <h1 style="margin:30px 0 0 0;color:#0e0e0c;font-family:'Inter Display','Inter','Segoe UI',Arial,sans-serif;font-size:36px;font-weight:600;line-height:1.02;letter-spacing:-0.02em;">
-                                        Atendimento<br><span class="degrade">marcado</span>
+                                <td class="col col-esq" valign="middle" width="50%" style="width:50%;padding:36px 0 0 40px;">
+                                    <img src="https://www.agentej.us/assets/img/logo-escuro.png" alt="Suporte AdvogaCert" width="190" style="display:block;width:190px;max-width:100%;height:auto;border:0;">
+                                    <!-- Montserrat 800, como no e-mail do código. Onde ela não carrega
+                                         (Gmail), cai em Helvetica/Arial no mesmo peso. A cor inline do
+                                         span é a reserva: sem o degradê, "marcado" fica azul. -->
+                                    <h1 style="margin:26px 0 0 0;color:#0e0e0c;font-family:'Montserrat',Helvetica,Arial,sans-serif;font-size:30px;font-weight:800;line-height:1.08;letter-spacing:-0.03em;">
+                                        atendimento<br><span class="degrade" style="color:#1f6fd1;">marcado</span>
                                     </h1>
                                 </td>
-                                <td valign="middle" align="center" width="300" style="width:300px;padding:36px 0 0 0;">
-                                    <img src="https://www.agentej.us/assets/img/email/tokens.png" alt="" width="232" style="display:block;margin:0 auto;width:232px;max-width:232px;height:auto;border:0;">
+                                <td class="col col-token" valign="middle" align="center" width="50%" style="width:50%;padding:36px 0 0 0;">
+                                    <img src="https://www.agentej.us/assets/img/email/tokens-email.png" alt="" width="232" style="display:block;margin:0 auto;width:232px;max-width:100%;height:auto;border:0;">
                                 </td>
                             </tr>
                         </table>
@@ -61,7 +79,7 @@
                 </tr>
 
                 <tr>
-                    <td style="padding:26px 40px 34px 40px;">
+                    <td class="pad" style="padding:26px 40px 34px 40px;">
                         <p style="margin:0 0 12px 0;color:#0e0e0c;font-size:16px;font-weight:600;line-height:1.5;">Olá, {{NOME}},</p>
                         <p style="margin:0 0 14px 0;color:#26262b;font-size:15px;font-weight:500;line-height:1.65;"><!--abertura-->Conferimos a inscrição <strong style="color:#0e0e0c;font-weight:600;">{{INSCRICAO}}</strong> e marcamos o seu atendimento:<!--/abertura--></p>
                         <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f8fe" style="margin:8px 0 18px 0;background-color:#f4f8fe;border:1px solid #cfe0f7;border-radius:12px;">
@@ -81,19 +99,20 @@
 
                 <!-- redes -->
                 <tr>
-                    <td align="center" style="padding:6px 40px 30px 40px;">
+                    <td class="pad" align="center" style="padding:6px 40px 30px 40px;">
                         <table cellpadding="0" cellspacing="0" border="0">
                             <tr>
-                                <td style="padding:0 8px;"><a href="https://wa.me/5561986241570"><img src="https://www.agentej.us/assets/img/email/whatsapp.png" alt="WhatsApp" width="40" height="40" style="display:block;border:0;"></a></td>
-                                <td style="padding:0 8px;"><a href="https://www.instagram.com/jonasadvogare"><img src="https://www.agentej.us/assets/img/email/instagram.png" alt="Instagram" width="40" height="40" style="display:block;border:0;"></a></td>
-                                <td style="padding:0 8px;"><a href="https://www.linkedin.com/in/jonas-costa-2a7256393/"><img src="https://www.agentej.us/assets/img/email/linkedin.png" alt="LinkedIn" width="40" height="40" style="display:block;border:0;"></a></td>
+                                <!-- só o símbolo, na cor de cada rede, sem o círculo em volta -->
+                                <td style="padding:0 11px;"><a href="https://wa.me/5561986241570"><img src="https://www.agentej.us/assets/img/email/whatsapp-icone.png" alt="WhatsApp" width="28" height="28" style="display:block;border:0;"></a></td>
+                                <td style="padding:0 11px;"><a href="https://www.instagram.com/jonasadvogare"><img src="https://www.agentej.us/assets/img/email/instagram-icone.png" alt="Instagram" width="28" height="28" style="display:block;border:0;"></a></td>
+                                <td style="padding:0 11px;"><a href="https://www.linkedin.com/in/jonas-costa-2a7256393/"><img src="https://www.agentej.us/assets/img/email/linkedin-icone.png" alt="LinkedIn" width="28" height="28" style="display:block;border:0;"></a></td>
                             </tr>
                         </table>
                     </td>
                 </tr>
 
                 <tr>
-                    <td bgcolor="#f6f7f8" style="background-color:#f6f7f8;padding:20px 40px;">
+                    <td class="pad" bgcolor="#f6f7f8" style="background-color:#f6f7f8;padding:20px 40px;">
                         <p style="margin:0;color:#44444a;font-size:12px;font-weight:500;line-height:1.7;text-align:center;">
                             Você recebeu este e-mail porque pediu suporte ao <strong style="color:#0e0e0c;font-weight:600;">Suporte AdvogaCert</strong>.<br>
                             Dúvidas? Responda este e-mail ou fale com a gente pelo WhatsApp.
