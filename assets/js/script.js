@@ -122,7 +122,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const tituloCadastro = document.querySelector('.login-container h2');
         const botaoCadastro = document.querySelector('#registerForm .login-btn');
         if (tituloCadastro) tituloCadastro.textContent = 'Dados para contato';
-        if (botaoCadastro) botaoCadastro.textContent = 'Salvar e confirmar e-mail';
+        if (botaoCadastro) botaoCadastro.textContent = 'Enviar dados';
+        const linkJaTenho = document.querySelector('#registerForm .login-links');
+        if (linkJaTenho) linkJaTenho.style.display = 'none';
+        const avisoCodigo = document.querySelector('#registerForm .otp-hint');
+        if (avisoCodigo) avisoCodigo.style.display = 'none';
         const grupoOab = document.getElementById('register-oab-grupo');
         const dicaOab = document.getElementById('register-oab-dica');
         const campoOab = document.getElementById('register-oab');
