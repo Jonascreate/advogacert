@@ -665,7 +665,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ========== CÓDIGO DO CHAT DINÂMICO (como no index.html) ==========
+    // Desligado: o robô de chat vive só no painel (admin.html). O bloco fica
+    // aqui, sem rodar, para não mexer no resto do script desta página.
     (() => {
+        return;
         console.log('JurisGPT iniciado');
 
         const botGlowStyle = document.createElement('style');

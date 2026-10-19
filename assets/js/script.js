@@ -518,6 +518,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // JURISGPT CHAT (Assistente virtual)
     // ==========================================
     (() => {
+        // O robô de chat vive só no painel (admin.html), onde explica o
+        // painel, o banco e o servidor. Nas páginas públicas ele saiu: o
+        // contato do cliente entra pelo questionário do botão do topo.
+        if (location.pathname.split('/').pop() !== 'admin.html') return;
         console.log('JurisGPT iniciado');
 
         const botGlowStyle = document.createElement('style');
