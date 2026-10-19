@@ -2359,18 +2359,17 @@ const server = http.createServer((req, res) => {
                     return;
                 }
 
-                if (!user.oab || !user.telefone) {
-                    responder(400, { success: false, error: 'Complete OAB e WhatsApp antes de continuar.' });
-                    return;
-                }
-
+                // OAB e WhatsApp não são mais exigidos aqui: o card de horário
+                // não tem campo para eles, e o login por e-mail ou Google cria
+                // a conta sem nenhum dos dois — a exigência barrava todo mundo
+                // depois de escolher o horário. Quem tiver, segue registrado.
                 const vaga = horarioValido(db, entrada.inicio);
                 if (!vaga.ok) {
                     responder(200, { success: false, error: vaga.erro, recarregar_agenda: true });
                     return;
                 }
 
-                const [inscricao, uf] = String(user.oab).split('/');
+                const [inscricao = '', uf = ''] = user.oab ? String(user.oab).split('/') : [];
                 const agora = new Date().toISOString();
                 db.verificacoes_oab = db.verificacoes_oab || [];
                 db.agendamentos = db.agendamentos || [];
@@ -2381,7 +2380,7 @@ const server = http.createServer((req, res) => {
                     inscricao,
                     uf,
                     nome_declarado: user.nome || user.email || '',
-                    contato: String(user.telefone).replace(/\D/g, ''),
+                    contato: String(user.telefone || '').replace(/\D/g, ''),
                     email: user.email || email,
                     status: 'confere',
                     observacao: `Plano ${PLANOS[plano].nome} escolhido; aguardando pagamento e conferência do horário.`,
@@ -2396,7 +2395,7 @@ const server = http.createServer((req, res) => {
                     id: proximoId(db.agendamentos),
                     chamado_id: null,
                     usuario_id: user.id,
-                    oab: user.oab,
+                    oab: user.oab || '',
                     nome: user.nome || user.email || '',
                     inicio: vaga.quando.toISOString(),
                     fim: fim.toISOString(),

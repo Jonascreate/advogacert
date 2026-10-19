@@ -1121,7 +1121,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 <div id="checkout-agenda">
                     <div class="pay-resumo-rotulo">Escolha o horário do atendimento</div>
-                    <div id="checkout-horarios" style="margin-top:.8rem;color:#8a8a90">Carregando horários disponíveis…</div>
+                    <div id="checkout-horarios" style="margin-top:.8rem;color:#8a8a90">
+                        <div class="free-rotulo">Escolha o dia</div>
+                        <div class="free-dias" id="checkout-dias"></div>
+                        <div class="free-rotulo">Escolha o horário</div>
+                        <div class="free-horas" id="checkout-horas"></div>
+                    </div>
                     <button type="button" class="pay-btn" id="checkout-continuar" disabled style="margin-top:1rem">Continuar para o pagamento</button>
                     <div class="pay-msg" id="checkout-status"></div>
                 </div>
@@ -1184,10 +1189,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const btnEnviar = modal.querySelector('#checkout-submit');
         const btnTexto = modal.querySelector('#checkout-submit-texto');
         const msg = modal.querySelector('#checkout-status');
-        const horariosCheckout = modal.querySelector('#checkout-horarios');
+        const gradeDias = modal.querySelector('#checkout-dias');
+        const gradeHoras = modal.querySelector('#checkout-horas');
         const continuarCheckout = modal.querySelector('#checkout-continuar');
         let checkoutAtual = null;
         let horarioEscolhido = null;
+        let agenda = [];
+        let diaEscolhido = null;
 
         // --- máscaras: o cliente digita só números, a formatação é nossa ---
         campoNumero.addEventListener('input', function () {
@@ -1244,38 +1252,83 @@ document.addEventListener('DOMContentLoaded', function() {
             overlay.classList.add('aberto');
             document.body.style.overflow = 'hidden';   // trava o fundo enquanto o modal está aberto
 
+            carregarAgenda();
+        }
+
+        // Mesma grade da página do suporte grátis (classes free-* de
+        // suporte-gratis.css): uma fileira de dias e, embaixo, as horas
+        // livres do dia escolhido. A lista vem do servidor, que é quem
+        // sabe o que já foi marcado.
+        function pintarDias() {
+            gradeDias.textContent = '';
+            agenda.forEach(d => {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'free-dia' + (d.dia === diaEscolhido ? ' ativo' : '');
+                b.innerHTML =
+                    '<span class="free-dia-sem"></span>' +
+                    '<span class="free-dia-num"></span>' +
+                    '<span class="free-dia-mes"></span>' +
+                    '<span class="free-dia-vagas"></span>';
+                b.querySelector('.free-dia-sem').textContent = d.semana;
+                b.querySelector('.free-dia-num').textContent = d.numero;
+                b.querySelector('.free-dia-mes').textContent = d.mes;
+                b.querySelector('.free-dia-vagas').textContent =
+                    d.vagas === 1 ? '1 vaga' : d.vagas + ' vagas';
+                b.addEventListener('click', () => {
+                    diaEscolhido = d.dia;
+                    horarioEscolhido = null;
+                    continuarCheckout.disabled = true;
+                    pintarDias();
+                    pintarHoras();
+                });
+                gradeDias.appendChild(b);
+            });
+        }
+
+        function pintarHoras() {
+            gradeHoras.textContent = '';
+            const d = agenda.find(x => x.dia === diaEscolhido);
+            if (!d) return;
+            d.horarios.forEach(h => {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'free-hora' + (h.inicio === horarioEscolhido ? ' ativo' : '');
+                b.textContent = h.rotulo;
+                b.addEventListener('click', () => {
+                    horarioEscolhido = h.inicio;
+                    continuarCheckout.disabled = false;
+                    msg.textContent = '';
+                    pintarHoras();
+                });
+                gradeHoras.appendChild(b);
+            });
+        }
+
+        function carregarAgenda() {
             continuarCheckout.disabled = true;
-            horariosCheckout.textContent = 'Carregando horários disponíveis…';
+            horarioEscolhido = null;
+            gradeDias.textContent = 'Carregando...';
+            gradeHoras.textContent = '';
             fetch(window.apiUrl('/agenda/horarios'))
                 .then(r => r.json())
                 .then(d => {
-                    const dias = (d && d.dias) || [];
-                    horariosCheckout.textContent = '';
-                    dias.forEach(dia => {
-                        const bloco = document.createElement('div');
-                        bloco.style.marginBottom = '.75rem';
-                        const titulo = document.createElement('div');
-                        titulo.textContent = dia.rotulo || dia.dia;
-                        titulo.style.cssText = 'font-size:.82rem;margin-bottom:.35rem;color:#d4d4d8';
-                        bloco.appendChild(titulo);
-                        (dia.horarios || []).forEach(h => {
-                            const b = document.createElement('button');
-                            b.type = 'button';
-                            b.textContent = h.rotulo;
-                            b.style.cssText = 'margin:0 .35rem .35rem 0;padding:.5rem .7rem;border:1px solid rgba(110,231,200,.35);border-radius:8px;background:transparent;color:#d4d4d8;cursor:pointer';
-                            b.onclick = function () {
-                                horariosCheckout.querySelectorAll('button').forEach(x => x.style.background = 'transparent');
-                                b.style.background = 'rgba(110,231,200,.22)';
-                                horarioEscolhido = h.inicio;
-                                continuarCheckout.disabled = false;
-                            };
-                            bloco.appendChild(b);
-                        });
-                        horariosCheckout.appendChild(bloco);
-                    });
-                    if (!dias.length) horariosCheckout.textContent = 'Não há horários disponíveis agora.';
+                    agenda = (d && d.dias) || [];
+                    diaEscolhido = agenda.length ? agenda[0].dia : null;
+                    if (!agenda.length) {
+                        gradeDias.textContent = '';
+                        msg.style.color = '#ff6b5e';
+                        msg.textContent = 'Não há horário livre nos próximos dias. Fale conosco pelo WhatsApp.';
+                        return;
+                    }
+                    pintarDias();
+                    pintarHoras();
                 })
-                .catch(() => { horariosCheckout.textContent = 'Não foi possível carregar os horários.'; });
+                .catch(() => {
+                    gradeDias.textContent = '';
+                    msg.style.color = '#ff6b5e';
+                    msg.textContent = 'Não foi possível carregar a agenda.';
+                });
         }
 
         continuarCheckout.onclick = function () {
@@ -1308,6 +1361,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     msg.style.color = '#ffb020';
                     msg.textContent = (d && d.error) ||
                         'Não foi possível abrir o pagamento agora.';
+                    // o horário foi tomado enquanto a pessoa escolhia
+                    if (d && d.recarregar_agenda) carregarAgenda();
+                    else continuarCheckout.disabled = false;
                 })
                 .catch(function () {
                     continuarCheckout.disabled = false;
