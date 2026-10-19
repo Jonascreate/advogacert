@@ -54,6 +54,16 @@ if (!BREVO_API_KEY) {
     console.warn('⚠️  Chave Brevo ausente: copie secrets_config.example.json para secrets_config.json. O envio de e-mail vai falhar.');
 }
 
+// Questionário do botão de WhatsApp do topo: o servidor repassa as respostas
+// ao fluxo "Site - Contato rápido (WhatsApp)" do n8n, que avisa o Jonas e
+// responde ao cliente pela Evolution. O segredo vai num cabeçalho e o n8n
+// recusa quem não o manda — por isso o navegador nunca fala com o n8n direto.
+const N8N_CONTATO_URL = process.env.N8N_CONTATO_URL || SECRETS.n8n?.contato_url ||
+    'https://n8n.agentej.us/webhook/site-contato';
+const N8N_CONTATO_SEGREDO = process.env.N8N_CONTATO_SEGREDO || SECRETS.n8n?.contato_segredo || '';
+// IP -> horários dos últimos envios do questionário (limite contra spam)
+const contatoEnvios = new Map();
+
 /**
  * Envia e-mail real via API Brevo
  */
@@ -2317,6 +2327,92 @@ const server = http.createServer((req, res) => {
             } catch (err) {
                 console.error('Erro ao salvar turma do curso:', err.message);
                 responder(400, { success: false, error: 'Não foi possível salvar a turma.' });
+            }
+        });
+        return;
+    }
+
+    // ============ CONTATO RÁPIDO: POST /contato/whatsapp ============
+    // O botão de WhatsApp do topo abria a conversa com o Jonas sem filtro.
+    // Agora abre um questionário (e-mail, WhatsApp, OAB; sem OAB, perfil e
+    // nome) e as respostas seguem para o n8n, que manda o resumo ao Jonas e
+    // uma confirmação ao cliente.
+    if (method === 'POST' && url === '/contato/whatsapp') {
+        let body = '';
+        req.on('data', chunk => { if (body.length < 4000) body += chunk; });
+        req.on('end', async () => {
+            const responder = (status, payload) => {
+                res.writeHead(status, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(payload));
+            };
+
+            try {
+                const entrada = JSON.parse(body || '{}');
+                const email = String(entrada.email || '').trim().toLowerCase().slice(0, 160);
+                const whatsapp = normalizarTelefone(entrada.whatsapp);
+                const oab = entrada.oab ? normalizarOab(entrada.oab) : null;
+                const PERFIS = ['Perito', 'Juiz', 'Contador', 'Médico', 'Pessoa jurídica'];
+                const perfil = oab ? 'Advogado' : PERFIS.find(p => p === entrada.perfil);
+                const nome = String(entrada.nome || '').trim().replace(/\s+/g, ' ').slice(0, 80);
+
+                if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+                    responder(400, { success: false, error: 'Informe um e-mail válido.' });
+                    return;
+                }
+                if (!whatsapp) {
+                    responder(400, { success: false, error: 'Informe o WhatsApp com DDD.' });
+                    return;
+                }
+                if (entrada.oab && !oab) {
+                    responder(400, { success: false, error: 'Confira a OAB no formato 123456/GO.' });
+                    return;
+                }
+                if (!oab && (!perfil || nome.length < 2)) {
+                    responder(400, { success: false, error: 'Escolha o perfil e informe seu nome.' });
+                    return;
+                }
+
+                // Três envios por IP a cada 10 minutos: o questionário dispara
+                // mensagem no WhatsApp, não pode virar canhão de spam.
+                const ip = ipDoPedido(req) || 'desconhecido';
+                const agora = Date.now();
+                const recentes = (contatoEnvios.get(ip) || []).filter(t => agora - t < 10 * 60 * 1000);
+                if (recentes.length >= 3) {
+                    responder(429, { success: false, error: 'Recebemos seus envios. Aguarde alguns minutos.' });
+                    return;
+                }
+                recentes.push(agora);
+                contatoEnvios.set(ip, recentes);
+
+                if (!N8N_CONTATO_SEGREDO) {
+                    console.error('❌ Contato rápido: N8N_CONTATO_SEGREDO não configurado.');
+                    responder(503, { success: false, error: 'Contato indisponível agora. Tente mais tarde.' });
+                    return;
+                }
+
+                const r = await fetch(N8N_CONTATO_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-contato-segredo': N8N_CONTATO_SEGREDO },
+                    body: JSON.stringify({
+                        email,
+                        whatsapp: whatsapp.replace('+', ''),
+                        oab: oab || '',
+                        perfil,
+                        nome
+                    })
+                });
+                const resposta = await r.json().catch(() => ({}));
+                if (!r.ok || !resposta.success) {
+                    console.error(`❌ Contato rápido: n8n respondeu ${r.status}`);
+                    responder(502, { success: false, error: 'Não foi possível enviar agora. Tente de novo.' });
+                    return;
+                }
+
+                console.log(`💬 Contato rápido: ${perfil}${oab ? ' ' + oab : ''} — ${email}`);
+                responder(200, { success: true });
+            } catch (err) {
+                console.error('Erro no contato rápido:', err.message);
+                responder(400, { success: false, error: 'Não foi possível enviar agora.' });
             }
         });
         return;

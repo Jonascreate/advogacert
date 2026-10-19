@@ -58,6 +58,11 @@ services:
       - key: GOOGLE_CLIENT_SECRET
         sync: false
 
+      # questionario do botao de WhatsApp do topo -> fluxo do n8n.
+      # O segredo e o mesmo que o no "Segredo confere?" do fluxo confere.
+      - key: N8N_CONTATO_SEGREDO
+        sync: false
+
       # pagamento Mercado Pago (opcional)
       - key: MP_LINK
         sync: false
