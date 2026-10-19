@@ -3,15 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="light">
+    <!-- "light only": pede ao cliente de e-mail que não escureça o layout no
+         modo escuro do aparelho. Apple Mail e Outlook respeitam; o app do
+         Gmail decide sozinho e pode escurecer mesmo assim. -->
+    <meta name="color-scheme" content="light only">
+    <meta name="supported-color-schemes" content="light only">
     <title>Seu código de acesso — Suporte AdvogaCert</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&family=Montserrat:wght@800&display=swap" rel="stylesheet">
     <!-- O degradê do título é o mesmo de "suporte contínuo" na index (verde
          cana ao azul, nos tons do tema claro, que se leem sobre o branco).
          Fica dentro de @supports de propósito: cliente que não entende
          (Gmail, Outlook) descarta o bloco inteiro e mostra o título preto.
          Solto, ele poderia apagar a cor do texto sem desenhar o degradê. -->
     <style>
+        :root { color-scheme: light only; supported-color-schemes: light only; }
         @font-face { font-family: 'Inter Display'; src: url('https://www.agentej.us/assets/fonts/InterDisplay-Medium.ttf') format('truetype'); font-weight: 500; }
         @font-face { font-family: 'Inter Display'; src: url('https://www.agentej.us/assets/fonts/InterDisplay-SemiBold.ttf') format('truetype'); font-weight: 600; }
         @supports (-webkit-background-clip: text) {
@@ -27,11 +32,12 @@
 <!--
     Código de acesso (login sem senha). Montado por htmlCodigoOtp() no
     server.js, que troca {{EMAIL}} e {{CODIGO}}. A logo era uma imagem no
-    Google Drive; agora é a logo preta do próprio site.
+    Google Drive; agora é a logo do painel admin (logo-email.png, degradê dourado ao prata),
+    que aparece tanto no fundo branco quanto no modo escuro.
 
     Padrão visual de todos os e-mails: cartão branco sobre fundo cinza-claro,
-    logo preta e título em Inter Display (1ª linha normal, 2ª com o degradê da index) na metade esquerda do topo, o token em pé
-    (assets/img/email/tokens.png) na metade direita, botão azul-claro, ícones
+    logo e título em Montserrat (1ª linha normal, 2ª com o degradê da index) na metade esquerda do topo, o token em pé
+    (assets/img/email/tokens-email.png, com o furo do chaveiro transparente) na metade direita, botão azul-claro, ícones
     das redes e faixa cinza no pé. Regras de e-mail: layout em <table>, estilo inline,
     imagens por URL absoluta do site, largura de 600px.
 -->
@@ -47,13 +53,18 @@
                         <table width="100%" cellpadding="0" cellspacing="0" border="0">
                             <tr>
                                 <td valign="middle" width="300" style="width:300px;padding:36px 0 0 40px;">
-                                    <img src="https://www.agentej.us/assets/img/logo-escuro.png" alt="Suporte AdvogaCert" width="190" style="display:block;width:190px;max-width:190px;height:auto;border:0;">
-                                    <h1 style="margin:30px 0 0 0;color:#0e0e0c;font-family:'Inter Display','Inter','Segoe UI',Arial,sans-serif;font-size:36px;font-weight:600;line-height:1.02;letter-spacing:-0.02em;">
-                                        Seu código<br><span class="degrade">de acesso</span>
+                                    <!-- logo do painel, não preta: no modo escuro do Gmail o fundo
+                                         escurece e a imagem não muda, e a preta sumia -->
+                                    <img src="https://www.agentej.us/assets/img/email/logo-email.png" alt="Suporte AdvogaCert" width="190" style="display:block;width:190px;max-width:190px;height:auto;border:0;">
+                                    <!-- Montserrat 800. Onde ela não carrega (Gmail), cai em
+                                         Helvetica/Arial no mesmo peso. A cor inline do span é a
+                                         reserva: sem o degradê, "de acesso" fica azul em vez de preta. -->
+                                    <h1 style="margin:26px 0 0 0;color:#0e0e0c;font-family:'Montserrat',Helvetica,Arial,sans-serif;font-size:30px;font-weight:800;line-height:1.08;letter-spacing:-0.03em;">
+                                        seu código<br><span class="degrade" style="color:#1f6fd1;">de acesso</span>
                                     </h1>
                                 </td>
                                 <td valign="middle" align="center" width="300" style="width:300px;padding:36px 0 0 0;">
-                                    <img src="https://www.agentej.us/assets/img/email/tokens.png" alt="" width="232" style="display:block;margin:0 auto;width:232px;max-width:232px;height:auto;border:0;">
+                                    <img src="https://www.agentej.us/assets/img/email/tokens-email.png" alt="" width="232" style="display:block;margin:0 auto;width:232px;max-width:232px;height:auto;border:0;">
                                 </td>
                             </tr>
                         </table>
@@ -66,9 +77,12 @@
                         <p style="margin:0 0 14px 0;color:#26262b;font-size:15px;font-weight:500;line-height:1.65;">Digite o código abaixo na tela de entrada. Ele substitui a senha.</p>
                         <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f8fe" style="margin:8px 0 18px 0;background-color:#f4f8fe;border:1px solid #cfe0f7;border-radius:12px;">
                             <tr>
-                                <td style="padding:22px 24px;text-align:center;">
-                                    <!-- user-select: all faz um toque selecionar o código inteiro nos webmails -->
-                                    <p style="margin:0;color:#0e0e0c;font-family:'SFMono-Regular',Consolas,'Liberation Mono','Courier New',monospace;font-size:38px;font-weight:700;letter-spacing:12px;text-indent:12px;line-height:1.1;"><span style="-webkit-user-select:all;-moz-user-select:all;-ms-user-select:all;user-select:all;">{{CODIGO}}</span></p>
+                                <td align="center" style="padding:22px 24px;text-align:center;">
+                                    <!-- user-select: all faz um toque selecionar o código inteiro nos webmails.
+                                         O letter-spacing deixa um espaço depois do último dígito; o
+                                         padding-left do mesmo tamanho o compensa e o código fica no
+                                         centro (text-indent, usado antes, não é respeitado em todo cliente). -->
+                                    <p align="center" style="margin:0;padding:0 0 0 10px;text-align:center;color:#0e0e0c;font-family:'SFMono-Regular',Consolas,'Liberation Mono','Courier New',monospace;font-size:38px;font-weight:700;letter-spacing:10px;line-height:1.1;"><span style="-webkit-user-select:all;-moz-user-select:all;-ms-user-select:all;user-select:all;">{{CODIGO}}</span></p>
                                     <p style="margin:10px 0 0 0;color:#55555c;font-size:12px;font-weight:600;">Vale por 5 minutos e só pode ser usado uma vez</p>
                                 </td>
                             </tr>
@@ -82,9 +96,10 @@
                     <td align="center" style="padding:6px 40px 30px 40px;">
                         <table cellpadding="0" cellspacing="0" border="0">
                             <tr>
-                                <td style="padding:0 8px;"><a href="https://wa.me/5561986241570"><img src="https://www.agentej.us/assets/img/email/whatsapp.png" alt="WhatsApp" width="40" height="40" style="display:block;border:0;"></a></td>
-                                <td style="padding:0 8px;"><a href="https://www.instagram.com/jonasadvogare"><img src="https://www.agentej.us/assets/img/email/instagram.png" alt="Instagram" width="40" height="40" style="display:block;border:0;"></a></td>
-                                <td style="padding:0 8px;"><a href="https://www.linkedin.com/in/jonas-costa-2a7256393/"><img src="https://www.agentej.us/assets/img/email/linkedin.png" alt="LinkedIn" width="40" height="40" style="display:block;border:0;"></a></td>
+                                <!-- só o símbolo, na cor de cada rede, sem o círculo em volta -->
+                                <td style="padding:0 11px;"><a href="https://wa.me/5561986241570"><img src="https://www.agentej.us/assets/img/email/whatsapp-icone.png" alt="WhatsApp" width="28" height="28" style="display:block;border:0;"></a></td>
+                                <td style="padding:0 11px;"><a href="https://www.instagram.com/jonasadvogare"><img src="https://www.agentej.us/assets/img/email/instagram-icone.png" alt="Instagram" width="28" height="28" style="display:block;border:0;"></a></td>
+                                <td style="padding:0 11px;"><a href="https://www.linkedin.com/in/jonas-costa-2a7256393/"><img src="https://www.agentej.us/assets/img/email/linkedin-icone.png" alt="LinkedIn" width="28" height="28" style="display:block;border:0;"></a></td>
                             </tr>
                         </table>
                     </td>
