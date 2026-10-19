@@ -134,6 +134,11 @@ body::before {
 .login-showcase {
     padding: 2rem;
 }
+/* sem o texto de apresentação ao lado: o cartão fica sozinho, no centro */
+.login-split.login-sem-vitrine {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+}
 
 .login-icon {
     display: flex;
