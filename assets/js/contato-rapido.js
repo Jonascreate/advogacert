@@ -3,8 +3,8 @@
  * O botão abria a conversa com o Jonas direto, sem saber quem chamava. Agora
  * abre este questionário: e-mail, WhatsApp e OAB. Sem OAB, avisa e pede o
  * perfil (perito, juiz, contador, médico, PJ) e o nome. As respostas vão
- * para /contato/whatsapp no servidor, que repassa ao n8n: o Jonas recebe o
- * resumo e o cliente recebe uma confirmação no próprio WhatsApp.
+ * para /contato/rapido no servidor e entram na triagem do painel; o Jonas
+ * marca o horário lá e o painel avisa o cliente por e-mail.
  *
  * Se este script não carregar, o link continua levando ao wa.me — o
  * questionário só intercepta o clique.
@@ -46,7 +46,8 @@
             '</form>' +
 
             '<div class="cr-passo" data-passo="pronto">' +
-                '<p class="cr-sub" style="margin-top:6px">Pronto. Mandamos uma mensagem no seu WhatsApp e o Jonas vai falar com você por lá.</p>' +
+                '<p class="cr-aviso">Recebemos a sua mensagem.</p>' +
+                '<p class="cr-sub">Vamos entrar em contato pelo e-mail ou pelo WhatsApp informado.</p>' +
                 '<button type="button" class="cr-btn" data-fechar>Fechar</button>' +
             '</div>' +
 
@@ -122,7 +123,7 @@
         aviso('');
         botaoAtivo.dataset.texto = botaoAtivo.textContent;
         botaoAtivo.textContent = 'Enviando...';
-        fetch(window.apiUrl('/contato/whatsapp'), {
+        fetch(window.apiUrl('/contato/rapido'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(dados)

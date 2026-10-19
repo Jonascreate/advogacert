@@ -558,13 +558,9 @@
                     <i class="fa-solid fa-arrow-right upsell-seta"></i>
                 </a>
 
-                <!-- ações na coluna da esquerda, alinhadas com o texto acima -->
-                <div class="action-buttons">
-                    <a href="https://wa.me/5561986241570" id="btn-whats" class="btn btn-suporte" target="_blank" rel="noopener">
-                        <i class="fa-solid fa-headset"></i>
-                        Chamar o suporte
-                    </a>
-                </div>
+                <!-- Sem botão de WhatsApp: no gratuito, quem chama é o suporte,
+                     no horário marcado. O WhatsApp direto ficou só para quem
+                     já pagou (agradecimento-premium.html). -->
             </div>
 
             <div class="next-steps">
@@ -595,8 +591,8 @@
                     <li>
                         <span class="passo-num">3</span>
                         <div>
-                            <strong>Chame no WhatsApp e passe o código</strong>
-                            <p>Envie o número junto com o que está acontecendo. Nossa equipe pede a conexão a partir dele.</p>
+                            <strong>Tenha o código em mãos</strong>
+                            <p>No horário marcado, nossa equipe entra em contato, pede esse número e faz a conexão a partir dele.</p>
                         </div>
                     </li>
                     <li>
@@ -636,7 +632,7 @@
     <script src="assets/js/api.js?v=9"></script>
     <script src="assets/js/telemetria.js?v=2"></script>
 
-    <script src="assets/js/script.js?v=16"></script>
+    <script src="assets/js/script.js?v=26"></script>
     <script>
     (function () {
         // Tela do CHAMADO GRATUITO — destino de quem acabou de criar conta.
@@ -664,30 +660,6 @@
             document.getElementById('oab-nota').innerHTML +=
                 `<br>Seu atendimento está marcado para <strong>${quandoTexto}</strong>.`;
         }
-
-        // já leva o contexto na conversa: a equipe não precisa perguntar quem é
-        const texto = `Olá! Quero usar meu chamado de suporte gratuito da AdvogaCert${oab ? ' (OAB ' + oab + ')' : ''}`
-            + (quandoTexto ? `, marcado para ${quandoTexto}` : '') + '.';
-        const btnWhats = document.getElementById('btn-whats');
-        btnWhats.href = 'https://wa.me/5561986241570?text=' + encodeURIComponent(texto);
-
-        // Mesmo registro da tela premium (ver agradecimento-premium.html, onde
-        // o porquê de cada escolha está explicado): o clique sai do site para o
-        // WhatsApp e precisa deixar rastro na auditoria, que o servidor
-        // sincroniza com o Supabase. sendBeacon sobrevive à navegação; o
-        // text/plain evita a checagem prévia de permissão que mataria o envio
-        // no domínio público.
-        btnWhats.addEventListener('click', function () {
-            try {
-                navigator.sendBeacon(apiUrl('/evento/suporte'), new Blob([JSON.stringify({
-                    origem: 'free',
-                    oab: oab,
-                    usuario_id: usuario && usuario.id,
-                    email: usuario && usuario.email,
-                    telefone: usuario && usuario.telefone
-                })], { type: 'text/plain;charset=UTF-8' }));
-            } catch (e) { /* registro nunca atrapalha a ida para o WhatsApp */ }
-        });
 
         // Cada sistema tem seu instalador: baixar o errado não roda. Detectamos
         // e destacamos o certo, mas deixamos os dois visíveis — a pessoa pode

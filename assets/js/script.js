@@ -545,30 +545,11 @@ document.addEventListener('DOMContentLoaded', function() {
             zIndex:'9999', animation:'botGlowPulse 3.2s ease-in-out infinite'
         });
 
-        // Botão WhatsApp — por enquanto aponta para o wa.me, no futuro pode
-        // ser trocado para o link da automação de atendimento no n8n.
-        const waBtn = document.createElement('a');
-        waBtn.href = 'https://wa.me/5561986241570';
-        waBtn.target = '_blank';
-        waBtn.rel = 'noopener';
-        waBtn.innerHTML = '<i class="fa-brands fa-whatsapp"></i>';
-        Object.assign(waBtn.style, {
-            position:'fixed', bottom:'92px', right:'24px',
-            width:'58px', height:'58px',
-            borderRadius:'50%', border:'1px solid rgba(37, 211, 102, 0.4)',
-            fontSize:'24px', cursor:'pointer',
-            display:'flex', alignItems:'center', justifyContent:'center',
-            background:'rgba(37, 211, 102, 0.14)', color:'#25D366',
-            textDecoration:'none',
-            zIndex:'9999', animation:'waGlowPulse 3.2s ease-in-out infinite'
-        });
+        // A bolinha flutuante do WhatsApp saiu de todas as páginas: o contato
+        // agora entra pelo questionário do botão do topo da index, e o
+        // WhatsApp direto só aparece para quem já pagou (agradecimento-premium).
         const waGlowStyle = document.createElement('style');
         waGlowStyle.textContent = `
-            @keyframes waGlowPulse {
-                0%, 100% { box-shadow: 0 4px 16px rgba(0,0,0,.3), 0 0 20px rgba(37, 211, 102, 0.15); }
-                50% { box-shadow: 0 4px 16px rgba(0,0,0,.3), 0 0 40px rgba(37, 211, 102, 0.4); }
-            }
-
             /* ---------- CELULAR ----------
                A janela e montada por JS com estilo inline, e estilo inline
                vence folha de estilo — dai o !important.
@@ -576,18 +557,17 @@ document.addEventListener('DOMContentLoaded', function() {
                Sem isto, num aparelho de 360px de largura os 360px fixos da
                janela mais 24px de margem estouravam a tela.
 
-               Aqui a janela comeca a 160px do rodape porque ha dois botoes
-               flutuantes empilhados (bot e WhatsApp), e nao um so. */
+               A janela comeca logo acima do unico botao flutuante (o robo). */
             @media (max-width: 600px) {
                 #chat-frame {
                     left: 12px !important;
                     right: 12px !important;
                     width: auto !important;
-                    bottom: 156px !important;
+                    bottom: 92px !important;
 
                     /* dvh, e nao vh: no iOS o vh ignora a barra de endereco,
                        e o campo de digitar acabava escondido atras dela. */
-                    height: calc(100dvh - 168px) !important;
+                    height: calc(100dvh - 104px) !important;
                     max-height: none !important;
                 }
 
@@ -664,30 +644,16 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
 
-        // Nas páginas que já têm um botão de WhatsApp próprio na página
-        // (agradecimento, contato), não duplica o botão flutuante.
-        // No painel também não: lá você é o atendente, não o cliente — falar
-        // com o próprio WhatsApp não serve para nada.
-        const paginasComWhatsAppProprio = [
-            'agradecimento-free.html', 'agradecimento-premium.html', 'contato.html', 'admin.html'
-        ];
         const paginaAtual = location.pathname.split('/').pop();
-        const temWhatsFlutuante = !paginasComWhatsAppProprio.includes(paginaAtual);
         // No painel o bot muda de assunto: em vez de vender plano, ele explica
         // o painel, o banco e o servidor. Quem decide isso é o servidor, pelo
         // "contexto" que vai junto da pergunta.
         const contextoChat = paginaAtual === 'admin.html' ? 'admin' : 'site';
 
-        if (temWhatsFlutuante) {
-            document.body.append(btn, waBtn, frame);
-        } else {
-            document.body.append(btn, frame);
-        }
+        document.body.append(btn, frame);
 
-        // A janela sobe o suficiente para passar dos botões que existem de fato:
-        // com WhatsApp são dois empilhados (160px), sem ele é só o robô (92px).
-        // Sem esse ajuste, sobrava um vão vazio nas páginas sem o WhatsApp.
-        frame.style.bottom = temWhatsFlutuante ? '160px' : '92px';
+        // Sem a bolinha do WhatsApp só sobra o robô: a janela sobe 92px.
+        frame.style.bottom = '92px';
 
         const msgs = frame.querySelector('#chat-messages');
         const input = frame.querySelector('#chat-input');
@@ -1354,6 +1320,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(function (r) { return r.json(); })
                 .then(function (d) {
                     if (d && d.success && d.url) {
+                        // A tela de agradecimento (agradecimento-premium.html)
+                        // monta a mensagem pronta do WhatsApp com o plano e o
+                        // horário. Ela não tem como saber disso: o Mercado Pago
+                        // devolve a pessoa sem esses dados, então ficam aqui.
+                        try {
+                            localStorage.setItem('ultimoCheckout', JSON.stringify({
+                                plano: checkoutAtual.ehPlus ? 'plus' : 'premium',
+                                inicio: horarioEscolhido,
+                                em: Date.now()
+                            }));
+                        } catch (_) {}
                         if (window.telemetriaEvento) {
                             window.telemetriaEvento('checkout_iniciado', {
                                 plano: checkoutAtual.plano,

@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.recarregar_agenda) carregarAgenda();
                 return;
             }
-            aviso('Atendimento marcado! Abrindo o WhatsApp...', '#6ee7c8');
+            aviso('Atendimento marcado!', '#6ee7c8');
             setTimeout(() => {
                 window.location.href = 'agradecimento-free.html'
                     + '?oab=' + encodeURIComponent(q('#free-inscricao').value.replace(/\D/g, '') + '/' + selUf.value)

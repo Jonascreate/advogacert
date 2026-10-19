@@ -54,14 +54,8 @@ if (!BREVO_API_KEY) {
     console.warn('⚠️  Chave Brevo ausente: copie secrets_config.example.json para secrets_config.json. O envio de e-mail vai falhar.');
 }
 
-// Questionário do botão de WhatsApp do topo: o servidor repassa as respostas
-// ao fluxo "Site - Contato rápido (WhatsApp)" do n8n, que avisa o Jonas e
-// responde ao cliente pela Evolution. O segredo vai num cabeçalho e o n8n
-// recusa quem não o manda — por isso o navegador nunca fala com o n8n direto.
-const N8N_CONTATO_URL = process.env.N8N_CONTATO_URL || SECRETS.n8n?.contato_url ||
-    'https://n8n.agentej.us/webhook/site-contato';
-const N8N_CONTATO_SEGREDO = process.env.N8N_CONTATO_SEGREDO || SECRETS.n8n?.contato_segredo || '';
-// IP -> horários dos últimos envios do questionário (limite contra spam)
+// IP -> horários dos últimos envios do questionário do botão de WhatsApp do
+// topo (POST /contato/rapido), para o limite contra spam
 const contatoEnvios = new Map();
 
 /**
@@ -1129,6 +1123,24 @@ function normalizarInscricao(inscricaoBruta, ufBruta) {
 function verificacaoDe(db, inscricao, uf) {
     return (db.verificacoes_oab || [])
         .find(v => v.inscricao === inscricao && v.uf === uf) || null;
+}
+
+/**
+ * Contato rápido (questionário do botão de WhatsApp do topo) não é pedido do
+ * gratuito: não tem inscrição a conferir, pode vir de perito, juiz etc. e
+ * pode repetir. A tabela exige inscrição preenchida e única por seccional,
+ * então ele ganha uma chave própria "R<id>" — que nunca bate com uma OAB, só
+ * dígitos — e o rótulo de verdade fica na observação ("Perfil: ...").
+ */
+function ehContatoRapido(v) {
+    return /^R\d+$/.test(String(v && v.inscricao || ''));
+}
+
+/** "123456/GO" para o pedido do gratuito; o perfil para o contato rápido. */
+function rotuloVerificacao(v) {
+    if (!ehContatoRapido(v)) return `${v.inscricao}/${v.uf}`;
+    const m = /Perfil: (.+?)\.\s*$/.exec(v.observacao || '');
+    return m ? m[1] : 'Contato rápido';
 }
 
 /**
@@ -2332,15 +2344,15 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    // ============ CONTATO RÁPIDO: POST /contato/whatsapp ============
+    // ============ CONTATO RÁPIDO: POST /contato/rapido ============
     // O botão de WhatsApp do topo abria a conversa com o Jonas sem filtro.
     // Agora abre um questionário (e-mail, WhatsApp, OAB; sem OAB, perfil e
-    // nome) e as respostas seguem para o n8n, que manda o resumo ao Jonas e
-    // uma confirmação ao cliente.
-    if (method === 'POST' && url === '/contato/whatsapp') {
+    // nome) e o contato cai na triagem do painel. Ninguém recebe WhatsApp
+    // nesta hora: você confere, marca o horário e o painel avisa o cliente.
+    if (method === 'POST' && url === '/contato/rapido') {
         let body = '';
         req.on('data', chunk => { if (body.length < 4000) body += chunk; });
-        req.on('end', async () => {
+        req.on('end', () => {
             const responder = (status, payload) => {
                 res.writeHead(status, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify(payload));
@@ -2353,7 +2365,9 @@ const server = http.createServer((req, res) => {
                 const oab = entrada.oab ? normalizarOab(entrada.oab) : null;
                 const PERFIS = ['Perito', 'Juiz', 'Contador', 'Médico', 'Pessoa jurídica'];
                 const perfil = oab ? 'Advogado' : PERFIS.find(p => p === entrada.perfil);
-                const nome = String(entrada.nome || '').trim().replace(/\s+/g, ' ').slice(0, 80);
+                // sem < > & ": o nome entra no HTML do aviso por e-mail
+                const nome = String(entrada.nome || '').replace(/[<>&"]/g, '').trim()
+                    .replace(/\s+/g, ' ').slice(0, 80);
 
                 if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
                     responder(400, { success: false, error: 'Informe um e-mail válido.' });
@@ -2372,8 +2386,8 @@ const server = http.createServer((req, res) => {
                     return;
                 }
 
-                // Três envios por IP a cada 10 minutos: o questionário dispara
-                // mensagem no WhatsApp, não pode virar canhão de spam.
+                // Três envios por IP a cada 10 minutos: cada envio vira um
+                // cartão na triagem, e o formulário não pode lotar o painel.
                 const ip = ipDoPedido(req) || 'desconhecido';
                 const agora = Date.now();
                 const recentes = (contatoEnvios.get(ip) || []).filter(t => agora - t < 10 * 60 * 1000);
@@ -2384,31 +2398,53 @@ const server = http.createServer((req, res) => {
                 recentes.push(agora);
                 contatoEnvios.set(ip, recentes);
 
-                if (!N8N_CONTATO_SEGREDO) {
-                    console.error('❌ Contato rápido: N8N_CONTATO_SEGREDO não configurado.');
-                    responder(503, { success: false, error: 'Contato indisponível agora. Tente mais tarde.' });
-                    return;
-                }
-
-                const r = await fetch(N8N_CONTATO_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-contato-segredo': N8N_CONTATO_SEGREDO },
-                    body: JSON.stringify({
-                        email,
-                        whatsapp: whatsapp.replace('+', ''),
-                        oab: oab || '',
-                        perfil,
-                        nome
-                    })
+                // Entra direto em "aguardando marcar" na triagem do painel: não
+                // há inscrição a conferir. Você marca o horário lá, e é o painel
+                // que manda o e-mail de atendimento marcado ao cliente.
+                const db = loadJsonDb();
+                db.verificacoes_oab = db.verificacoes_oab || [];
+                const id = proximoId(db.verificacoes_oab);
+                const criadoEm = new Date().toISOString();
+                const rotulo = oab ? `Advogado (OAB ${oab})` : perfil;
+                db.verificacoes_oab.push({
+                    id,
+                    inscricao: `R${id}`,
+                    uf: oab ? oab.split('/')[1] : 'XX',
+                    nome_declarado: nome || email,
+                    contato: whatsapp.replace('+', ''),
+                    email,
+                    status: 'confere',
+                    observacao: `Contato rápido pelo site. Perfil: ${rotulo}.`,
+                    decidido_por: 'contato rápido',
+                    decidido_em: criadoEm,
+                    ip,
+                    criado_em: criadoEm
                 });
-                const resposta = await r.json().catch(() => ({}));
-                if (!r.ok || !resposta.success) {
-                    console.error(`❌ Contato rápido: n8n respondeu ${r.status}`);
-                    responder(502, { success: false, error: 'Não foi possível enviar agora. Tente de novo.' });
-                    return;
+                auditar(db, {
+                    ator: 'cliente',
+                    acao: 'contato_rapido',
+                    alvo: rotulo,
+                    detalhe: `${nome || '(sem nome)'} — ${email} — ${whatsapp}`,
+                    ip
+                });
+                saveJsonDb(db);
+                console.log(`💬 Contato rápido: ${rotulo} — ${email}`);
+
+                // Aviso por e-mail, como no pedido do gratuito: a triagem só
+                // anda quando alguém abre o painel.
+                if (MP.emailAviso) {
+                    enviarEmailBrevo(
+                        MP.emailAviso,
+                        `Contato rápido pelo site — ${rotulo}`,
+                        `<p><strong>Novo contato pelo botão do topo.</strong></p>
+                         <p>Perfil: ${rotulo}<br>Nome: ${nome || '—'}<br>
+                         WhatsApp: ${whatsapp}<br>E-mail: ${email}</p>
+                         <p>Marque o horário no painel:
+                         ${OAUTH.baseUrl.replace(/\/$/, '')}/admin.html</p>`,
+                        `Contato rápido pelo site — ${rotulo} — ${email}`
+                    ).catch(e => console.error('Aviso de contato rápido não saiu:', e.message));
                 }
 
-                console.log(`💬 Contato rápido: ${perfil}${oab ? ' ' + oab : ''} — ${email}`);
                 responder(200, { success: true });
             } catch (err) {
                 console.error('Erro no contato rápido:', err.message);
@@ -3273,7 +3309,7 @@ const server = http.createServer((req, res) => {
 
             return {
                 id: v.id,
-                inscricao: `${v.inscricao}/${v.uf}`,
+                inscricao: rotuloVerificacao(v),
                 uf: v.uf,
                 nome_declarado: v.nome_declarado,
                 contato: v.contato,
@@ -3410,7 +3446,7 @@ const server = http.createServer((req, res) => {
 
         const resumir = v => ({
             verificacao_id: v.id,
-            inscricao: `${v.inscricao}/${v.uf}`,
+            inscricao: rotuloVerificacao(v),
             nome: v.nome_declarado,
             contato: v.contato,
             email: v.email,
@@ -3531,7 +3567,7 @@ const server = http.createServer((req, res) => {
                     return;
                 }
 
-                const rotulo = `${v.inscricao}/${v.uf}`;
+                const rotulo = rotuloVerificacao(v);
                 const soDigitos = s => String(s || '').replace(/\D/g, '');
                 const dono = (db.usuarios || []).find(u =>
                     (v.email && String(u.email || '').toLowerCase() === String(v.email).toLowerCase()) ||
@@ -3580,11 +3616,17 @@ const server = http.createServer((req, res) => {
                 // caixa de entrada dele.
                 if (v.email && !semHorario) {
                     const partes = partesDoHorario(vaga.quando);
-                    const corpo = montarEmail('email-atendimento-marcado.html', {
+                    let corpo = montarEmail('email-atendimento-marcado.html', {
                         NOME: primeiroNome(v.nome_declarado),
                         INSCRICAO: rotulo,
                         ...partes
                     });
+                    // No contato rápido não houve inscrição conferida: a frase
+                    // "Conferimos a inscrição ..." vira só "Marcamos ...".
+                    if (corpo && ehContatoRapido(v)) {
+                        corpo = corpo.replace(/<!--abertura-->[\s\S]*?<!--\/abertura-->/,
+                            'Marcamos o seu atendimento:');
+                    }
 
                     if (corpo) {
                         enviarEmailBrevo(
@@ -3975,7 +4017,7 @@ const server = http.createServer((req, res) => {
         const eventos = [];
 
         (db.verificacoes_oab || [])
-            .filter(v => `${v.inscricao}/${v.uf}` === rotulo)
+            .filter(v => rotuloVerificacao(v).toUpperCase() === rotulo)
             .forEach(v => {
                 eventos.push({ em: v.criado_em, tipo: 'pedido', texto: 'Pediu o atendimento gratuito' });
                 if (v.decidido_em) {
@@ -4892,8 +4934,10 @@ e mandam o cliente para uma tela de erro.
 
 2) CONTATO — https://www.agentej.us/contato.html
    Telefone, e-mail, horário de atendimento e LinkedIn. É onde se fala com uma pessoa.
-   - WhatsApp: https://wa.me/5561986241570
    - E-mail: advogare@agentej.us
+   - NÃO passe número nem link de WhatsApp. Quem quer falar com o suporte usa o
+     botão verde do WhatsApp no topo da página inicial: ele abre um formulário
+     curto e a equipe entra em contato pelo e-mail ou WhatsApp informado.
    É também onde fica este chat.
 
 3) CURSO — https://www.agentej.us/curso.html

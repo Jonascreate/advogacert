@@ -29,7 +29,11 @@
     function quemPediu(item, linhaDeCima) {
         return el('div', {}, [
             linhaDeCima,
-            el('div.triagem-inscricao', { texto: 'OAB ' + item.inscricao }),
+            // contato rápido não tem OAB a mostrar: vem "Perito",
+            // "Advogado (OAB 123456/GO)" etc., já pronto do servidor
+            el('div.triagem-inscricao', {
+                texto: /^\d+\/[A-Z]{2}$/.test(item.inscricao || '') ? 'OAB ' + item.inscricao : item.inscricao
+            }),
             el('div.fraco', { texto: item.nome || '—' }),
             item.contato ? el('div.fraco', { texto: 'WhatsApp ' + item.contato }) : null
         ]);

@@ -578,7 +578,7 @@
     <script src="assets/js/api.js?v=9"></script>
     <script src="assets/js/telemetria.js?v=2"></script>
 
-    <script src="assets/js/script.js?v=16"></script>
+    <script src="assets/js/script.js?v=26"></script>
     <script>
     (function () {
         // Tela do PLANO PREMIUM — destino de quem acabou de pagar.
@@ -593,8 +593,30 @@
             ? `Atendimento vinculado à inscrição <strong>${oab}</strong>. É por ela que seus chamados são registrados.`
             : 'Seus chamados ficam registrados na sua inscrição da OAB.';
 
-        // já leva o contexto na conversa: a equipe não precisa perguntar quem é
-        const texto = `Olá! Acabei de assinar o Plano Premium da AdvogaCert${oab ? ' (OAB ' + oab + ')' : ''} e preciso de suporte.`;
+        // Mensagem pronta para a PESSOA começar a conversa. Quem escreve
+        // primeiro tem de ser o cliente: a Evolution bloqueia o número que
+        // puxa conversa com desconhecidos, e o bot do n8n responde a partir
+        // desta primeira mensagem. Plano e horário vêm do checkout
+        // (script.js grava em 'ultimoCheckout' antes de abrir o Mercado Pago).
+        let checkout = null;
+        try {
+            checkout = JSON.parse(localStorage.getItem('ultimoCheckout') || 'null');
+            if (checkout && Date.now() - checkout.em > 24 * 60 * 60 * 1000) checkout = null;
+        } catch {}
+        const nomePlano = checkout && checkout.plano === 'plus' ? 'Premium mensal' : 'Premium (diária)';
+        // "sexta-feira, 23/10, às 14:00" (sempre no horário de Brasília)
+        const dataMarcada = checkout && checkout.inicio ? new Date(checkout.inicio) : null;
+        const quandoMarcado = dataMarcada && !isNaN(dataMarcada)
+            ? dataMarcada.toLocaleDateString('pt-BR', {
+                  weekday: 'long', day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo'
+              }) + ', às ' + dataMarcada.toLocaleTimeString('pt-BR', {
+                  hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo'
+              })
+            : '';
+        const nome = usuario && usuario.nome ? String(usuario.nome).trim().split(/\s+/)[0] : '';
+        const texto = `Oi, Jonas! Sou ${nome ? nome + ', ' : ''}cliente do ${nomePlano}` +
+            `${oab ? ' (OAB ' + oab + ')' : ''} e preciso de atendimento em no máximo 30 minutos.` +
+            (quandoMarcado ? ` Marquei para ${quandoMarcado}.` : '');
         const btnWhats = document.getElementById('btn-whats');
         btnWhats.href = 'https://wa.me/5561986241570?text=' + encodeURIComponent(texto);
 

@@ -822,7 +822,7 @@
 
     <footer><div class="footer-content"><div class="footer-logo-mask" role="img" aria-label="AdvogaCert"></div><div class="footer-copy">© 2026 AdvogaCert. Todos os direitos reservados.</div></div></footer>
     <div class="mobile-purchase"><button class="btn-primary" id="btn-vaga-mobile" type="button">Garantir vaga por R$ 65 <span class="arrow">→</span></button></div>
-    <script src="assets/js/api.js?v=9"></script><script src="assets/js/telemetria.js?v=2"></script><script src="assets/js/script.js?v=22"></script>
+    <script src="assets/js/api.js?v=9"></script><script src="assets/js/telemetria.js?v=2"></script><script src="assets/js/script.js?v=26"></script>
     <script>
     (function(){'use strict';
     /* Inscrições suspensas: o site continua no ar e a página segue explicando
@@ -830,7 +830,7 @@
        obrigado a honrar a vaga de quem tropeçou aqui por acaso.
        Para reabrir, é esta linha e mais nenhuma: false. */
     var INSCRICOES_SUSPENSAS=true;
-    var DEADLINE='2026-08-17T20:00:00-03:00';var WHATSAPP='https://wa.me/5561986241570?text='+encodeURIComponent('Quero garantir minha vaga no curso de PJe e IA (R$ 65)');var botao=document.getElementById('btn-vaga');var mobile=document.getElementById('btn-vaga-mobile');var rotulo=document.getElementById('prazo-rotulo');var relogio=document.getElementById('prazo-relogio');var prazo=new Date(DEADLINE).getTime();function dois(n){return String(n).padStart(2,'0')}function atualizarPrazo(){var falta=prazo-Date.now();if(falta<=0){rotulo.textContent='Inscrições encerradas';relogio.textContent='00d 00h 00m 00s';botao.disabled=true;if(mobile)mobile.disabled=true;return}var s=Math.floor(falta/1000);relogio.textContent=dois(Math.floor(s/86400))+'d '+dois(Math.floor(s%86400/3600))+'h '+dois(Math.floor(s%3600/60))+'m '+dois(s%60)+'s'}
+    var DEADLINE='2026-08-17T20:00:00-03:00';var botao=document.getElementById('btn-vaga');var mobile=document.getElementById('btn-vaga-mobile');var rotulo=document.getElementById('prazo-rotulo');var relogio=document.getElementById('prazo-relogio');var prazo=new Date(DEADLINE).getTime();function dois(n){return String(n).padStart(2,'0')}function atualizarPrazo(){var falta=prazo-Date.now();if(falta<=0){rotulo.textContent='Inscrições encerradas';relogio.textContent='00d 00h 00m 00s';botao.disabled=true;if(mobile)mobile.disabled=true;return}var s=Math.floor(falta/1000);relogio.textContent=dois(Math.floor(s/86400))+'d '+dois(Math.floor(s%86400/3600))+'h '+dois(Math.floor(s%3600/60))+'m '+dois(s%60)+'s'}
     /* Suspenso ganha do relógio. O contador vencido desabilitava o botão, e
        botão desabilitado não dispara clique — o aviso nunca aparecia. Além
        disso, relógio correndo ao lado de "indisponível" diz duas coisas
@@ -859,7 +859,7 @@
 
     // Manda para o Mercado Pago, que é quem pede cartão ou Pix. Enquanto o
     // link do curso não estiver configurado (MP_LINK_CURSO), o servidor
-    // recusa e a pessoa cai no WhatsApp em vez de num botão morto.
+    // recusa e a pessoa vê o aviso de indisponível em vez de um botão morto.
     function irPagar(){
         // Também aqui, e não só no clique: quem volta do login com a compra
         // pendente cai direto neste caminho (ver retomar(), no fim).
@@ -873,10 +873,10 @@
                 return;
             }
             botao.innerHTML=texto;
-            window.open(WHATSAPP,'_blank','noopener');
+            avisarIndisponivel();
         }).catch(function(){
             botao.innerHTML=texto;
-            window.open(WHATSAPP,'_blank','noopener');
+            avisarIndisponivel();
         });
     }
 
