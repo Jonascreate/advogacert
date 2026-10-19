@@ -115,8 +115,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const checkoutSolicitado = new URLSearchParams(location.search).get('checkout') === '1';
     if (checkoutSolicitado) {
         // Quem veio de um plano pago e ainda não tem conta precisa passar
-        // primeiro pelo cadastro completo que já existia no projeto. Ele grava
-        // e-mail, WhatsApp e OAB no servidor antes de enviar o código de acesso.
+        // primeiro pelo cadastro. Ele grava e-mail e WhatsApp no servidor
+        // antes de enviar o código de acesso. A OAB não é pedida: o cliente
+        // está pagando, e não há chamado grátis a controlar.
         window.showRegisterForm();
         const tituloCadastro = document.querySelector('.login-container h2');
         const botaoCadastro = document.querySelector('#registerForm .login-btn');
@@ -125,9 +126,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const grupoOab = document.getElementById('register-oab-grupo');
         const dicaOab = document.getElementById('register-oab-dica');
         const campoOab = document.getElementById('register-oab');
-        if (grupoOab) grupoOab.style.display = '';
-        if (dicaOab) dicaOab.style.display = '';
-        if (campoOab) campoOab.required = true;
+        if (grupoOab) grupoOab.style.display = 'none';
+        if (dicaOab) dicaOab.style.display = 'none';
+        if (campoOab) campoOab.required = false;
         const container = document.querySelector('.login-container');
         if (container) {
             const aviso = document.createElement('div');
@@ -437,7 +438,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            if (!/^\d{3,6}\s*\/?\s*[A-Za-z]{2}$/.test(oab.replace(/\s/g, ''))) {
+            if (!checkoutSolicitado && !/^\d{3,6}\s*\/?\s*[A-Za-z]{2}$/.test(oab.replace(/\s/g, ''))) {
                 messageDiv.style.color = '#ef4444';
                 messageDiv.textContent = '✗ Informe sua inscrição na OAB no formato 123456/GO';
                 return;

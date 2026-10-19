@@ -4510,8 +4510,11 @@ const server = http.createServer((req, res) => {
 
                     // A OAB é a chave da contabilidade: é por ela que o chamado
                     // grátis é contado, não pelo e-mail.
+                    // Quem vem de um plano pago não informa OAB: está pagando,
+                    // e não há chamado grátis a controlar. O campo some da tela
+                    // e a conta nasce sem ela.
                     const oab = normalizarOab(input.oab);
-                    if (!oab) {
+                    if (!oab && !cadastroCheckout) {
                         res.writeHead(400, { 'Content-Type': 'application/json' });
                         res.end(JSON.stringify({ success: false, error: 'Informe sua inscrição na OAB (ex: 123456/GO)' }));
                         return;
@@ -4531,15 +4534,15 @@ const server = http.createServer((req, res) => {
                             // aqui permite que um cliente antigo complete os
                             // dados que faltavam sem criar conta duplicada.
                             exists.telefone = whatsapp;
-                            exists.oab = oab;
+                            if (oab) exists.oab = oab;
                             if (input.nome) exists.nome = String(input.nome).trim().slice(0, 120);
                             saveJsonDb(db);
                             res.writeHead(200, { 'Content-Type': 'application/json' });
                             res.end(JSON.stringify({
                                 success: true,
                                 msg: 'Dados atualizados. Confirme seu e-mail para continuar.',
-                                oab,
-                                free_disponivel: !freeUsadoPelaOab(db, oab)
+                                oab: exists.oab || null,
+                                free_disponivel: exists.oab ? !freeUsadoPelaOab(db, exists.oab) : true
                             }));
                             return;
                         }
@@ -4568,7 +4571,7 @@ const server = http.createServer((req, res) => {
                         id: proximoId(db.usuarios),
                         email,
                         telefone: whatsapp,
-                        oab,
+                        oab: oab || null,
                         nome: String(input.nome || '').trim().slice(0, 120),
                         senha: hash,
                         created_at: new Date().toISOString()
