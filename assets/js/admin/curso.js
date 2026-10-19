@@ -85,6 +85,18 @@
 
         var cabecalho = el('div.turma-topo', {}, [
             el('div', {}, [
+                // o nome do curso vem antes da data: o painel tem turmas de
+                // cursos diferentes, e "ter · 19:00" sozinho não diz qual é
+                el('div.turma-curso', {}, [
+                    el('strong', { texto: t.nome || '(sem nome do curso)' }),
+                    el('button.acao.mini.discreta', {
+                        type: 'button', texto: 'Renomear',
+                        aoClicar: function () {
+                            var novo = prompt('Nome do curso desta turma:', t.nome || '');
+                            if (novo != null && novo.trim()) salvarTurma({ id: t.id, nome: novo.trim() });
+                        }
+                    })
+                ]),
                 el('strong.turma-data', { texto: rotuloTurma(t) }),
                 el('div.turma-nota', {
                     texto: t.confirmadas + ' confirmada(s) · ' + t.pendentes + ' pendente(s) · ' +
@@ -95,14 +107,16 @@
                 el('span.turma-vagas' + (lotada ? '.lotada' : ''), {
                     texto: lotada ? 'Lotada' : t.vagas + (t.vagas === 1 ? ' vaga' : ' vagas')
                 }),
-                el('button.acao.mini' + (t.status === 'aberta' ? '.discreta' : ''), {
+                el('button.acao.mini.discreta', {
                     type: 'button',
-                    texto: t.status === 'aberta' ? 'Fechar' : 'Reabrir',
-                    title: t.status === 'aberta'
-                        ? 'Some do site. Os inscritos continuam registrados.'
-                        : 'Volta a aparecer no site enquanto houver vaga.',
+                    texto: 'Fechar',
+                    title: 'Some do site e desta tela. Os inscritos continuam no relatório.',
                     aoClicar: function () {
-                        salvarTurma({ id: t.id, status: t.status === 'aberta' ? 'fechada' : 'aberta' });
+                        if (confirm('Fechar a turma ' + (t.nome ? '"' + t.nome + '" ' : '') + 'de ' +
+                                    rotuloTurma(t) + '?\n\nEla sai do site e desta tela, ' +
+                                    'e continua aparecendo no relatório impresso.')) {
+                            salvarTurma({ id: t.id, status: 'fechada' });
+                        }
                     }
                 })
             ])
@@ -117,6 +131,10 @@
     }
 
     function formNovaTurma() {
+        var campoNome = el('input', {
+            type: 'text', id: 'curso-nova-nome', maxlength: '120',
+            placeholder: 'Ex.: IA aplicada à gestão de processos'
+        });
         var campoData = el('input', { type: 'datetime-local', id: 'curso-nova-data' });
         var campoCap = el('input', { type: 'number', min: '1', valor: '5', id: 'curso-nova-cap' });
         var msg = el('span.form-msg');
@@ -124,11 +142,13 @@
         return el('div.turma-nova', {}, [
             el('strong', { texto: 'Abrir turma' }),
             el('div.turma-nova-campos', {}, [
+                el('label.turma-nova-nome', {}, ['Nome do curso', campoNome]),
                 el('label', {}, ['Data e hora', campoData]),
                 el('label', {}, ['Lugares', campoCap]),
                 el('button.acao', {
                     type: 'button', texto: 'Criar turma',
                     aoClicar: function () {
+                        if (campoNome.value.trim().length < 3) { msg.textContent = 'Informe o nome do curso.'; return; }
                         if (!campoData.value) { msg.textContent = 'Escolha a data e a hora.'; return; }
                         msg.textContent = 'Salvando…';
                         // O campo datetime-local é hora LOCAL do navegador. O
@@ -136,6 +156,7 @@
                         // ISO em UTC — sem isso, turma marcada às 19h viraria
                         // 19h UTC, ou seja, 16h de Goiás.
                         salvarTurma({
+                            nome: campoNome.value.trim(),
                             inicio: new Date(campoData.value).toISOString(),
                             capacidade: Number(campoCap.value) || 5
                         }, msg);
@@ -150,9 +171,12 @@
         var d = estado.dados;
         if (!d) { D.trocar(alvo, el('div.vazio', { texto: 'Carregando turmas...' })); return; }
 
-        var turmas = d.turmas.filter(function (t) {
+        // Turma fechada sai da tela e fica só no relatório impresso: na seção
+        // ela aparecia esmaecida e parecia ainda estar valendo.
+        var doPeriodo = d.turmas.filter(function (t) {
             return estado.mostrarPassadas || !t.passada;
         });
+        var turmas = doPeriodo.filter(function (t) { return t.status === 'aberta'; });
 
         var totalConfirmadas = d.turmas.reduce(function (s, t) { return s + t.confirmadas; }, 0);
         var totalPendentes = d.turmas.reduce(function (s, t) { return s + t.pendentes; }, 0);
@@ -192,7 +216,7 @@
                 el('button.acao.diag-btn-imprimir', {
                     type: 'button',
                     texto: 'Imprimir relatório',
-                    aoClicar: function () { imprimir(turmas); }
+                    aoClicar: function () { imprimir(doPeriodo); }
                 })
             ) : null
         ]);
@@ -240,7 +264,8 @@
                 : '<tr><td colspan="5"><em>Nenhum inscrito.</em></td></tr>';
 
             return '<section>' +
-                '<div class="section-head"><h3>' + esc(rotuloTurma(t)) + '</h3>' +
+                '<div class="section-head"><h3>' + esc((t.nome ? t.nome + ' — ' : '') + rotuloTurma(t) +
+                    (t.status !== 'aberta' ? ' (fechada)' : '')) + '</h3>' +
                 '<span class="roman">' + (idx + 1) + ' de ' + turmas.length + '</span></div>' +
                 '<dl class="specs">' +
                     '<div class="item"><dt>Lugares</dt><dd>' + t.capacidade + '</dd></div>' +

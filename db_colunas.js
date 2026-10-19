@@ -51,8 +51,10 @@ const COLUNAS = {
     logins: [
         'id', 'usuario_id', 'metodo', 'ip', 'criado_em'
     ],
+    // nome: o curso daquela turma ("IA aplicada à gestão de processos"),
+    // digitado no painel ao abrir a turma — ver migracao_curso_nome.sql
     turmas_curso: [
-        'id', 'inicio', 'fim', 'capacidade', 'status', 'observacao', 'criado_em'
+        'id', 'nome', 'inicio', 'fim', 'capacidade', 'status', 'observacao', 'criado_em'
     ],
     // nome, email, telefone e oab sao copiados do cadastro no momento da
     // inscricao: a lista de presenca de uma turma passada precisa continuar

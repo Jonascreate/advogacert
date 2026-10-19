@@ -1334,6 +1334,7 @@ function turmasAbertas(db) {
             const opc = { timeZone: 'America/Sao_Paulo' };
             return {
                 id: t.id,
+                nome: t.nome || '',
                 inicio: t.inicio,
                 capacidade: Number(t.capacidade) || 0,
                 vagas: vagasRestantes(db, t),
@@ -2176,6 +2177,7 @@ const server = http.createServer((req, res) => {
                 const pendentes = daTurma.filter(i => i.status === 'pendente').length;
                 return {
                     id: t.id,
+                    nome: t.nome || '',
                     inicio: t.inicio,
                     capacidade: Number(t.capacidade) || 0,
                     status: t.status,
@@ -2301,10 +2303,15 @@ const server = http.createServer((req, res) => {
                         turma.capacidade = Math.max(1, Number(entrada.capacidade) || 1);
                     }
                     if (entrada.observacao != null) turma.observacao = String(entrada.observacao).slice(0, 300);
+                    if (entrada.nome != null) {
+                        const nome = String(entrada.nome).trim().replace(/\s+/g, ' ').slice(0, 120);
+                        if (nome.length < 3) return responder(400, { success: false, error: 'Informe o nome do curso.' });
+                        turma.nome = nome;
+                    }
 
                     auditar(db, {
                         ator: 'painel', acao: 'curso_turma_alterada', alvo: turma.id,
-                        detalhe: `${turma.inicio} — ${turma.status} — ${turma.capacidade} lugares`,
+                        detalhe: `${turma.nome || 'sem nome'} — ${turma.inicio} — ${turma.status} — ${turma.capacidade} lugares`,
                         ip: ipDoPedido(req)
                     });
                     saveJsonDb(db);
@@ -2317,9 +2324,15 @@ const server = http.createServer((req, res) => {
                 const inicio = new Date(entrada.inicio);
                 if (isNaN(inicio)) return responder(400, { success: false, error: 'Data e hora inválidas.' });
 
+                // O nome do curso daquela turma: o painel abre turmas de cursos
+                // diferentes, e só data e hora não dizem de qual se trata.
+                const nome = String(entrada.nome || '').trim().replace(/\s+/g, ' ').slice(0, 120);
+                if (nome.length < 3) return responder(400, { success: false, error: 'Informe o nome do curso.' });
+
                 const duracaoH = Number(entrada.duracao_horas) || 2;
                 const turma = {
                     id: proximoId(db.turmas_curso),
+                    nome,
                     inicio: inicio.toISOString(),
                     fim: new Date(inicio.getTime() + duracaoH * 3600000).toISOString(),
                     capacidade: Math.max(1, Number(entrada.capacidade) || 5),
@@ -2331,7 +2344,7 @@ const server = http.createServer((req, res) => {
 
                 auditar(db, {
                     ator: 'painel', acao: 'curso_turma_criada', alvo: turma.id,
-                    detalhe: `${turma.inicio} — ${turma.capacidade} lugares`,
+                    detalhe: `${turma.nome} — ${turma.inicio} — ${turma.capacidade} lugares`,
                     ip: ipDoPedido(req)
                 });
                 saveJsonDb(db);
