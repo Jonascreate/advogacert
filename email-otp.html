@@ -32,11 +32,11 @@
 <!--
     Código de acesso (login sem senha). Montado por htmlCodigoOtp() no
     server.js, que troca {{EMAIL}} e {{CODIGO}}. A logo era uma imagem no
-    Google Drive; agora é a logo do painel admin (logo-email.png, degradê dourado ao prata),
-    que aparece tanto no fundo branco quanto no modo escuro.
+    Google Drive; agora é a logo preta do próprio site. O e-mail é de
+    página branca: não há versão escura.
 
     Padrão visual de todos os e-mails: cartão branco sobre fundo cinza-claro,
-    logo e título em Montserrat (1ª linha normal, 2ª com o degradê da index) na metade esquerda do topo, o token em pé
+    logo preta e título em Montserrat (1ª linha normal, 2ª com o degradê da index) na metade esquerda do topo, o token em pé
     (assets/img/email/tokens-email.png, com o furo do chaveiro transparente) na metade direita, botão azul-claro, ícones
     das redes e faixa cinza no pé. Regras de e-mail: layout em <table>, estilo inline,
     imagens por URL absoluta do site, largura de 600px.
@@ -53,9 +53,7 @@
                         <table width="100%" cellpadding="0" cellspacing="0" border="0">
                             <tr>
                                 <td valign="middle" width="300" style="width:300px;padding:36px 0 0 40px;">
-                                    <!-- logo do painel, não preta: no modo escuro do Gmail o fundo
-                                         escurece e a imagem não muda, e a preta sumia -->
-                                    <img src="https://www.agentej.us/assets/img/email/logo-email.png" alt="Suporte AdvogaCert" width="190" style="display:block;width:190px;max-width:190px;height:auto;border:0;">
+                                    <img src="https://www.agentej.us/assets/img/logo-escuro.png" alt="Suporte AdvogaCert" width="190" style="display:block;width:190px;max-width:190px;height:auto;border:0;">
                                     <!-- Montserrat 800. Onde ela não carrega (Gmail), cai em
                                          Helvetica/Arial no mesmo peso. A cor inline do span é a
                                          reserva: sem o degradê, "de acesso" fica azul em vez de preta. -->
