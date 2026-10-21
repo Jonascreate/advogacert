@@ -429,7 +429,9 @@
             flex: 1;
             min-width: 0;
         }
-        .platform-card.mac { padding-right: 8rem; }
+        /* aqui havia um padding-right de 8rem no card do Mac, reservando o
+           canto para a cápsula "Recomendado". A cápsula saiu; o vão foi com
+           ela, senão ficaria um buraco à direita do texto. */
         .platform-card > * {
             position: relative;
             z-index: 1;
@@ -530,25 +532,6 @@
             box-shadow: 0 20px 50px rgba(31, 111, 209, 0.15);
         }
 
-        .recommended-tag {
-            position: absolute;
-            top: 50%;
-            right: 1.1rem;
-            transform: translateY(-50%);
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-            white-space: nowrap;
-            background: linear-gradient(135deg, rgba(166,206,78,0.22), rgba(33,185,143,0.28));
-            backdrop-filter: blur(6px);
-            border: 1px solid rgba(166, 206, 78, 0.4);
-            color: var(--accent-mac);
-            font-weight: 700;
-            font-size: 0.68rem;
-            letter-spacing: 0.03em;
-            padding: 0.25rem 0.65rem;
-            border-radius: 100px;
-        }
 
         .platform-icon {
             flex-shrink: 0;
@@ -1848,11 +1831,6 @@
         .platform-card.win:hover { box-shadow: 0 14px 34px rgba(31, 111, 209, 0.12); }
         .platform-card.mac::after,
         .platform-card.win::after { filter: none; }
-        .recommended-tag {
-            background: rgba(107, 163, 47, 0.1);
-            border-color: rgba(107, 163, 47, 0.35);
-            backdrop-filter: none;
-        }
 
 
         /* curso como anúncio "em breve", no fim da seção dos certificados:
@@ -2000,10 +1978,6 @@
         /* texto escuro nos botões verdes, como no escuro original */
         html[data-tema="escuro"] .curso-anuncio-btn { color: #062018; }
 
-        html[data-tema="escuro"] .recommended-tag {
-            background: rgba(166, 206, 78, 0.12);
-            border-color: rgba(166, 206, 78, 0.4);
-        }
 
 
         /* mídias de certificado */
@@ -2161,22 +2135,18 @@
             /* o que engrossava o botão era o rótulo quebrando em duas
                linhas: "Quero automatizar meu escritório" não cabia nos
                ~200px entre o ícone e as bordas. Com "Conheça mais" sobra
-               espaço, a altura vem de uma linha só e o respiro pode ser
-               curto. A entrelinha fica explícita para a altura não depender
-               da métrica da fonte. */
-            padding: 0.6rem 1rem;
+               espaço e a altura vem de uma linha só, então o respiro de
+               cima e de baixo é o único que a controla: 0,85rem dá cerca
+               de 46px. A entrelinha fica explícita para a altura não
+               depender da métrica da fonte. */
+            padding: 0.85rem 1rem;
             line-height: 1.25;
             text-align: center;
         }
-        /* nome do fluxo no canto do canvas, como o título do workflow no n8n */
-        .n8n-titulo {
-            position: absolute;
-            top: 0.8rem;
-            right: 1rem;
-            color: #e6e7ea;
-            font-size: 0.7rem;
-            font-weight: 600;
-        }
+        /* aqui ficava o nome do fluxo no canto do canvas ("Intimações do
+           dia", "Documentos no timbrado"), como o título do workflow no
+           n8n. Saiu: a legenda embaixo já diz o que está acontecendo, e no
+           canto de cima sobra o selo da rede fechada sozinho. */
         .vps-btn {
             display: inline-flex;
             align-items: center;
@@ -2309,7 +2279,7 @@
         .n8n-no.rodando > .n8n-caixa,
         .n8n-sub-no.rodando .n8n-sub-caixa {
             border-color: #ff9b3d;
-            animation: n8nPulso 0.6s ease-in-out infinite;
+            animation: n8nPulso 0.5s ease-in-out infinite;
         }
         @keyframes n8nPulso {
             0%, 100% { box-shadow: 0 0 0 0 rgba(255, 155, 61, 0.35); }
@@ -2416,7 +2386,7 @@
         }
         /* o script espera exatamente este tempo antes de pintar a ligação
            de verde: mudar aqui pede mudar lá (a espera no executa) */
-        .n8n-liga.anda i { animation: n8nAnda 0.45s ease-in forwards; }
+        .n8n-liga.anda i { animation: n8nAnda 0.35s ease-in forwards; }
         @keyframes n8nAnda {
             0% { left: 0; opacity: 1; }
             90% { opacity: 1; }
@@ -2822,7 +2792,8 @@
         /* o vão à direita é onde mora o selo "Recomendado": sem repetir
            aqui, a regra de cima (mesma especificidade, mais abaixo na
            folha) apagaria o padding-right e o selo cobriria o "Mac" */
-        .suporte-cards .platform-card.mac { padding-right: 8rem; }
+        /* sem a cápsula, o card do Mac respira igual ao do Windows: o
+           padding dos dois vem da regra de cima, nada de especial aqui */
         .suporte-cards .platform-card .subtitle { margin-bottom: 0.3rem; }
         .suporte-cards .platform-card h2 { margin-bottom: 0.3rem; }
         /* soltos, fora do quadro, os cards voltam a ter fundo próprio; o
@@ -2836,18 +2807,8 @@
             background: linear-gradient(160deg, rgba(79,163,255,0.08), rgba(22,22,24,0.35) 55%);
             box-shadow: none;
         }
-        @media (max-width: 700px) {
-            /* celular: o selo "Recomendado" sai do canto, onde cobria o
-               "Mac", e desce para baixo do texto */
-            .suporte-cards .platform-card.mac { flex-wrap: wrap; padding-right: 1.1rem; }
-            .suporte-cards .platform-card.mac .card-text { flex-basis: calc(100% - 40px - 0.9rem); }
-            .suporte-cards .recommended-tag {
-                order: 3;
-                position: static;
-                transform: none;
-                margin-left: calc(40px + 0.9rem);
-            }
-        }
+        /* o bloco que, no celular, descia o selo "Recomendado" para baixo do
+           texto saiu junto com o selo: não há mais nada para reposicionar. */
         .suporte-chamada {
             margin: 0 0 2.5rem;
             text-align: center;
@@ -3363,7 +3324,6 @@
         <p class="suporte-chamada">Não consegue acessar os tribunais? <span class="destaque-cana">Protocolar petição?</span> Chama o suporte!</p>
         <div class="platform-grid suporte-cards">
             <a class="platform-card mac">
-                <div class="recommended-tag"><i class="fas fa-check"></i> Recomendado</div>
                 <div class="platform-icon"><i class="fab fa-apple"></i></div>
                 <div class="card-text">
                     <div class="subtitle">Sistema operacional mais seguro</div>
@@ -3404,7 +3364,6 @@
                              aria-label="Fluxo no n8n rodando numa VPS em rede fechada: todo dia às 6h o gatilho dispara, o fluxo consulta os tribunais, um agente de IA com RAG analisa as intimações usando a base do escritório e envia o resumo no WhatsApp do advogado."
                              data-legendas='["Todo dia às 6h o fluxo acorda sozinho, dentro da sua VPS.","Ele consulta os andamentos e intimações nos tribunais.","O agente de IA lê cada intimação e cruza com a base do seu escritório.","O resumo chega no seu WhatsApp, com prazo e número do processo."]'>
                             <div class="n8n-rede"><i class="fa-solid fa-lock"></i> Sua VPS - rede fechada</div>
-                            <div class="n8n-titulo">Intimações do dia</div>
                             <div class="n8n-fluxo">
                                 <div class="n8n-no n8n-gatilho">
                                     <div class="n8n-caixa"><i class="fa-solid fa-clock"></i><span class="n8n-check"><i class="fa-solid fa-check"></i></span></div>
@@ -3445,7 +3404,6 @@
                              aria-label="Fluxo no n8n rodando numa VPS em rede fechada: o advogado pede uma procuração pelo WhatsApp, um agente de IA com RAG escreve o documento com base nos modelos do escritório, o texto é aplicado no timbrado da AdvCert e convertido em PDF, e o PDF é enviado de volta na conversa."
                              data-legendas='["Você pede o documento numa mensagem de WhatsApp.","O agente de IA escreve com base nos modelos do seu escritório.","O texto entra no timbrado da AdvCert e vira PDF.","O PDF chega pronto na conversa, para revisar e assinar."]'>
                             <div class="n8n-rede"><i class="fa-solid fa-lock"></i> Sua VPS - rede fechada</div>
-                            <div class="n8n-titulo">Documentos no timbrado</div>
                             <div class="n8n-fluxo">
                                 <div class="n8n-no n8n-gatilho n8n-zap">
                                     <div class="n8n-caixa"><i class="fa-brands fa-whatsapp"></i><span class="n8n-check"><i class="fa-solid fa-check"></i></span></div>
@@ -3600,7 +3558,7 @@
                     if (f.ligas[i]) {
                         f.ligas[i].classList.add('anda');
                         // o mesmo tempo da animação n8nAnda, no CSS
-                        await espera(450);
+                        await espera(350);
                         f.ligas[i].classList.add('ok');
                     }
                 }
@@ -3627,9 +3585,9 @@
                     for (var i = 0; i < f.nos.length; i++) {
                         var no = f.nos[i];
                         legenda(f, i);
-                        await executa(f, i, no.classList.contains('n8n-agente') ? 1500
-                            : no.classList.contains('n8n-timbre') ? 1100
-                            : (i === 0 ? 450 : 850));
+                        await executa(f, i, no.classList.contains('n8n-agente') ? 1150
+                            : no.classList.contains('n8n-timbre') ? 850
+                            : (i === 0 ? 350 : 650));
                     }
                     await mensagens(f, false);
                     await espera(4500);
