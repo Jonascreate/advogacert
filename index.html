@@ -865,95 +865,6 @@
                 mask-image: none;
             }
         }
-        /* === SUPORTE REMOTO E DRIVERS (mesmo modelo do antigo dashboard.html) === */
-        /* o respiro e a linha divisória que vinham do aviso removido
-           passaram para cá, para o bloco não colar na esteira acima */
-        .remote-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2.5rem;
-            align-items: center;
-            background: rgba(22, 22, 24, 0.35);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 2.5rem;
-            margin-top: 3rem;
-        }
-        .remote-visual {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            aspect-ratio: 4 / 3;
-            border-radius: 16px;
-            /* sem fundo nem borda: fica só a tela do AnyDesk */
-            position: relative;
-            overflow: hidden;
-        }
-        .remote-visual .remote-window {
-            width: 78%;
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.35);
-            overflow: hidden;
-        }
-        .remote-visual .remote-topbar {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            padding: 0.6rem 0.8rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .remote-visual .remote-dot {
-            width: 9px;
-            height: 9px;
-            border-radius: 50%;
-            background: var(--text-muted);
-        }
-        /* no lugar do ID falso, a captura da tela do AnyDesk */
-        .remote-visual .remote-body img {
-            display: block;
-            width: 100%;
-            height: auto;
-        }
-
-        .remote-text h2 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 0.9rem;
-        }
-        .remote-text p {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            line-height: 1.7;
-            margin-bottom: 1.5rem;
-        }
-        .remote-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.85rem;
-        }
-        .remote-buttons a {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.6rem;
-            padding: 0.85rem 1.4rem;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        .remote-buttons .btn-anydesk {
-            background: linear-gradient(135deg, var(--accent-mac-dark), var(--accent-mac));
-            color: #062018;
-        }
-        .remote-buttons .btn-anydesk:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 26px rgba(166, 206, 78, 0.3);
-        }
 
         /* === MÍDIAS DE CERTIFICADO: cada uma é o download da sua leitora === */
         .cert-shelf-title {
@@ -1037,9 +948,6 @@
             color: var(--text-muted);
         }
 
-        @media (max-width: 860px) {
-            .remote-section { grid-template-columns: 1fr; }
-        }
         @media (max-width: 768px) {
             .cert-shelf { gap: 1.25rem 1.5rem; }
             .cert-item { max-width: 112px; padding: 0.35rem 0.4rem; }
@@ -1946,925 +1854,6 @@
             backdrop-filter: none;
         }
 
-        /* Um quadro largo só, em três colunas: Mac e Windows empilhados, o
-           vídeo do suporte remoto e o texto com o botão. Lado a lado a seção
-           fica baixa, em vez de empilhar tudo na vertical. */
-        .platform-duo {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr) minmax(0, 1fr);
-            gap: 1.75rem;
-            align-items: center;
-            padding: 1.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            background: #fff;
-            box-shadow: 0 10px 30px rgba(20, 24, 31, 0.06);
-        }
-        /* os cards ficam na altura do próprio conteúdo, centrados na coluna,
-           em vez de esticar até a altura do card do curso */
-        .platform-duo .platform-grid {
-            grid-template-columns: minmax(0, 1fr);
-            align-content: center;
-        }
-        /* Mac e Windows sem o card: some fundo, borda, sombra, a moldura
-           animada (::after) e o holofote (::before); o conteúdo fica solto
-           sobre o branco da página */
-        .platform-duo .platform-card,
-        .platform-duo .platform-card.mac,
-        .platform-duo .platform-card.win,
-        .platform-duo .platform-card:hover {
-            background: none;
-            border-color: transparent;
-            box-shadow: none;
-            transform: none;
-        }
-        .platform-duo .platform-card::before,
-        .platform-duo .platform-card::after { display: none; }
-        /* a linha fina separa os serviços do suporte remoto */
-        .platform-duo .platform-grid {
-            padding-right: 1.75rem;
-            border-right: 1px solid var(--border-color);
-        }
-        /* colunas estreitas: o selo "Recomendado" sai do canto (onde
-           cobriria o texto) e desce para baixo do texto do Mac */
-        .platform-duo .platform-card.mac {
-            flex-wrap: wrap;
-            padding-right: 1.1rem;
-        }
-        .platform-duo .platform-card.mac .card-text { flex-basis: calc(100% - 40px - 0.9rem); }
-        .platform-duo .recommended-tag {
-            order: 3;
-            position: static;
-            transform: none;
-            margin-left: calc(40px + 0.9rem);
-        }
-        /* a caixa do suporte remoto some: o vídeo e o texto viram a segunda
-           e a terceira coluna do quadro */
-        .platform-duo .remote-section { display: contents; }
-        .platform-duo .remote-visual { aspect-ratio: auto; }
-        .platform-duo .remote-visual .remote-window { width: 100%; }
-        .platform-duo .remote-visual .remote-topbar { padding: 0.45rem 0.6rem; gap: 0.3rem; }
-        .platform-duo .remote-visual .remote-dot { width: 7px; height: 7px; }
-        .platform-duo .remote-text h2 { font-size: 0.98rem; margin-bottom: 0.4rem; }
-        .platform-duo .remote-text p { font-size: 0.74rem; line-height: 1.5; margin-bottom: 0.85rem; }
-        .platform-duo .remote-buttons a { padding: 0.6rem 1.1rem; font-size: 0.85rem; }
-        /* telas médias: serviços e vídeo em cima, o texto na linha de baixo */
-        @media (max-width: 1060px) {
-            .platform-duo { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); }
-            .platform-duo .remote-text { grid-column: 1 / -1; }
-        }
-        /* celular: tudo numa coluna, sem a linha divisória */
-        @media (max-width: 700px) {
-            .platform-duo { grid-template-columns: minmax(0, 1fr); padding: 1.25rem; }
-            .platform-duo .platform-grid { padding-right: 0; border-right: 0; }
-        }
-        /* ─── VÍDEO DO SUPORTE REMOTO (.rv) ───
-           Loop de 26s. Linha do tempo (a legenda segue as mesmas faixas):
-             0–42%   WhatsApp: pedido do TJCE, pergunta do AnyDesk, "vou enviar"
-             42–58%  AnyDesk: o número é selecionado e copiado
-             58–78%  WhatsApp: o número é enviado e o suporte responde
-             78–100% pedido de conexão: zoom, clique em Aceitar, o zoom volta
-                     ao meio e o vídeo recomeça pela conversa
-           Para mexer no tempo de um detalhe, ajuste o percentual dele dentro
-           da faixa. Tamanhos em em, com a fonte presa à largura (cqw): o
-           desenho inteiro escala junto, do computador ao celular. */
-        .rv {
-            --rv-dur: 26s;
-            container-type: inline-size;
-        }
-        .rv-tela {
-            position: relative;
-            aspect-ratio: 16 / 10;
-            overflow: hidden;
-            font-family: 'Inter', sans-serif;
-            font-size: clamp(7px, 2.6cqw, 13px);
-            color: #1b1f24;
-            background: #f4f5f7;
-        }
-        .rv-camada {
-            position: absolute;
-            inset: 0;
-            opacity: 0;
-            animation: var(--rv-dur) linear infinite;
-        }
-        .rv-cursor {
-            position: absolute;
-            left: 45%;
-            top: 45%;
-            z-index: 2;
-            font-size: 1.35em;
-            color: #111;
-            filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
-            animation: var(--rv-dur) ease-in-out infinite;
-        }
-
-        /* ── fundo: réplica da janela do AnyDesk 9 ──
-           Medidas tiradas do print real (1366px de largura): --u vale 1px
-           daquele print, então cada número abaixo é o mesmo da tela original. */
-        .rv-ad {
-            --u: calc(100cqw / 1366);
-            position: absolute;
-            inset: 0;
-            background: #f4f5f7;
-            color: #222;
-            font-family: 'Segoe UI', 'Inter', sans-serif;
-            /* zoom de câmera no número enquanto ele é copiado: a janela
-               inteira fica pequena demais para ler nesse tamanho */
-            transform-origin: 50% 17%;
-            animation: rv-zoom var(--rv-dur) ease-in-out infinite;
-        }
-        @keyframes rv-zoom {
-            0%, 43% { transform: none; }
-            45.9%, 57% { transform: scale(1.9); }
-            59.3%, 100% { transform: none; }
-        }
-        .rv-ad i { font-style: normal; }
-        .rv-ad-titulo {
-            display: flex;
-            align-items: center;
-            gap: calc(10 * var(--u));
-            height: calc(30 * var(--u));
-            padding: 0 calc(8 * var(--u));
-            font-size: calc(15 * var(--u));
-        }
-        .rv-ad-titulo b { font-weight: 600; }
-        .rv-ad-logo,
-        .rv-logo-mini {
-            position: relative;
-            display: inline-block;
-            flex-shrink: 0;
-            width: calc(26 * var(--u));
-            height: calc(18 * var(--u));
-        }
-        .rv-ad-logo i,
-        .rv-logo-mini i {
-            position: absolute;
-            top: 18%;
-            width: 46%;
-            height: 64%;
-            background: #ef443b;
-            transform: rotate(45deg);
-        }
-        .rv-ad-logo i:first-child,
-        .rv-logo-mini i:first-child { left: 2%; }
-        .rv-ad-logo i:last-child,
-        .rv-logo-mini i:last-child { left: 42%; background: #d93a32; }
-        .rv-ad-aba {
-            display: flex;
-            align-items: center;
-            gap: calc(8 * var(--u));
-            width: calc(158 * var(--u));
-            height: calc(24 * var(--u));
-            margin-left: calc(2 * var(--u));
-            padding: 0 calc(10 * var(--u));
-            border-radius: calc(3 * var(--u));
-            background: #fff;
-            color: #333;
-        }
-        .rv-ad-nova { color: #555; }
-        .rv-ad-janela {
-            display: flex;
-            gap: calc(45 * var(--u));
-            margin-left: auto;
-            padding-right: calc(14 * var(--u));
-            color: #444;
-        }
-        .rv-ad-endereco {
-            display: flex;
-            align-items: center;
-            gap: calc(8 * var(--u));
-            height: calc(33 * var(--u));
-            padding: 0 calc(8 * var(--u));
-            font-size: calc(15 * var(--u));
-        }
-        .rv-ad-ok { color: #2ea44f; font-size: calc(17 * var(--u)); }
-        .rv-ad-campo {
-            display: flex;
-            flex: 1;
-            align-items: center;
-            justify-content: space-between;
-            height: calc(30 * var(--u));
-            padding: 0 calc(12 * var(--u));
-            border: 1px solid #d6d8db;
-            border-radius: calc(4 * var(--u));
-            background: #fff;
-            color: #555;
-        }
-        .rv-ad-campo span { display: flex; gap: calc(18 * var(--u)); color: #333; }
-        .rv-ad-endereco .fa-bars { margin: 0 calc(6 * var(--u)); font-size: calc(19 * var(--u)); }
-        .rv-ad-faixa {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: calc(40 * var(--u));
-            background: #ff4436;
-            color: #222;
-            font-size: calc(13.5 * var(--u));
-            white-space: nowrap;
-        }
-        .rv-ad-faixa u { font-weight: 700; }
-        .rv-ad-id {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: calc(12 * var(--u));
-            height: calc(82 * var(--u));
-            font-size: calc(21 * var(--u));
-        }
-        .rv-ad-id > i { font-size: calc(18 * var(--u)); }
-        .rv-ad-num {
-            position: relative;
-            margin: 0 calc(10 * var(--u));
-            color: #ef443b;
-            font-size: calc(48 * var(--u));
-            font-weight: 500;
-            line-height: 1;
-            white-space: nowrap;
-        }
-        /* seleção azul do texto, arrastada da esquerda para a direita */
-        .rv-ad-num::before {
-            content: '';
-            position: absolute;
-            inset: -6% -2%;
-            background: rgba(0, 120, 215, 0.3);
-            transform: scaleX(0);
-            transform-origin: left;
-            animation: rv-sel var(--rv-dur) linear infinite;
-        }
-        @keyframes rv-sel {
-            0%, 47.1% { transform: scaleX(0); }
-            51.2%, 57.6% { transform: scaleX(1); }
-            58.1%, 100% { transform: scaleX(0); }
-        }
-        .rv-ad-ibeam {
-            position: absolute;
-            top: 5%;
-            left: -8%;
-            color: #111;
-            /* dentro do zoom de 1.9x: na tela fica perto de 3.8cqw */
-            font-size: 2cqw;
-            opacity: 0;
-            filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff);
-            animation: rv-ibeam var(--rv-dur) ease-in-out infinite;
-        }
-        @keyframes rv-ibeam {
-            0%, 44.2% { left: 30%; top: 260%; opacity: 0; }
-            45.3% { opacity: 1; }
-            47.1% { left: -2%; top: 5%; }
-            51.2%, 57.6% { left: 100%; top: 5%; opacity: 1; }
-            58.1%, 100% { left: 100%; top: 5%; opacity: 0; }
-        }
-        .rv-ad-copiado {
-            position: absolute;
-            left: 50%;
-            bottom: 125%;
-            padding: 0.3em 0.7em;
-            border-radius: 0.4em;
-            background: #1b1f24;
-            color: #fff;
-            font-family: 'Inter', sans-serif;
-            font-size: 1.3cqw;
-            font-weight: 600;
-            white-space: nowrap;
-            opacity: 0;
-            animation: rv-copiado var(--rv-dur) linear infinite;
-        }
-        @keyframes rv-copiado {
-            0%, 51.7% { opacity: 0; transform: translate(-50%, 0.4em); }
-            53.5%, 57.6% { opacity: 1; transform: translate(-50%, 0); }
-            58.1%, 100% { opacity: 0; }
-        }
-        .rv-ad-convidar {
-            display: flex;
-            align-items: center;
-            gap: calc(6 * var(--u));
-            padding: calc(2 * var(--u)) calc(8 * var(--u));
-            border: 1px solid #ef443b;
-            color: #ef443b;
-            font-size: calc(16 * var(--u));
-        }
-        .rv-ad-abas {
-            display: flex;
-            align-items: center;
-            gap: calc(30 * var(--u));
-            padding: calc(26 * var(--u)) calc(32 * var(--u)) 0;
-            color: #aaa;
-            font-size: calc(15.5 * var(--u));
-        }
-        .rv-ad-abas b { color: #ef443b; font-weight: 700; }
-        .rv-ad-vistas { display: flex; gap: calc(20 * var(--u)); margin-left: auto; color: #555; }
-        .rv-ad-noticias {
-            margin: calc(24 * var(--u)) calc(30 * var(--u)) 0;
-            padding-bottom: calc(4 * var(--u));
-            border-bottom: 1px solid #333;
-            color: #555;
-            font-size: calc(13 * var(--u));
-        }
-        .rv-ad-cards {
-            display: flex;
-            gap: calc(8 * var(--u));
-            padding: calc(11 * var(--u)) calc(30 * var(--u));
-        }
-        .rv-ad-card {
-            position: relative;
-            flex-shrink: 0;
-            width: calc(235 * var(--u));
-            height: calc(180 * var(--u));
-            padding: calc(16 * var(--u)) calc(15 * var(--u));
-            overflow: hidden;
-            color: #fff;
-            font-size: calc(15.5 * var(--u));
-            font-weight: 700;
-        }
-        .rv-ad-card > span {
-            display: block;
-            margin-top: calc(8 * var(--u));
-            font-size: calc(13.5 * var(--u));
-            font-weight: 400;
-            line-height: 1.4;
-        }
-        .rv-ad-card1 {
-            padding-top: calc(22 * var(--u));
-            background: linear-gradient(140deg, #bfeaf8 0%, #8fd3f0 38%, #f2a7c3 68%, #f9d86b 100%);
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
-        }
-        .rv-ad-card1 strong { display: block; font-size: calc(27 * var(--u)); }
-        .rv-ad-card1 em {
-            position: absolute;
-            right: calc(14 * var(--u));
-            top: calc(6 * var(--u));
-            color: transparent;
-            font-size: calc(150 * var(--u));
-            font-style: normal;
-            line-height: 1;
-            -webkit-text-stroke: calc(3 * var(--u)) rgba(240, 160, 110, 0.8);
-        }
-        .rv-ad-saiba {
-            position: absolute;
-            left: calc(20 * var(--u));
-            bottom: calc(20 * var(--u));
-            padding: calc(7 * var(--u)) calc(32 * var(--u));
-            background: #444;
-            font-size: calc(12 * var(--u));
-            text-shadow: none;
-        }
-        .rv-ad-card2 { background: linear-gradient(160deg, #d06a9b, #a83e72); }
-        .rv-ad-card3 { background: linear-gradient(160deg, #4a6d98, #34547f); }
-        .rv-ad-card4 { background: linear-gradient(160deg, #f6d060, #eb9a3d); }
-        .rv-ad-card5 { background: linear-gradient(160deg, #c8abda, #b397cc); }
-        .rv-ad-card4 .rv-ad-gravar {
-            margin-top: calc(50 * var(--u));
-            padding: calc(14 * var(--u)) calc(10 * var(--u));
-            background: #f8dc9c;
-            color: #555;
-            text-align: center;
-        }
-
-        /* ── camada: conversa no WhatsApp ──
-           As mensagens entram pela altura (max-height), com o corpo alinhado
-           embaixo: cada nova empurra as anteriores para cima, como no app. */
-        .rv-zap-camada {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 1;
-            background:
-                radial-gradient(90% 70% at 20% 10%, rgba(79, 163, 255, 0.35), transparent 60%),
-                radial-gradient(80% 70% at 90% 100%, rgba(166, 206, 78, 0.28), transparent 60%),
-                linear-gradient(160deg, #1d2633, #121821);
-            animation-name: rv-zap;
-        }
-        @keyframes rv-zap {
-            0%, 39.5% { opacity: 1; }
-            41.9%, 58.1% { opacity: 0; }
-            60.5%, 76.7% { opacity: 1; }
-            79.1%, 97.7% { opacity: 0; }
-            98.3%, 100% { opacity: 1; }
-        }
-        .rv-zap {
-            display: flex;
-            flex-direction: column;
-            width: 76%;
-            height: 90%;
-            overflow: hidden;
-            border-radius: 0.7em;
-            background: #efeae2;
-            box-shadow: 0 1.2em 3em rgba(0, 0, 0, 0.45);
-            font-size: 1.05em;
-        }
-        .rv-zap-topo {
-            display: flex;
-            align-items: center;
-            gap: 0.6em;
-            padding: 0.5em 0.8em;
-            background: #008069;
-            color: #fff;
-        }
-        .rv-zap-topo > i { font-size: 0.85em; }
-        .rv-avatar {
-            display: grid;
-            place-items: center;
-            flex-shrink: 0;
-            width: 1.9em;
-            height: 1.9em;
-            border-radius: 50%;
-            background: #fff;
-            color: #008069;
-            font-size: 0.85em;
-            font-weight: 800;
-        }
-        .rv-zap-nome { display: flex; flex-direction: column; line-height: 1.2; }
-        .rv-zap-nome strong { font-size: 0.88em; }
-        .rv-zap-nome small { font-size: 0.7em; opacity: 0.85; }
-        .rv-zap-acoes { display: flex; gap: 1em; margin-left: auto; font-size: 0.85em; }
-        .rv-zap-corpo {
-            display: flex;
-            flex: 1;
-            flex-direction: column;
-            justify-content: flex-end;
-            min-height: 0;
-            overflow: hidden;
-            padding: 0.2em 0.7em 0.5em;
-            background-color: #efeae2;
-            background-image: radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px);
-            background-size: 0.9em 0.9em;
-        }
-        .rv-msg {
-            display: flex;
-            flex-shrink: 0;
-            max-height: 0;
-            overflow: hidden;
-            opacity: 0;
-            animation: var(--rv-dur) ease-out infinite;
-        }
-        .rv-msg-eu { justify-content: flex-end; }
-        .rv-bolha {
-            max-width: 80%;
-            margin-top: 0.4em;
-            padding: 0.4em 0.6em 0.3em;
-            border-radius: 0.55em;
-            background: #fff;
-            color: #111b21;
-            font-size: 0.9em;
-            line-height: 1.35;
-            box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
-        }
-        .rv-msg-eu .rv-bolha { background: #d9fdd3; border-top-right-radius: 0; }
-        .rv-msg-ele .rv-bolha { border-top-left-radius: 0; }
-        .rv-bolha small {
-            float: right;
-            margin: 0.4em 0 0 0.8em;
-            color: #667781;
-            font-size: 0.72em;
-        }
-        .rv-bolha small i { color: #53bdeb; }
-        .rv-bolha-num { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
-        .rv-digitando {
-            display: flex;
-            gap: 0.25em;
-            margin-top: 0.4em;
-            padding: 0.6em 0.75em;
-            border-radius: 0.55em;
-            border-top-left-radius: 0;
-            background: #fff;
-        }
-        .rv-digitando span {
-            width: 0.4em;
-            height: 0.4em;
-            border-radius: 50%;
-            background: #8a909a;
-            animation: rv-pulo 0.9s ease-in-out infinite;
-        }
-        .rv-digitando span:nth-child(2) { animation-delay: 0.15s; }
-        .rv-digitando span:nth-child(3) { animation-delay: 0.3s; }
-        @keyframes rv-pulo { 0%, 100% { transform: none; } 50% { transform: translateY(-0.25em); } }
-        .rv-m1 { animation-name: rv-m1; }
-        .rv-t1 { animation-name: rv-t1; }
-        .rv-m2 { animation-name: rv-m2; }
-        .rv-m3 { animation-name: rv-m3; }
-        .rv-m4 { animation-name: rv-m4; }
-        .rv-t2 { animation-name: rv-t2; }
-        .rv-m5 { animation-name: rv-m5; }
-        /* as mensagens somem em 97%, com a conversa ainda escondida, para o
-           loop recomeçar com a tela limpa */
-        @keyframes rv-m1 { 0%, 3.5% { max-height: 0; opacity: 0; } 5.8%, 96.5% { max-height: 8em; opacity: 1; } 97.1%, 100% { max-height: 0; opacity: 0; } }
-        @keyframes rv-t1 { 0%, 9.3% { max-height: 0; opacity: 0; } 10.5%, 16.3% { max-height: 3em; opacity: 1; } 16.9%, 100% { max-height: 0; opacity: 0; } }
-        @keyframes rv-m2 { 0%, 16.9% { max-height: 0; opacity: 0; } 19.2%, 96.5% { max-height: 8em; opacity: 1; } 97.1%, 100% { max-height: 0; opacity: 0; } }
-        @keyframes rv-m3 { 0%, 27.9% { max-height: 0; opacity: 0; } 30.2%, 96.5% { max-height: 8em; opacity: 1; } 97.1%, 100% { max-height: 0; opacity: 0; } }
-        @keyframes rv-m4 { 0%, 62.8% { max-height: 0; opacity: 0; } 65.1%, 96.5% { max-height: 8em; opacity: 1; } 97.1%, 100% { max-height: 0; opacity: 0; } }
-        @keyframes rv-t2 { 0%, 66.3% { max-height: 0; opacity: 0; } 67.4%, 69.8% { max-height: 3em; opacity: 1; } 70.3%, 100% { max-height: 0; opacity: 0; } }
-        @keyframes rv-m5 { 0%, 70.3% { max-height: 0; opacity: 0; } 72.7%, 96.5% { max-height: 8em; opacity: 1; } 97.1%, 100% { max-height: 0; opacity: 0; } }
-        .rv-zap-rodape {
-            display: flex;
-            align-items: center;
-            gap: 0.45em;
-            padding: 0.35em 0.5em;
-            background: #f0f2f5;
-        }
-        .rv-zap-rodape span {
-            flex: 1;
-            padding: 0.35em 0.8em;
-            border-radius: 1em;
-            background: #fff;
-            color: #8696a0;
-            font-size: 0.8em;
-        }
-        .rv-zap-rodape i {
-            display: grid;
-            place-items: center;
-            width: 1.9em;
-            height: 1.9em;
-            border-radius: 50%;
-            background: #00a884;
-            color: #fff;
-            font-size: 0.8em;
-        }
-
-        /* ── camada: pedido de conexão ──
-           Réplica da janela real do AnyDesk que pede autorização (print de
-           700x491px). --k vale 1px daquele print e todo elemento é posicionado
-           com as mesmas coordenadas do original. Depois de aberta, a câmera
-           dá zoom nos botões Aceitar/Recusar para o clique ficar legível. */
-        .rv-pedido-camada {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            /* fundo escuro e opaco desde a entrada: a conversa do WhatsApp
-               passa direto para o pedido, sem a tela do número no meio */
-            background: #0d1117;
-            animation-name: rv-pedido-camada;
-        }
-        /* só some depois que a sessão (camada de cima) já cobriu tudo, senão
-           o fundo com o número aparece no meio da troca */
-        @keyframes rv-pedido-camada { 0%, 76.7% { opacity: 0; } 77.9%, 98.3% { opacity: 1; } 100% { opacity: 0; } }
-        .rv-ac {
-            --k: calc(80cqw / 700);
-            position: relative;
-            flex-shrink: 0;
-            width: calc(700 * var(--k));
-            height: calc(491 * var(--k));
-            border: 1px solid #e0463c;
-            background: #fff;
-            box-shadow: 0 1em 2.6em rgba(0, 0, 0, 0.35);
-            color: #333;
-            font-family: 'Segoe UI', 'Inter', sans-serif;
-            font-size: calc(14.5 * var(--k));
-            /* zoom em volta do ponto entre os dois botões de baixo */
-            transform-origin: 21% 92%;
-            animation: rv-pedido var(--rv-dur) ease-in-out infinite;
-        }
-        /* abre, dá zoom no Aceitar e, depois do clique (78,5%), o zoom
-           volta: a janela retorna ao tamanho inteiro sobre o fundo escuro
-           e fica ali até a sessão entrar por cima */
-        @keyframes rv-pedido {
-            0%, 77.3% { transform: translate(0, 0) scale(0.9); }
-            80.2%, 84.9% { transform: translate(0, 0) scale(1); }
-            88.4%, 92.4% { transform: translate(4cqw, -8cqw) scale(1.45); }
-            95.9%, 100% { transform: translate(0, 0) scale(1); }
-        }
-        .rv-ac > div > *,
-        .rv-ac-titulo > * { position: absolute; }
-        .rv-ac i { font-style: normal; }
-
-        .rv-ac-titulo {
-            position: absolute;
-            inset: 0 0 auto;
-            height: calc(34 * var(--k));
-            background: #f0f0f0;
-        }
-        .rv-ac-logo {
-            left: calc(6 * var(--k));
-            top: calc(9 * var(--k));
-            width: calc(26 * var(--k));
-            height: calc(16 * var(--k));
-        }
-        .rv-ac-logo i {
-            position: absolute;
-            top: 12%;
-            width: 46%;
-            height: 72%;
-            border: calc(3.5 * var(--k)) solid #333;
-            border-left: 0;
-            border-bottom: 0;
-            transform: rotate(45deg);
-        }
-        .rv-ac-logo i:first-child { left: 0; background: #333; }
-        .rv-ac-logo i:last-child { left: 42%; }
-        .rv-ac-aba {
-            left: calc(37 * var(--k));
-            top: calc(6 * var(--k));
-            display: flex;
-            align-items: center;
-            gap: calc(8 * var(--k));
-            width: calc(160 * var(--k));
-            height: calc(28 * var(--k));
-            padding: 0 calc(6 * var(--k));
-            background: #fff;
-            color: #222;
-            font-size: calc(13 * var(--k));
-            font-weight: 600;
-            white-space: nowrap;
-        }
-        .rv-ac-aba-icone {
-            width: calc(15 * var(--k));
-            height: calc(15 * var(--k));
-            background: #e8322a;
-        }
-        .rv-ac-janela {
-            right: calc(20 * var(--k));
-            top: calc(10 * var(--k));
-            display: flex;
-            gap: calc(38 * var(--k));
-            color: #333;
-            font-size: calc(13 * var(--k));
-        }
-
-        .rv-ac-esq,
-        .rv-ac-dir { position: absolute; top: 0; bottom: 0; }
-        .rv-ac-esq { left: 0; width: calc(313 * var(--k)); }
-        .rv-ac-dir {
-            left: calc(313 * var(--k));
-            right: 0;
-            top: calc(36 * var(--k));
-            border-left: 1px solid #ccc;
-        }
-
-        /* avatar vermelho com a figura branca (cabeça e V) */
-        .rv-ac-avatar {
-            left: calc(21 * var(--k));
-            top: calc(57 * var(--k));
-            width: calc(100 * var(--k));
-            height: calc(100 * var(--k));
-            background: linear-gradient(135deg, #f0463c, #c9241c);
-        }
-        .rv-ac-avatar i {
-            position: absolute;
-            left: 50%;
-            top: calc(19 * var(--k));
-            width: calc(30 * var(--k));
-            height: calc(30 * var(--k));
-            border-radius: 50%;
-            background: #fff;
-            transform: translateX(-50%);
-        }
-        .rv-ac-avatar b {
-            position: absolute;
-            left: 50%;
-            top: calc(40 * var(--k));
-            width: calc(34 * var(--k));
-            height: calc(34 * var(--k));
-            border: calc(14 * var(--k)) solid #fff;
-            border-top: 0;
-            border-left: 0;
-            transform: translateX(-50%) rotate(45deg);
-        }
-        .rv-ac-quem {
-            left: calc(136 * var(--k));
-            top: calc(58 * var(--k));
-            display: flex;
-            flex-direction: column;
-            gap: calc(4 * var(--k));
-            color: #555;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: calc(13 * var(--k));
-        }
-        .rv-ac-quem strong { color: #222; font-family: 'Segoe UI', 'Inter', sans-serif; font-size: calc(16 * var(--k)); }
-        .rv-ac-texto {
-            left: calc(141 * var(--k));
-            top: calc(146 * var(--k));
-            width: calc(160 * var(--k));
-            line-height: 1.35;
-        }
-        .rv-ac-status {
-            left: calc(24 * var(--k));
-            top: calc(167 * var(--k));
-            display: flex;
-            gap: calc(8 * var(--k));
-            font-size: calc(12 * var(--k));
-        }
-        .rv-ac-status i:first-child { color: #2e9e44; }
-        .rv-ac-perfil {
-            left: calc(21 * var(--k));
-            top: calc(204 * var(--k));
-            color: #222;
-            font-size: calc(15 * var(--k));
-            font-weight: 700;
-        }
-        .rv-ac-select {
-            left: calc(21 * var(--k));
-            top: calc(233 * var(--k));
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: calc(272 * var(--k));
-            height: calc(31 * var(--k));
-            padding: 0 calc(12 * var(--k)) 0 calc(32 * var(--k));
-            border: 1px solid #ccc;
-            color: #666;
-            font-size: calc(15 * var(--k));
-        }
-        .rv-ac-perm {
-            display: grid;
-            place-items: center;
-            width: calc(48 * var(--k));
-            height: calc(40 * var(--k));
-            background: #5b8dd6;
-            color: #fff;
-            font-size: calc(15 * var(--k));
-        }
-        .rv-ac-p1, .rv-ac-p2, .rv-ac-p3, .rv-ac-p4, .rv-ac-p5 { top: calc(275 * var(--k)); }
-        .rv-ac-p6, .rv-ac-p7 { top: calc(323 * var(--k)); }
-        .rv-ac-p1, .rv-ac-p6 { left: calc(21 * var(--k)); }
-        .rv-ac-p2, .rv-ac-p7 { left: calc(77 * var(--k)); }
-        .rv-ac-p3 { left: calc(133 * var(--k)); }
-        .rv-ac-p4 { left: calc(189 * var(--k)); }
-        .rv-ac-p5 { left: calc(245 * var(--k)); }
-        .rv-ac-p7 { background: #e6e6e6; color: #c8c8c8; }
-        .rv-ac-mais {
-            left: calc(246 * var(--k));
-            top: calc(334 * var(--k));
-            color: #555;
-            font-size: calc(15 * var(--k));
-        }
-        .rv-ac-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: calc(8 * var(--k));
-            height: calc(32 * var(--k));
-            color: #fff;
-            font-size: calc(14.5 * var(--k));
-        }
-        .rv-ac-aceitar-perfil {
-            left: calc(21 * var(--k));
-            top: calc(398 * var(--k));
-            width: calc(272 * var(--k));
-            background: #2e9a40;
-        }
-        .rv-ac-aceitar {
-            left: calc(21 * var(--k));
-            top: calc(438 * var(--k));
-            width: calc(132 * var(--k));
-            background: #2e9a40;
-        }
-        .rv-ac-recusar {
-            left: calc(161 * var(--k));
-            top: calc(438 * var(--k));
-            width: calc(132 * var(--k));
-            background: #f4433b;
-        }
-        /* o clique no Aceitar de baixo */
-        .rv-ac .rv-aceitar { animation: rv-aperta var(--rv-dur) linear infinite; }
-        @keyframes rv-aperta {
-            0%, 90.7% { filter: none; }
-            91.3%, 92.4% { filter: brightness(0.82); }
-            93%, 100% { filter: none; }
-        }
-        .rv-ac .rv-cursor {
-            left: 50%;
-            top: 45%;
-            /* dentro do zoom de 1.45x: na tela fica perto de 3.8cqw */
-            font-size: 2.6cqw;
-            animation-name: rv-cursor-aceitar;
-        }
-        @keyframes rv-cursor-aceitar {
-            0%, 85.5% { transform: translate(5em, -4em); }
-            90.1% { transform: translate(0, 0); }
-            91.3% { transform: scale(0.8); }
-            92.4%, 100% { transform: translate(0, 0); }
-        }
-
-        /* lado direito: chat da sessão */
-        .rv-ac-tab {
-            top: 0;
-            display: grid;
-            place-items: center;
-            height: calc(34 * var(--k));
-            color: #fff;
-            font-size: calc(15 * var(--k));
-            font-weight: 600;
-        }
-        .rv-ac-tab-chat { left: 0; width: calc(193 * var(--k)); background: #5b8dd6; }
-        .rv-ac-tab-arq { left: calc(193 * var(--k)); right: 0; background: #cfcfcf; white-space: nowrap; }
-        .rv-ac-log {
-            left: calc(9 * var(--k));
-            top: calc(46 * var(--k));
-            color: #222;
-            font-weight: 700;
-            text-decoration: underline;
-        }
-        .rv-ac-linha1,
-        .rv-ac-linha2 { left: 0; right: 0; height: 1px; background: #ccc; }
-        .rv-ac-linha1 { top: calc(68 * var(--k)); }
-        .rv-ac-linha2 { top: calc(389 * var(--k)); }
-        .rv-ac-nome {
-            left: calc(4 * var(--k));
-            top: calc(79 * var(--k));
-            color: #222;
-            font-weight: 700;
-        }
-        .rv-ac-hora {
-            right: calc(7 * var(--k));
-            top: calc(78 * var(--k));
-            color: #555;
-            font-size: calc(12 * var(--k));
-        }
-        .rv-ac-evento {
-            left: calc(6 * var(--k));
-            top: calc(108 * var(--k));
-            display: flex;
-            align-items: center;
-            gap: calc(9 * var(--k));
-            color: #444;
-        }
-        .rv-ac-evento i { color: #e0a800; font-size: calc(12 * var(--k)); }
-        .rv-ac-msg {
-            left: calc(14 * var(--k));
-            top: calc(414 * var(--k));
-            color: #444;
-            font-style: italic;
-        }
-        .rv-ac-enviar {
-            right: calc(10 * var(--k));
-            top: calc(412 * var(--k));
-            color: #444;
-            font-size: calc(20 * var(--k));
-        }
-
-        /* ── legenda e progresso, como nos stories: um traço por passo ── */
-        .rv-legenda {
-            padding: 0.7em 0.9em 0.8em;
-            border-top: 1px solid var(--border-color);
-            font-size: clamp(10px, 2.9cqw, 13.5px);
-        }
-        .rv-progresso {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 0.35em;
-            margin-bottom: 0.6em;
-        }
-        .rv-progresso span {
-            height: 0.22em;
-            overflow: hidden;
-            border-radius: 1em;
-            background: var(--border-color);
-        }
-        .rv-progresso i {
-            display: block;
-            height: 100%;
-            background: var(--accent-mac);
-            transform: scaleX(0);
-            transform-origin: left;
-            animation: var(--rv-dur) linear infinite;
-        }
-        .rv-progresso span:nth-child(1) i { animation-name: rv-seg1; }
-        .rv-progresso span:nth-child(2) i { animation-name: rv-seg2; }
-        .rv-progresso span:nth-child(3) i { animation-name: rv-seg3; }
-        .rv-progresso span:nth-child(4) i { animation-name: rv-seg4; }
-        @keyframes rv-seg1 { 0% { transform: scaleX(0); } 41.9%, 100% { transform: scaleX(1); } }
-        @keyframes rv-seg2 { 0%, 41.9% { transform: scaleX(0); } 58.1%, 100% { transform: scaleX(1); } }
-        @keyframes rv-seg3 { 0%, 58.1% { transform: scaleX(0); } 77.3%, 100% { transform: scaleX(1); } }
-        @keyframes rv-seg4 { 0%, 77.3% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
-        .rv-passos { display: grid; }
-        .rv-passo {
-            grid-area: 1 / 1;
-            margin: 0;
-            color: var(--text-primary);
-            font-size: 1em;
-            font-weight: 600;
-            line-height: 1.35;
-            opacity: 0;
-            animation: var(--rv-dur) linear infinite;
-        }
-        .rv-passos .rv-p1 { animation-name: rv-p1; }
-        .rv-passos .rv-p2 { animation-name: rv-p2; }
-        .rv-passos .rv-p3 { animation-name: rv-p3; }
-        .rv-passos .rv-p4 { animation-name: rv-p4; }
-        @keyframes rv-p1 { 0% { opacity: 0; } 1.7%, 40.1% { opacity: 1; } 41.9%, 100% { opacity: 0; } }
-        @keyframes rv-p2 { 0%, 41.9% { opacity: 0; } 43.6%, 56.4% { opacity: 1; } 58.1%, 100% { opacity: 0; } }
-        @keyframes rv-p3 { 0%, 58.1% { opacity: 0; } 59.9%, 76.2% { opacity: 1; } 77.3%, 100% { opacity: 0; } }
-        @keyframes rv-p4 { 0%, 77.3% { opacity: 0; } 78.5%, 98.8% { opacity: 1; } 100% { opacity: 0; } }
-        .rv-passo b {
-            display: inline-grid;
-            place-items: center;
-            width: 1.5em;
-            height: 1.5em;
-            margin-right: 0.45em;
-            border-radius: 50%;
-            background: var(--accent-mac);
-            color: #fff;
-            font-size: 0.8em;
-        }
-        html[data-tema="escuro"] .rv-passo b { color: #062018; }
-
-        /* quem pediu menos movimento vê a conversa parada, com as três
-           primeiras mensagens, e os quatro passos escritos um embaixo do outro */
-        @media (prefers-reduced-motion: reduce) {
-            .rv *, .rv *::before, .rv *::after { animation: none !important; }
-            .rv-m1, .rv-m2, .rv-m3 { max-height: none; opacity: 1; }
-            .rv-passo { grid-area: auto; margin-bottom: 0.35em; opacity: 1; }
-            .rv-progresso, .rv-ad-ibeam { display: none; }
-        }
 
         /* curso como anúncio "em breve", no fim da seção dos certificados:
            uma faixa só, com as marcas, o texto e o selo "Logo mais" em linha.
@@ -2903,16 +1892,6 @@
         .curso-anuncio-tag i { filter: none; }
         .curso-anuncio-btn { color: #fff; }
 
-        /* suporte remoto */
-        .remote-section {
-            background: #fff;
-            backdrop-filter: none;
-            -webkit-backdrop-filter: none;
-            box-shadow: 0 10px 30px rgba(20, 24, 31, 0.06);
-        }
-        .remote-visual .remote-window { box-shadow: 0 16px 40px rgba(20, 24, 31, 0.14); }
-        .remote-buttons .btn-anydesk { color: #fff; }
-        .remote-buttons .btn-anydesk:hover { box-shadow: 0 12px 26px rgba(107, 163, 47, 0.25); }
 
         /* mídias de certificado */
         .cert-item:hover { background: rgba(20, 24, 31, 0.04); }
@@ -3019,27 +1998,13 @@
         /* curso: as duas logos já são as versões brancas, sem inverter */
         html[data-tema="escuro"] .curso-anuncio-icone img { filter: none; }
         /* texto escuro nos botões verdes, como no escuro original */
-        html[data-tema="escuro"] .curso-anuncio-btn,
-        html[data-tema="escuro"] .remote-buttons .btn-anydesk { color: #062018; }
+        html[data-tema="escuro"] .curso-anuncio-btn { color: #062018; }
 
         html[data-tema="escuro"] .recommended-tag {
             background: rgba(166, 206, 78, 0.12);
             border-color: rgba(166, 206, 78, 0.4);
         }
 
-        /* quadro de serviços + suporte remoto */
-        html[data-tema="escuro"] .platform-duo {
-            background: var(--bg-card);
-            box-shadow: none;
-        }
-
-        /* suporte remoto */
-        html[data-tema="escuro"] .remote-section {
-            background: var(--bg-card);
-            box-shadow: none;
-        }
-        html[data-tema="escuro"] .remote-visual .remote-window { box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); }
-        html[data-tema="escuro"] .remote-buttons .btn-anydesk:hover { box-shadow: 0 12px 26px rgba(166, 206, 78, 0.25); }
 
         /* mídias de certificado */
         html[data-tema="escuro"] .cert-item:hover { background: rgba(255, 255, 255, 0.04); }
@@ -3087,6 +2052,798 @@
             color: var(--accent-mac);
             border-color: rgba(166, 206, 78, 0.45);
         }
+    </style>
+    <!-- ─── CIBERSEGURANÇA E AUTOMAÇÃO EM VPS: o tema principal da seção ───
+         O bloco da VPS abre a seção #plataformas e o suporte ao certificado
+         desce para segundo plano. Veio da página de rascunho teste-vps.html,
+         que continua no diretório, fora do repositório, para novas provas.
+         Ao mexer aqui, lembre que lá existe uma cópia desatualizada. -->
+    <style>
+        .vps-titulo {
+            margin: 0 0 2.75rem;
+            text-align: center;
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(2rem, 5vw, 3.1rem);
+            font-weight: 600;
+            line-height: 1.18;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+        .vps-titulo .vps-titulo-linha0 { letter-spacing: -0.01em; }
+        /* o mesmo degradê do "certificados digitais" do topo (paradas do Figma) */
+        .vps-titulo .vps-titulo-grad {
+            background: linear-gradient(90deg, #67e300 0%, #224eff 25%, #ff02ee 50%, #ff151e 75%, #fc9a04 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        /* o título do topo cai para 2rem nessa largura; este acompanha */
+        @media (max-width: 900px) {
+            .vps-titulo { font-size: 2rem; }
+        }
+        /* quadro dos fluxos: à esquerda, um carrossel com um fluxo do n8n
+           por vez; à direita, o celular fixo, que só troca a conversa */
+        /* o fundo pontilhado do canvas do n8n cobre o quadro inteiro, nos
+           dois temas: o fluxo e o celular ficam juntos no mesmo plano */
+        .vps-bloco {
+            padding: 2rem;
+            border: 1px solid #3d4048;
+            border-radius: 20px;
+            background-color: #1b1c21;
+            background-image: radial-gradient(#34363d 1px, transparent 1px);
+            background-size: 18px 18px;
+            box-shadow: 0 10px 30px rgba(20, 24, 31, 0.12);
+            color: #e6e7ea;
+        }
+        html[data-tema="escuro"] .vps-bloco { box-shadow: none; }
+        /* o fluxo estica até a altura do celular com o botão embaixo */
+        .vps-palco {
+            display: grid;
+            grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+            gap: 2rem;
+            align-items: stretch;
+        }
+        .vps-fluxos {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        /* Carrossel: os slides ocupam a mesma célula da grade, então o
+           quadro fica com a altura do maior e não pula na troca. O que
+           sai desliza pouco para a direita e esmaece; o próximo entra da
+           esquerda um instante depois, para os dois não se atropelarem. */
+        .vps-carrossel {
+            flex: 1;
+            display: grid;
+            overflow: hidden;
+        }
+        .vps-slide {
+            grid-area: 1 / 1;
+            opacity: 0;
+            transform: translateX(-48px);
+            transition: transform 1.3s cubic-bezier(0.33, 0, 0.2, 1), opacity 1.1s ease-in-out;
+        }
+        .vps-slide.ativo { opacity: 1; transform: none; transition-delay: 0.4s; }
+        .vps-slide.saindo { opacity: 0; transform: translateX(48px); }
+        /* volta para a esquerda sem animar, fora da vista */
+        .vps-slide.sem-transicao { transition: none; }
+        .vps-pontos {
+            display: flex;
+            justify-content: center;
+            gap: 0.45rem;
+            margin: 1.5rem 0 0;
+        }
+        .vps-pontos span {
+            width: 8px;
+            height: 8px;
+            border-radius: 99px;
+            background: var(--border-color);
+            transition: width 0.4s ease, background-color 0.4s ease;
+        }
+        .vps-pontos span.on { width: 24px; background: var(--accent-mac); }
+        /* coluna da direita: o celular e, logo abaixo, o botão.
+           A largura do aparelho é uma variável só: o botão acompanha e o
+           desenho de dentro escala por ela (ver .zap-cel). */
+        .zap-col {
+            --zap-larg: 258px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.1rem;
+            min-width: 0;
+        }
+        .zap-col .vps-btn {
+            box-sizing: border-box;
+            width: 100%;
+            max-width: var(--zap-larg);
+            justify-content: center;
+            /* o que engrossava o botão era o rótulo quebrando em duas
+               linhas: "Quero automatizar meu escritório" não cabia nos
+               ~200px entre o ícone e as bordas. Com "Conheça mais" sobra
+               espaço, a altura vem de uma linha só e o respiro pode ser
+               curto. A entrelinha fica explícita para a altura não depender
+               da métrica da fonte. */
+            padding: 0.6rem 1rem;
+            line-height: 1.25;
+            text-align: center;
+        }
+        /* nome do fluxo no canto do canvas, como o título do workflow no n8n */
+        .n8n-titulo {
+            position: absolute;
+            top: 0.8rem;
+            right: 1rem;
+            color: #e6e7ea;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .vps-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.9rem 1.5rem;
+            border-radius: 10px;
+            /* degradê verde → azul, as duas cores que estruturam a página
+               (o verde do Mac e o azul do Windows). Os tons são escolhidos
+               escuros de propósito: o verde do título (#67e300) e o azul
+               claro dariam 2:1 de contraste com texto branco. Nestes, o
+               pior ponto dá 5,2:1, então dispensa véu e sombra no texto.
+
+               O degradê vai e volta (verde → azul → verde) numa faixa de
+               220% da largura: no repouso a janela visível mostra o verde
+               indo para o azul e, no hover, ela desliza para a outra
+               metade — a luz atravessa o botão em vez de só piscar. */
+            background-image: linear-gradient(110deg, #3d7a1f 0%, #1e4fc4 50%, #3d7a1f 100%);
+            background-size: 220% 100%;
+            background-position: 0% 50%;
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.92rem;
+            text-decoration: none;
+            transition: transform 0.35s ease, box-shadow 0.35s ease, background-position 0.55s ease;
+        }
+        /* o branco vale nos dois temas: antes o tema escuro escrevia em
+           quase preto, legível só sobre o verde-menta de então */
+        .vps-btn:hover {
+            background-position: 100% 50%;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 24px rgba(30, 79, 196, 0.32);
+        }
+        /* quem pediu menos movimento mantém o degradê, perde só o deslize */
+        @media (prefers-reduced-motion: reduce) {
+            .vps-btn { transition: none; }
+            .vps-btn:hover { background-position: 0% 50%; }
+        }
+
+        /* ─── CANVAS DO N8N (.n8n) ───
+           Sem fundo nem moldura: o fluxo fica solto no pontilhado do
+           .vps-bloco, o mesmo que fica atrás do celular. Ocupa a altura
+           toda da coluna, com o fluxo no meio e a legenda embaixo. O
+           script no fim do bloco liga as classes .rodando e .ok em
+           sequência, imitando uma execução de verdade. */
+        .n8n-canvas {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            padding: 3rem 1.25rem 1.25rem;
+            color: #e6e7ea;
+        }
+        .n8n-canvas .n8n-fluxo { margin: auto 0; }
+        .n8n-rede {
+            position: absolute;
+            top: 0.85rem;
+            left: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            color: #8b8f98;
+            font-size: 0.66rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .n8n-rede i { color: #a6ce4e; }
+        .n8n-fluxo {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+        }
+        .n8n-no {
+            flex-shrink: 0;
+            width: 86px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .n8n-no.n8n-agente { width: 112px; }
+        .n8n-caixa {
+            position: relative;
+            box-sizing: border-box;
+            width: 62px;
+            height: 62px;
+            display: grid;
+            place-items: center;
+            border-radius: 10px;
+            border: 2px solid #464953;
+            background: #2a2c33;
+            font-size: 1.4rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        /* o gatilho do n8n tem o lado esquerdo arredondado */
+        .n8n-gatilho .n8n-caixa { border-radius: 31px 10px 10px 31px; }
+        .n8n-agente .n8n-caixa { width: 92px; }
+        .n8n-gatilho .n8n-caixa i { color: #ff6d5a; }
+        .n8n-tribunais .n8n-caixa i { color: #4fa3ff; }
+        .n8n-agente .n8n-caixa i { color: #c9a7ff; }
+        .n8n-zap .n8n-caixa i { color: #25d366; }
+        /* bolinha de saída, à direita de cada nó (no último não há) */
+        .n8n-no:not(.n8n-fim) .n8n-caixa::after {
+            content: '';
+            position: absolute;
+            right: -6px;
+            top: 50%;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #5c606b;
+            transform: translateY(-50%);
+        }
+        .n8n-check {
+            position: absolute;
+            top: -9px;
+            right: -9px;
+            width: 20px;
+            height: 20px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: #2dbf7a;
+            color: #fff;
+            font-size: 0.6rem;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        .n8n-no.rodando > .n8n-caixa,
+        .n8n-sub-no.rodando .n8n-sub-caixa {
+            border-color: #ff9b3d;
+            animation: n8nPulso 0.6s ease-in-out infinite;
+        }
+        @keyframes n8nPulso {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 155, 61, 0.35); }
+            50% { box-shadow: 0 0 0 6px rgba(255, 155, 61, 0); }
+        }
+        .n8n-no.ok > .n8n-caixa,
+        .n8n-sub-no.ok .n8n-sub-caixa { border-color: #2dbf7a; }
+        .n8n-no.ok .n8n-check { opacity: 1; transform: none; }
+        .n8n-nome {
+            margin-top: 0.55rem;
+            font-size: 0.74rem;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+        .n8n-desc {
+            margin-top: 0.15rem;
+            color: #8b8f98;
+            font-size: 0.64rem;
+            line-height: 1.3;
+        }
+        /* modelo e base de conhecimento pendurados embaixo do agente,
+           com a linha tracejada das conexões de IA do n8n */
+        .n8n-subs {
+            display: flex;
+            gap: 0.55rem;
+            margin-top: 0.55rem;
+        }
+        .n8n-sub-no {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 46px;
+        }
+        .n8n-sub-no::before {
+            content: '';
+            height: 12px;
+            border-left: 1px dashed #5c606b;
+        }
+        .n8n-sub-caixa {
+            box-sizing: border-box;
+            width: 30px;
+            height: 30px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            border: 2px solid #464953;
+            background: #2a2c33;
+            color: #c9a7ff;
+            font-size: 0.7rem;
+            transition: border-color 0.3s ease;
+        }
+        .n8n-sub-no span {
+            margin-top: 0.25rem;
+            color: #8b8f98;
+            font-size: 0.56rem;
+            line-height: 1.2;
+        }
+        /* ligação entre nós: linha com seta, o pacote que anda por ela e
+           a contagem de itens que o n8n escreve depois de executar */
+        .n8n-liga {
+            position: relative;
+            flex: 1;
+            min-width: 18px;
+            height: 2px;
+            margin: 30px 4px 0 8px;
+            background: #5c606b;
+            transition: background-color 0.3s ease;
+        }
+        .n8n-liga::after {
+            content: '';
+            position: absolute;
+            right: -1px;
+            top: -4px;
+            border-left: 7px solid #5c606b;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+            transition: border-color 0.3s ease;
+        }
+        .n8n-liga.ok { background: #2dbf7a; }
+        .n8n-liga.ok::after { border-left-color: #2dbf7a; }
+        .n8n-liga b {
+            position: absolute;
+            left: 50%;
+            bottom: 7px;
+            transform: translateX(-50%);
+            color: #8b8f98;
+            font-size: 0.58rem;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .n8n-liga.ok b { opacity: 1; }
+        .n8n-liga i {
+            position: absolute;
+            top: -3px;
+            left: 0;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ff9b3d;
+            box-shadow: 0 0 8px rgba(255, 155, 61, 0.8);
+            opacity: 0;
+        }
+        /* o script espera exatamente este tempo antes de pintar a ligação
+           de verde: mudar aqui pede mudar lá (a espera no executa) */
+        .n8n-liga.anda i { animation: n8nAnda 0.45s ease-in forwards; }
+        @keyframes n8nAnda {
+            0% { left: 0; opacity: 1; }
+            90% { opacity: 1; }
+            100% { left: calc(100% - 8px); opacity: 0; }
+        }
+        /* legenda que explica o passo em andamento */
+        .n8n-legenda {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            min-height: 2.8em;
+            margin-top: 1.6rem;
+            padding-top: 1rem;
+            border-top: 1px solid #2c2e35;
+            font-size: 0.84rem;
+            line-height: 1.4;
+        }
+        .n8n-legenda b {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: #a6ce4e;
+            color: #062018;
+            font-size: 0.75rem;
+        }
+
+        /* ─── CELULAR COM O WHATSAPP (.zap) ───
+           Proporção de celular, com o recorte da câmera no topo. Não é a
+           do iPhone 12 Pro Max (428 x 926): esta é um pouco menos comprida,
+           para o aparelho não esticar a altura da seção — fica entre o
+           iPhone 8 e os atuais. A altura é fixa: as mensagens novas
+           empurram as antigas para cima e as que passam do topo somem,
+           como no app.
+           As cores da conversa são as do WhatsApp da animação do AnyDesk
+           (.rv-zap), que saiu desta página e está guardada em
+           _bloco-anydesk.html: topo verde, papel bege pontilhado e
+           balões claros.
+
+           O aparelho é um container de consulta e tudo dentro dele vai em
+           cqw (porcentagem da largura do celular), como na folha timbrada.
+           Assim mudar só a --zap-larg encolhe a tela inteira — texto,
+           balões e espaços juntos — sem nada sair de proporção. As medidas
+           vêm de um aparelho de 300px, onde 1cqw valia 3px. */
+        .zap-cel {
+            container-type: inline-size;
+            position: relative;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: var(--zap-larg);
+            min-width: 0;
+            aspect-ratio: 428 / 860;
+            border: 8px solid #1c1d21;
+            border-radius: 38px;
+            overflow: hidden;
+            background: #efeae2;
+            box-shadow: 0 0 0 1px #3d4048, 0 20px 52px rgba(0, 0, 0, 0.45);
+        }
+        /* recorte da câmera */
+        .zap-cel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            z-index: 2;
+            width: 44%;
+            height: 7.3cqw;
+            border-radius: 0 0 4.7cqw 4.7cqw;
+            background: #1c1d21;
+            transform: translateX(-50%);
+        }
+        .zap-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2.1cqw 6.4cqw 1.3cqw;
+            background: #008069;
+            color: #fff;
+            font-size: 3.3cqw;
+            font-weight: 600;
+        }
+        .zap-status span:last-child { display: flex; gap: 1.6cqw; font-size: 3cqw; }
+        .zap-topo {
+            display: flex;
+            align-items: center;
+            gap: 2.9cqw;
+            padding: 2.4cqw 4cqw 2.9cqw;
+            background: #008069;
+            color: #fff;
+        }
+        .zap-topo > i { font-size: 3.8cqw; }
+        .zap-avatar {
+            flex-shrink: 0;
+            width: 10cqw;
+            height: 10cqw;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: #fff;
+            color: #008069;
+            font-size: 4.3cqw;
+        }
+        .zap-topo strong {
+            display: block;
+            font-size: 4.05cqw;
+            line-height: 1.2;
+        }
+        .zap-topo small {
+            font-size: 3.3cqw;
+            opacity: 0.85;
+        }
+        .zap-acoes { display: flex; gap: 4.8cqw; margin-left: auto; font-size: 3.8cqw; }
+        /* as duas conversas ocupam a mesma célula; o script esmaece uma e
+           acende a outra quando o fluxo troca */
+        .zap-corpo {
+            flex: 1;
+            display: grid;
+            grid-template-rows: minmax(0, 1fr);
+            min-height: 0;
+            overflow: hidden;
+            background-color: #efeae2;
+            background-image: radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+            background-size: 4.3cqw 4.3cqw;
+        }
+        .zap-conversa {
+            grid-area: 1 / 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            gap: 2.1cqw;
+            min-height: 0;
+            overflow: hidden;
+            padding: 3.2cqw 3.2cqw 2.7cqw;
+            opacity: 0;
+            transition: opacity 0.7s ease-in-out;
+        }
+        .zap-conversa.ativa { opacity: 1; }
+        .zap-msg,
+        .zap-dig {
+            flex-shrink: 0;
+            align-self: flex-start;
+            max-width: 84%;
+            padding: 2.1cqw 2.9cqw 1.6cqw;
+            border-radius: 0 2.7cqw 2.7cqw 2.7cqw;
+            background: #fff;
+            color: #111b21;
+            font-size: 3.7cqw;
+            line-height: 1.4;
+            overflow-wrap: anywhere;
+            box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+        }
+        /* as mensagens ainda não chegadas ficam fora do fluxo, para a
+           conversa crescer de baixo para cima como no WhatsApp */
+        .zap-msg { display: none; }
+        .zap-msg.on { display: block; animation: zapEntra 0.3s ease; }
+        @keyframes zapEntra {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: none; }
+        }
+        .zap-msg small {
+            display: block;
+            text-align: right;
+            color: #667781;
+            font-size: 3cqw;
+        }
+        .zap-msg small i { color: #53bdeb; }
+        .zap-msg em {
+            font-style: normal;
+            color: #667781;
+            font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+            font-size: 3.3cqw;
+        }
+        .zap-dig { display: none; gap: 1cqw; padding: 3.2cqw 3.7cqw; }
+        .zap-dig.on { display: inline-flex; }
+        .zap-dig span {
+            width: 2cqw;
+            height: 2cqw;
+            border-radius: 50%;
+            background: #8a909a;
+            animation: zapPonto 0.9s ease-in-out infinite;
+        }
+        .zap-dig span:nth-child(2) { animation-delay: 0.15s; }
+        .zap-dig span:nth-child(3) { animation-delay: 0.3s; }
+        @keyframes zapPonto {
+            0%, 100% { transform: none; }
+            50% { transform: translateY(-3px); }
+        }
+        .zap-rodape {
+            display: flex;
+            align-items: center;
+            gap: 2.4cqw;
+            padding: 2.1cqw 2.7cqw 3.7cqw;
+            background: #f0f2f5;
+        }
+        .zap-rodape span {
+            flex: 1;
+            padding: 2.1cqw 4.3cqw;
+            border-radius: 6.7cqw;
+            background: #fff;
+            color: #8696a0;
+            font-size: 3.6cqw;
+        }
+        .zap-rodape i {
+            width: 10cqw;
+            height: 10cqw;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: #00a884;
+            color: #fff;
+            font-size: 3.8cqw;
+        }
+
+        /* fluxo 2: pedido do advogado, documento no timbrado, PDF de volta */
+        .n8n-timbre .n8n-caixa i { color: #ff6b6b; }
+        /* o sinal de concluído é sempre branco: sem isto ele herdava a cor
+           do ícone do nó e sumia no verde dos nós do WhatsApp */
+        .n8n-no .n8n-caixa .n8n-check i { color: #fff; }
+        /* mensagem enviada por quem pede: à direita, no verde do WhatsApp */
+        .zap-msg.eu {
+            align-self: flex-end;
+            border-radius: 2.7cqw 0 2.7cqw 2.7cqw;
+            background: #d9fdd3;
+        }
+        /* anexo em PDF: a prévia mostra o topo da primeira página, cortada,
+           como o WhatsApp faz com o documento */
+        .zap-doc { width: 84%; padding: 1.3cqw; }
+        .zap-doc .tb-folha {
+            height: 39.3cqw;
+            overflow: hidden;
+            border-radius: 1.7cqw;
+        }
+        .zap-arquivo {
+            display: flex;
+            align-items: center;
+            gap: 2.4cqw;
+            padding: 2.4cqw 1.9cqw 0.5cqw;
+        }
+        .zap-arquivo > i { color: #e5252a; font-size: 5.9cqw; }
+        .zap-arquivo span { display: block; font-size: 3.5cqw; }
+        .zap-arquivo small { text-align: left; }
+
+        /* ─── FOLHA TIMBRADA DA ADVCERT (.tb-folha) ───
+           Cópia do timbrado do curso (curso.html, .ia-timbrado): papel
+           marfim, serifa, moldura interna, marca AdvCert em azul pela
+           máscara do logo, faixa de contatos, filete sob o cabeçalho e
+           rodapé com o endereço. Lá a folha tem 340px; aqui ela tem várias
+           larguras, então as medidas vão em cqw (porcentagem da largura da
+           folha) e a página encolhe inteira, sem quebrar o desenho. */
+        .tb-folha { container-type: inline-size; }
+        .tb-pagina {
+            --paper: #fefcf0; --ink: #1a1a1a; --ink-2: #4a4a4a; --ink-3: #787878; --rule-soft: #ded8c4; --marca: #1a4f9c;
+            position: relative;
+            box-sizing: border-box;
+            aspect-ratio: 210 / 297;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 2.4cqw;
+            padding: 7cqw 6.4cqw;
+            background: var(--paper);
+            border: 1px solid var(--rule-soft);
+            color: var(--ink);
+            font-family: Georgia, 'Times New Roman', Times, serif;
+        }
+        .tb-pagina::before { content: ''; position: absolute; inset: 2.6cqw; border: 1px solid var(--rule-soft); pointer-events: none; }
+        .tb-cabecalho { text-align: center; padding-bottom: 2.1cqw; border-bottom: 1px solid var(--marca); }
+        /* o PNG entra como máscara e a cor vem do fundo: o arquivo tem o
+           "ADV" em branco, desenhado para fundo escuro, e sumiria no papel */
+        .tb-logo { height: 11.2cqw; aspect-ratio: 768 / 332; margin: 0 auto;
+            background: linear-gradient(135deg, #2f7fd4, #0a3d7a);
+            -webkit-mask-image: url('assets/img/logo.png'); mask-image: url('assets/img/logo.png');
+            -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+            -webkit-mask-position: center; mask-position: center;
+            -webkit-mask-size: contain; mask-size: contain; }
+        .tb-contatos { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.5cqw 2.4cqw; margin-top: 0.9cqw; font-size: 1.8cqw; letter-spacing: .04em; }
+        .tb-contatos span { display: inline-flex; align-items: center; gap: 1cqw; }
+        .tb-contatos span + span { padding-left: 2.4cqw; border-left: 1px solid var(--rule-soft); }
+        .tb-contatos i { font-size: 1.5cqw; opacity: .8; }
+        .tb-corpo { display: flex; flex-direction: column; flex: 1; gap: 2.4cqw; }
+        .tb-faixa { margin-top: 1.5cqw; padding: 0.8cqw 0; border: 1px solid var(--ink); text-align: center; font-size: 2.4cqw; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+        .tb-linha { margin: 0; font-size: 2.05cqw; line-height: 1.45; color: var(--ink-2); text-align: justify; }
+        .tb-linha b { color: var(--ink); }
+        .tb-nome { font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--ink); }
+        .tb-linha.data { margin-top: auto; text-align: center; font-style: italic; color: var(--ink-3); }
+        .tb-assina { margin: 1.5cqw auto 0; padding-top: 0.8cqw; width: 62%; border-top: 1px solid var(--ink); text-align: center; font-size: 2cqw; font-weight: 700; }
+        .tb-rodape { padding-top: 1.4cqw; border-top: 1px solid var(--marca); text-align: center; font-size: 1.9cqw; line-height: 1.5; color: var(--ink-3); }
+        .tb-rodape u { color: var(--marca); }
+
+        /* fluxo e celular ficam lado a lado até o tablet; só empilham
+           quando o fluxo não cabe mais em linha */
+        @media (max-width: 980px) {
+            .vps-bloco { padding: 1.4rem; }
+            .vps-palco { gap: 1.25rem; }
+            /* nós mais estreitos para o fluxo caber na coluna menor */
+            .n8n-canvas { padding-left: 0.9rem; padding-right: 0.9rem; }
+            .n8n-no { width: 70px; }
+            .n8n-no.n8n-agente { width: 92px; }
+            .n8n-agente .n8n-caixa { width: 78px; }
+            .n8n-liga { min-width: 12px; }
+        }
+        @media (max-width: 760px) {
+            .vps-palco { grid-template-columns: minmax(0, 1fr); gap: 1.75rem; }
+        }
+        /* celular: o fluxo fica em pé, um nó embaixo do outro */
+        @media (max-width: 600px) {
+            .n8n-canvas { padding: 2.8rem 1rem 1rem; }
+            .n8n-fluxo { flex-direction: column; align-items: center; }
+            .n8n-liga {
+                flex: none;
+                width: 2px;
+                height: 30px;
+                min-width: 0;
+                margin: 0.5rem 0 0.4rem;
+            }
+            .n8n-liga::after {
+                right: auto;
+                top: auto;
+                left: -4px;
+                bottom: -1px;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-top: 7px solid #5c606b;
+                border-bottom: 0;
+            }
+            .n8n-liga.ok::after { border-left-color: transparent; border-top-color: #2dbf7a; }
+            .n8n-liga b { left: 12px; bottom: auto; top: 50%; transform: translateY(-50%); }
+            .n8n-liga i { left: -3px; top: 0; }
+            .n8n-liga.anda i { animation-name: n8nDesce; }
+            @keyframes n8nDesce {
+                0% { top: 0; opacity: 1; }
+                90% { opacity: 1; }
+                100% { top: calc(100% - 8px); opacity: 0; }
+            }
+            .n8n-no:not(.n8n-fim) .n8n-caixa::after {
+                right: auto;
+                top: auto;
+                left: 50%;
+                bottom: -6px;
+                transform: translateX(-50%);
+            }
+            .n8n-agente .n8n-caixa::after { display: none; }
+        }
+
+        /* o suporte ao certificado continua, mas em segundo plano: título
+           menor e um separador marcando a troca de assunto */
+        .suporte-separador {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 3.5rem 0 2.25rem;
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .suporte-separador::before,
+        .suporte-separador::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
+        /* no alto da seção o separador não precisa do respiro de cima */
+        .platform-section > .suporte-separador:first-child { margin-top: 0; }
+
+        /* ─── RESPIRO DA SEÇÃO ───
+           Com o suporte ao certificado em segundo plano, tudo aqui vinha
+           com a mesma distância curta (1,25rem) e os quatro elementos —
+           rótulo, chamada, cards e título da automação — leram como um
+           bloco só. As distâncias agora crescem na ordem da hierarquia:
+           pouco dentro do card, mais entre os cards, muito antes do
+           próximo assunto. Tudo escopado em .suporte-cards para não
+           mexer nos cards de outros lugares. */
+        .platform-section { padding-top: 4rem; }
+        .suporte-cards {
+            gap: 1.5rem;
+            margin-bottom: 6rem;
+        }
+        .suporte-cards .platform-card { padding: 1.15rem 1.25rem; gap: 1.1rem; }
+        /* o vão à direita é onde mora o selo "Recomendado": sem repetir
+           aqui, a regra de cima (mesma especificidade, mais abaixo na
+           folha) apagaria o padding-right e o selo cobriria o "Mac" */
+        .suporte-cards .platform-card.mac { padding-right: 8rem; }
+        .suporte-cards .platform-card .subtitle { margin-bottom: 0.3rem; }
+        .suporte-cards .platform-card h2 { margin-bottom: 0.3rem; }
+        /* soltos, fora do quadro, os cards voltam a ter fundo próprio; o
+           tema claro os pinta de branco, então o escuro devolve o original */
+        html[data-tema="escuro"] .suporte-cards .platform-card.mac {
+            border-color: rgba(166, 206, 78, 0.3);
+            background: linear-gradient(160deg, rgba(166,206,78,0.1), rgba(22,22,24,0.35) 55%);
+            box-shadow: 0 0 0 1px rgba(166,206,78,0.06), 0 20px 50px rgba(33, 185, 143, 0.1);
+        }
+        html[data-tema="escuro"] .suporte-cards .platform-card.win {
+            background: linear-gradient(160deg, rgba(79,163,255,0.08), rgba(22,22,24,0.35) 55%);
+            box-shadow: none;
+        }
+        @media (max-width: 700px) {
+            /* celular: o selo "Recomendado" sai do canto, onde cobria o
+               "Mac", e desce para baixo do texto */
+            .suporte-cards .platform-card.mac { flex-wrap: wrap; padding-right: 1.1rem; }
+            .suporte-cards .platform-card.mac .card-text { flex-basis: calc(100% - 40px - 0.9rem); }
+            .suporte-cards .recommended-tag {
+                order: 3;
+                position: static;
+                transform: none;
+                margin-left: calc(40px + 0.9rem);
+            }
+        }
+        .suporte-chamada {
+            margin: 0 0 2.5rem;
+            text-align: center;
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.45rem;
+            font-weight: 600;
+            line-height: 1.35;
+        }
+        @media (max-width: 600px) {
+            .suporte-chamada { font-size: 1.25rem; }
+        }
+
     </style>
 </head>
 <body>
@@ -3577,15 +3334,17 @@
         </section>
     </div>
 
-    <!-- Mac e Windows empilhados à esquerda, o anúncio do curso ao lado -->
+    <!-- A seção tem dois assuntos, nesta ordem: o suporte ao certificado
+         (chamada + Mac e Windows) e, depois do título em degradê, a
+         automação em VPS com o carrossel dos fluxos do n8n.
+         O vídeo do suporte remoto com o AnyDesk, que fechava a seção, saiu
+         daqui e está guardado inteiro em _bloco-anydesk.html. -->
     <section class="platform-section" id="plataformas">
-        <p class="hero-desc">
-            <!-- o degradê marca um trecho só: dois ou três acesos na mesma
-                 frase brigam entre si e nenhum puxa o olho -->
-            <strong class="hero-desc-chamada">Não consegue acessar os tribunais? <span class="destaque-cana">Protocolar petição?</span><br>Chama o suporte!</strong>
-        </p>
-        <div class="platform-duo">
-        <div class="platform-grid">
+        <!-- suporte ao certificado no alto da seção: chamada e, logo
+             abaixo, Mac e Windows lado a lado -->
+        <div class="suporte-separador">Suporte ao certificado digital</div>
+        <p class="suporte-chamada">Não consegue acessar os tribunais? <span class="destaque-cana">Protocolar petição?</span> Chama o suporte!</p>
+        <div class="platform-grid suporte-cards">
             <a class="platform-card mac">
                 <div class="recommended-tag"><i class="fas fa-check"></i> Recomendado</div>
                 <div class="platform-icon"><i class="fab fa-apple"></i></div>
@@ -3606,169 +3365,289 @@
             </a>
         </div>
 
-        <!-- suporte remoto no lugar do curso: a tela do AnyDesk à esquerda,
-             explicação e download à direita -->
-        <div class="remote-section">
-            <div class="remote-visual">
-                <div class="remote-window">
-                    <div class="remote-topbar">
-                        <div class="remote-dot"></div>
-                        <div class="remote-dot"></div>
-                        <div class="remote-dot"></div>
-                    </div>
-                    <!-- "Vídeo" do atendimento, feito só com HTML e CSS, em loop
-                         de 30s. Camadas empilhadas na mesma tela: a janela do
-                         AnyDesk fica sempre no fundo e a conversa do WhatsApp,
-                         o pedido de conexão e a sessão aparecem por cima.
-                         Todas as animações usam a mesma duração (--rv-dur),
-                         por isso andam sincronizadas. -->
-                    <div class="remote-body rv" role="img"
-                         aria-label="Como funciona: o cliente chama no WhatsApp pedindo acesso ao TJCE; o suporte pergunta o número do AnyDesk; o cliente copia o número na tela do AnyDesk e envia; quando o pedido de conexão aparece, clica em Aceitar; o técnico resolve e o cliente acompanha tudo.">
-                        <div class="rv-tela">
+        <!-- mesma letra e alinhamento do "Suporte para / certificados
+             digitais" do topo: primeira linha lisa, segunda no degradê -->
+        <h2 class="vps-titulo">
+            <span class="vps-titulo-linha0">Automatize processos com Agentes RAGS.</span><br>
+            <span class="vps-titulo-grad">Numa rede fechada - Cibersegurança</span>
+        </h2>
 
-                            <!-- fundo: réplica da janela do AnyDesk 9 -->
-                            <div class="rv-ad">
-                                <div class="rv-ad-titulo">
-                                    <span class="rv-ad-logo"><i></i><i></i></span>
-                                    <b>AnyDesk</b>
-                                    <span class="rv-ad-aba"><i class="fa-solid fa-display"></i> Nova sessão</span>
-                                    <i class="fa-regular fa-window-maximize rv-ad-nova"></i>
-                                    <span class="rv-ad-janela"><i class="fa-solid fa-minus"></i><i class="fa-regular fa-window-restore"></i><i class="fa-solid fa-xmark"></i></span>
+        <!-- TEMA PRINCIPAL: carrossel com dois fluxos do n8n rodando na VPS.
+             Cada slide executa o seu fluxo e termina numa conversa no
+             WhatsApp; no fim, sai pela direita e o outro entra. Feito só com
+             HTML e CSS; o script logo abaixo conduz tudo. Processos, nomes e
+             prazos são fictícios. -->
+        <div class="vps-bloco">
+            <div class="vps-palco">
+                <div class="vps-fluxos">
+                    <div class="vps-carrossel">
+
+                        <!-- fluxo 1: intimações do dia -->
+                        <div class="vps-slide n8n-canvas ativo" role="img"
+                             aria-label="Fluxo no n8n rodando numa VPS em rede fechada: todo dia às 6h o gatilho dispara, o fluxo consulta os tribunais, um agente de IA com RAG analisa as intimações usando a base do escritório e envia o resumo no WhatsApp do advogado."
+                             data-legendas='["Todo dia às 6h o fluxo acorda sozinho, dentro da sua VPS.","Ele consulta os andamentos e intimações nos tribunais.","O agente de IA lê cada intimação e cruza com a base do seu escritório.","O resumo chega no seu WhatsApp, com prazo e número do processo."]'>
+                            <div class="n8n-rede"><i class="fa-solid fa-lock"></i> Sua VPS - rede fechada</div>
+                            <div class="n8n-titulo">Intimações do dia</div>
+                            <div class="n8n-fluxo">
+                                <div class="n8n-no n8n-gatilho">
+                                    <div class="n8n-caixa"><i class="fa-solid fa-clock"></i><span class="n8n-check"><i class="fa-solid fa-check"></i></span></div>
+                                    <div class="n8n-nome">Todo dia 6h</div>
+                                    <div class="n8n-desc">Gatilho</div>
                                 </div>
-                                <div class="rv-ad-endereco">
-                                    <i class="fa-solid fa-circle-check rv-ad-ok"></i>
-                                    <span class="rv-ad-campo">Digite o endereço remoto <span><i class="fa-regular fa-file-lines"></i><i class="fa-solid fa-arrow-right"></i></span></span>
-                                    <i class="fa-solid fa-bars"></i>
+                                <div class="n8n-liga"><i></i><b>1 item</b></div>
+                                <div class="n8n-no n8n-tribunais">
+                                    <div class="n8n-caixa"><i class="fa-solid fa-scale-balanced"></i><span class="n8n-check"><i class="fa-solid fa-check"></i></span></div>
+                                    <div class="n8n-nome">Tribunais</div>
+                                    <div class="n8n-desc">PJe, TJCE, TRF5</div>
                                 </div>
-                                <div class="rv-ad-faixa">Free license (non-professional use). Start&nbsp;<u>professional trial</u>&nbsp;or&nbsp;<u>purchase license</u>&nbsp;to unlock more features.</div>
-                                <div class="rv-ad-id">
-                                    Este dispositivo
-                                    <span class="rv-ad-num">1 871 933 131
-                                        <i class="fa-solid fa-i-cursor rv-ad-ibeam"></i>
-                                        <span class="rv-ad-copiado"><i class="fa-regular fa-copy"></i> Copiado</span>
-                                    </span>
-                                    <i class="fa-solid fa-circle-info"></i>
-                                    <i class="fa-solid fa-lock"></i>
-                                    <span class="rv-ad-convidar"><i class="fa-solid fa-share"></i> Convidar</span>
+                                <div class="n8n-liga"><i></i><b>3 itens</b></div>
+                                <div class="n8n-no n8n-agente">
+                                    <div class="n8n-caixa"><i class="fa-solid fa-robot"></i><span class="n8n-check"><i class="fa-solid fa-check"></i></span></div>
+                                    <div class="n8n-nome">Agente RAG</div>
+                                    <div class="n8n-desc">Lê e resume</div>
+                                    <div class="n8n-subs">
+                                        <div class="n8n-sub-no"><div class="n8n-sub-caixa"><i class="fa-solid fa-brain"></i></div><span>Modelo IA</span></div>
+                                        <div class="n8n-sub-no"><div class="n8n-sub-caixa"><i class="fa-solid fa-database"></i></div><span>Base do escritório</span></div>
+                                    </div>
                                 </div>
-                                <div class="rv-ad-abas">
-                                    <b>Notícias</b><span>Favoritos</span><span>Sessões Recentes</span><span>Encontrados</span><span>Convites</span>
-                                    <span class="rv-ad-vistas"><i class="fa-solid fa-grip"></i><i class="fa-solid fa-grip-vertical"></i><i class="fa-solid fa-list"></i></span>
-                                </div>
-                                <div class="rv-ad-noticias"><i class="fa-regular fa-newspaper"></i> Notícias</div>
-                                <div class="rv-ad-cards">
-                                    <div class="rv-ad-card rv-ad-card1">Discover<strong>AnyDesk</strong><em>9</em><span class="rv-ad-saiba">Saiba Mais</span></div>
-                                    <div class="rv-ad-card rv-ad-card2">Instalar AnyDesk<span><u>Instalar AnyDesk neste dispositivo...</u></span></div>
-                                    <div class="rv-ad-card rv-ad-card3">Detectar<span>Encontre outros clients AnyDesk na sua rede local automaticamente.</span></div>
-                                    <div class="rv-ad-card rv-ad-card4">Gravar tela<span class="rv-ad-gravar">Não foram encontradas gravações de tela</span></div>
-                                    <div class="rv-ad-card rv-ad-card5">Ajude-nos a melhorar<span>Com sua permissão, gostaríamos de coletar dados de cliente.</span></div>
+                                <div class="n8n-liga"><i></i><b>3 itens</b></div>
+                                <div class="n8n-no n8n-zap n8n-fim">
+                                    <div class="n8n-caixa"><i class="fa-brands fa-whatsapp"></i><span class="n8n-check"><i class="fa-solid fa-check"></i></span></div>
+                                    <div class="n8n-nome">WhatsApp</div>
+                                    <div class="n8n-desc">Envia resumo</div>
                                 </div>
                             </div>
-
-                            <!-- camada: conversa no WhatsApp (abre o vídeo e volta
-                                 depois para o envio do número) -->
-                            <div class="rv-camada rv-zap-camada">
-                                <div class="rv-zap">
-                                    <div class="rv-zap-topo">
-                                        <i class="fa-solid fa-arrow-left"></i>
-                                        <span class="rv-avatar">A</span>
-                                        <span class="rv-zap-nome"><strong>Suporte AdvogaCert</strong><small>online</small></span>
-                                        <span class="rv-zap-acoes"><i class="fa-solid fa-video"></i><i class="fa-solid fa-phone"></i></span>
-                                    </div>
-                                    <div class="rv-zap-corpo">
-                                        <div class="rv-msg rv-msg-eu rv-m1"><span class="rv-bolha">Oi, gostaria de acessar o TJCE.<small>10:41 <i class="fa-solid fa-check-double"></i></small></span></div>
-                                        <div class="rv-msg rv-msg-ele rv-t1"><span class="rv-digitando"><span></span><span></span><span></span></span></div>
-                                        <div class="rv-msg rv-msg-ele rv-m2"><span class="rv-bolha">Olá, somos do suporte AdvogaCert. O(a) senhor(a) tem o número do AnyDesk?<small>10:41</small></span></div>
-                                        <div class="rv-msg rv-msg-eu rv-m3"><span class="rv-bolha">Sim, vou enviar.<small>10:42 <i class="fa-solid fa-check-double"></i></small></span></div>
-                                        <div class="rv-msg rv-msg-eu rv-m4"><span class="rv-bolha rv-bolha-num">1 871 933 131<small>10:42 <i class="fa-solid fa-check-double"></i></small></span></div>
-                                        <div class="rv-msg rv-msg-ele rv-t2"><span class="rv-digitando"><span></span><span></span><span></span></span></div>
-                                        <div class="rv-msg rv-msg-ele rv-m5"><span class="rv-bolha">Recebido! Vou conectar. Quando aparecer o pedido, clique em <b>Aceitar</b>.<small>10:42</small></span></div>
-                                    </div>
-                                    <div class="rv-zap-rodape">
-                                        <span>Mensagem</span>
-                                        <i class="fa-solid fa-microphone"></i>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- camada: pedido de conexão — réplica da janela real
-                                 do AnyDesk que abre no computador do cliente -->
-                            <div class="rv-camada rv-pedido-camada">
-                                <div class="rv-ac">
-                                    <div class="rv-ac-titulo">
-                                        <span class="rv-ac-logo"><i></i><i></i></span>
-                                        <span class="rv-ac-aba"><i class="rv-ac-aba-icone"></i> Suporte AdvogaCert</span>
-                                        <span class="rv-ac-janela"><i class="fa-solid fa-minus"></i><i class="fa-regular fa-square"></i><i class="fa-solid fa-xmark"></i></span>
-                                    </div>
-
-                                    <div class="rv-ac-esq">
-                                        <span class="rv-ac-avatar"><i></i><b></b></span>
-                                        <span class="rv-ac-quem"><strong>Suporte AdvogaCert</strong>742 118 903</span>
-                                        <span class="rv-ac-texto">gostaria de ver a sua área de trabalho.</span>
-                                        <span class="rv-ac-status"><i class="fa-solid fa-lock"></i><i class="fa-solid fa-display"></i></span>
-                                        <span class="rv-ac-perfil">Perfil</span>
-                                        <span class="rv-ac-select">Padrão <i class="fa-solid fa-chevron-down"></i></span>
-                                        <span class="rv-ac-perm rv-ac-p1"><i class="fa-solid fa-keyboard"></i></span>
-                                        <span class="rv-ac-perm rv-ac-p2"><i class="fa-solid fa-right-to-bracket"></i></span>
-                                        <span class="rv-ac-perm rv-ac-p3"><i class="fa-solid fa-clipboard"></i></span>
-                                        <span class="rv-ac-perm rv-ac-p4"><i class="fa-solid fa-volume-high"></i></span>
-                                        <span class="rv-ac-perm rv-ac-p5"><i class="fa-solid fa-video"></i></span>
-                                        <span class="rv-ac-perm rv-ac-p6"><i class="fa-solid fa-pen"></i></span>
-                                        <span class="rv-ac-perm rv-ac-p7"><i class="fa-solid fa-display"></i></span>
-                                        <span class="rv-ac-mais">Mais</span>
-                                        <span class="rv-ac-btn rv-ac-aceitar-perfil"><i class="fa-solid fa-shield-halved"></i> Aceitar</span>
-                                        <span class="rv-ac-btn rv-ac-aceitar rv-aceitar">
-                                            Aceitar
-                                            <i class="fa-solid fa-arrow-pointer rv-cursor"></i>
-                                        </span>
-                                        <span class="rv-ac-btn rv-ac-recusar">Recusar</span>
-                                    </div>
-
-                                    <div class="rv-ac-dir">
-                                        <span class="rv-ac-tab rv-ac-tab-chat">Chat</span>
-                                        <span class="rv-ac-tab rv-ac-tab-arq">Transferência de Arquivos</span>
-                                        <span class="rv-ac-log">Abrir registro do chat</span>
-                                        <span class="rv-ac-linha1"></span>
-                                        <span class="rv-ac-nome">Suporte AdvogaCert</span>
-                                        <span class="rv-ac-hora">11:18</span>
-                                        <span class="rv-ac-evento"><i class="fa-solid fa-display"></i> Solicitação de sessão recebida</span>
-                                        <span class="rv-ac-linha2"></span>
-                                        <span class="rv-ac-msg">Mensagem</span>
-                                        <i class="fa-solid fa-paper-plane rv-ac-enviar"></i>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-
-                        <div class="rv-legenda">
-                            <div class="rv-progresso"><span><i></i></span><span><i></i></span><span><i></i></span><span><i></i></span></div>
-                            <div class="rv-passos">
-                                <p class="rv-passo rv-p1"><b>1</b> Chame a gente no WhatsApp</p>
-                                <p class="rv-passo rv-p2"><b>2</b> Abra o AnyDesk e copie o seu número</p>
-                                <p class="rv-passo rv-p3"><b>3</b> Mande o número na conversa</p>
-                                <p class="rv-passo rv-p4"><b>4</b> Quando o pedido aparecer, clique em Aceitar</p>
+                            <div class="n8n-legenda">
+                                <b class="n8n-num">1</b>
+                                <span class="n8n-texto">Todo dia às 6h o fluxo acorda sozinho, dentro da sua VPS.</span>
                             </div>
                         </div>
+
+                        <!-- fluxo 2: documento no timbrado do escritório -->
+                        <div class="vps-slide n8n-canvas" role="img"
+                             aria-label="Fluxo no n8n rodando numa VPS em rede fechada: o advogado pede uma procuração pelo WhatsApp, um agente de IA com RAG escreve o documento com base nos modelos do escritório, o texto é aplicado no timbrado da AdvCert e convertido em PDF, e o PDF é enviado de volta na conversa."
+                             data-legendas='["Você pede o documento numa mensagem de WhatsApp.","O agente de IA escreve com base nos modelos do seu escritório.","O texto entra no timbrado da AdvCert e vira PDF.","O PDF chega pronto na conversa, para revisar e assinar."]'>
+                            <div class="n8n-rede"><i class="fa-solid fa-lock"></i> Sua VPS - rede fechada</div>
+                            <div class="n8n-titulo">Documentos no timbrado</div>
+                            <div class="n8n-fluxo">
+                                <div class="n8n-no n8n-gatilho n8n-zap">
+                                    <div class="n8n-caixa"><i class="fa-brands fa-whatsapp"></i><span class="n8n-check"><i class="fa-solid fa-check"></i></span></div>
+                                    <div class="n8n-nome">Pedido</div>
+                                    <div class="n8n-desc">Mensagem recebida</div>
+                                </div>
+                                <div class="n8n-liga"><i></i><b>1 item</b></div>
+                                <div class="n8n-no n8n-agente">
+                                    <div class="n8n-caixa"><i class="fa-solid fa-robot"></i><span class="n8n-check"><i class="fa-solid fa-check"></i></span></div>
+                                    <div class="n8n-nome">Agente RAG</div>
+                                    <div class="n8n-desc">Escreve o texto</div>
+                                    <div class="n8n-subs">
+                                        <div class="n8n-sub-no"><div class="n8n-sub-caixa"><i class="fa-solid fa-brain"></i></div><span>Modelo IA</span></div>
+                                        <div class="n8n-sub-no"><div class="n8n-sub-caixa"><i class="fa-solid fa-folder-open"></i></div><span>Modelos do escritório</span></div>
+                                    </div>
+                                </div>
+                                <div class="n8n-liga"><i></i><b>1 item</b></div>
+                                <div class="n8n-no n8n-timbre">
+                                    <div class="n8n-caixa"><i class="fa-solid fa-file-pdf"></i><span class="n8n-check"><i class="fa-solid fa-check"></i></span></div>
+                                    <div class="n8n-nome">Timbrado</div>
+                                    <div class="n8n-desc">Gera o PDF</div>
+                                </div>
+                                <div class="n8n-liga"><i></i><b>1 item</b></div>
+                                <div class="n8n-no n8n-zap n8n-fim">
+                                    <div class="n8n-caixa"><i class="fa-brands fa-whatsapp"></i><span class="n8n-check"><i class="fa-solid fa-check"></i></span></div>
+                                    <div class="n8n-nome">WhatsApp</div>
+                                    <div class="n8n-desc">Envia o PDF</div>
+                                </div>
+                            </div>
+                            <div class="n8n-legenda">
+                                <b class="n8n-num">1</b>
+                                <span class="n8n-texto">Você pede o documento numa mensagem de WhatsApp.</span>
+                            </div>
+                        </div>
+
                     </div>
+                    <div class="vps-pontos" aria-hidden="true"><span class="on"></span><span></span></div>
                 </div>
-            </div>
-            <div class="remote-text">
-                <h2>Como funciona o suporte remoto</h2>
-                <p>
-                    Quando o chamado precisa de acesso à sua máquina, nossa equipe conecta com você
-                    por <strong>AnyDesk</strong> — você compartilha o ID de
-                    sessão gerado pelo programa, autoriza a conexão na hora, acompanha tudo em tempo
-                    real na sua tela e pode encerrar o acesso a qualquer momento.
-                </p>
-                <div class="remote-buttons">
-                    <a href="https://anydesk.com/pt/downloads" target="_blank" rel="noopener" class="btn-anydesk">
-                        <i class="fas fa-download"></i> Baixar AnyDesk
+
+                <!-- o celular não sai do lugar: só a conversa troca com o fluxo -->
+                <div class="zap-col">
+                    <div class="zap-cel" aria-hidden="true">
+                        <div class="zap-status"><span>9:41</span><span><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><i class="fa-solid fa-battery-full"></i></span></div>
+                        <div class="zap-topo">
+                            <i class="fa-solid fa-arrow-left"></i>
+                            <span class="zap-avatar"><i class="fa-solid fa-robot"></i></span>
+                            <span><strong>Assistente do escritório</strong><small>online</small></span>
+                            <span class="zap-acoes"><i class="fa-solid fa-video"></i><i class="fa-solid fa-phone"></i></span>
+                        </div>
+                        <div class="zap-corpo">
+                            <!-- conversa do fluxo 1 -->
+                            <div class="zap-conversa ativa">
+                                <div class="zap-msg">Bom dia! Rodei a consulta das 6h nos tribunais e encontrei <b>3 novidades</b>.<small>06:02</small></div>
+                                <div class="zap-msg"><b>TJCE</b> <em>0801234-56.2026.8.06.0001</em><br>Intimação para contrarrazões. Prazo de 15 dias úteis.<small>06:02</small></div>
+                                <div class="zap-msg"><b>TRF5</b> <em>0809876-12.2026.4.05.8100</em><br>Audiência marcada para 12/11 às 14h.<small>06:02</small></div>
+                                <div class="zap-msg">Quer que eu prepare a minuta das contrarrazões?<small>06:02</small></div>
+                                <div class="zap-dig"><span></span><span></span><span></span></div>
+                            </div>
+                            <!-- conversa do fluxo 2; data-antes: é a mensagem que dispara o fluxo -->
+                            <div class="zap-conversa">
+                                <div class="zap-msg eu" data-antes>Preciso de uma procuração ad judicia para o cliente João Pereira, ação de cobrança.<small>14:20 <i class="fa-solid fa-check-double"></i></small></div>
+                                <div class="zap-msg">Pronto! Procuração gerada no seu timbrado:<small>14:21</small></div>
+                                <div class="zap-msg zap-doc">
+                                    <div class="tb-folha">
+                                        <div class="tb-pagina">
+                                            <div class="tb-cabecalho">
+                                                <div class="tb-logo"></div>
+                                                <div class="tb-contatos">
+                                                    <span><i class="fa-solid fa-phone"></i> (00) 0000-0000</span>
+                                                    <span><i class="fa-solid fa-envelope"></i> contato@adv.br</span>
+                                                    <span><i class="fa-solid fa-id-card"></i> OAB/UF 00.000</span>
+                                                </div>
+                                            </div>
+                                            <div class="tb-corpo">
+                                                <div class="tb-faixa">Procuração</div>
+                                                <p class="tb-linha"><b class="tb-nome">João Pereira</b>, brasileiro, portador do RG nº 0.000.000 e inscrito no CPF sob o nº 000.000.000-00, residente na Rua xxxxxx, nº 00, nomeia e constitui seu procurador o advogado subscritor, inscrito na OAB/UF 00.000,</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="zap-arquivo">
+                                        <i class="fa-solid fa-file-pdf"></i>
+                                        <div><span>Procuracao_Joao_Pereira.pdf</span><small>PDF, 1 página</small></div>
+                                    </div>
+                                </div>
+                                <div class="zap-msg">Revise e me avise se quiser alguma alteração.<small>14:21</small></div>
+                                <div class="zap-dig"><span></span><span></span><span></span></div>
+                            </div>
+                        </div>
+                        <div class="zap-rodape"><span>Mensagem</span><i class="fa-solid fa-microphone"></i></div>
+                    </div>
+                    <a href="https://wa.me/5561986241570?text=Ol%C3%A1%2C%20quero%20automatizar%20meu%20escrit%C3%B3rio%20com%20n8n." target="_blank" rel="noopener" class="vps-btn">
+                        <i class="fa-brands fa-whatsapp"></i> Conheça mais
                     </a>
                 </div>
             </div>
         </div>
-        </div>
+        <script>
+            (function () {
+                var slides = document.querySelectorAll('.vps-slide');
+                var pontos = document.querySelectorAll('.vps-pontos span');
+                if (!slides.length) return;
+                var cada = function (lista, fn) { [].forEach.call(lista, fn); };
+                var espera = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+
+                // monta o "roteiro" de cada slide a partir do próprio HTML
+                // cada fluxo tem a sua conversa no celular fixo, na mesma ordem
+                var conversas = document.querySelectorAll('.zap-conversa');
+                var fluxos = [].map.call(slides, function (s, k) {
+                    var c = conversas[k];
+                    return {
+                        slide: s,
+                        conversa: c,
+                        nos: s.querySelectorAll('.n8n-no'),
+                        ligas: s.querySelectorAll('.n8n-liga'),
+                        msgs: c.querySelectorAll('.zap-msg'),
+                        dig: c.querySelector('.zap-dig'),
+                        num: s.querySelector('.n8n-num'),
+                        texto: s.querySelector('.n8n-texto'),
+                        legendas: JSON.parse(s.getAttribute('data-legendas'))
+                    };
+                });
+                function legenda(f, i) { f.num.textContent = i + 1; f.texto.textContent = f.legendas[i]; }
+                function limpa(f) {
+                    cada(f.slide.querySelectorAll('.rodando, .ok, .anda'), function (e) { e.classList.remove('rodando', 'ok', 'anda'); });
+                    cada(f.msgs, function (m) { m.classList.remove('on'); });
+                    f.dig.classList.remove('on');
+                    legenda(f, 0);
+                }
+                function pronto(f) {
+                    cada(f.nos, function (n) { n.classList.add('ok'); });
+                    cada(f.ligas, function (l) { l.classList.add('ok'); });
+                    cada(f.slide.querySelectorAll('.n8n-sub-no'), function (s) { s.classList.add('ok'); });
+                    cada(f.msgs, function (m) { m.classList.add('on'); });
+                    legenda(f, f.legendas.length - 1);
+                }
+
+                // quem prefere sem animação vê o primeiro fluxo já executado, sem carrossel
+                if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                    pronto(fluxos[0]);
+                    return;
+                }
+
+                async function executa(f, i, tempo) {
+                    var no = f.nos[i];
+                    var subs = no.querySelectorAll('.n8n-sub-no');
+                    no.classList.add('rodando');
+                    cada(subs, function (s) { s.classList.add('rodando'); });
+                    await espera(tempo);
+                    no.classList.remove('rodando');
+                    no.classList.add('ok');
+                    cada(subs, function (s) { s.classList.remove('rodando'); s.classList.add('ok'); });
+                    if (f.ligas[i]) {
+                        f.ligas[i].classList.add('anda');
+                        // o mesmo tempo da animação n8nAnda, no CSS
+                        await espera(450);
+                        f.ligas[i].classList.add('ok');
+                    }
+                }
+                async function mensagens(f, antes) {
+                    for (var m = 0; m < f.msgs.length; m++) {
+                        var msg = f.msgs[m];
+                        if (msg.hasAttribute('data-antes') !== antes) continue;
+                        // quem digita é o assistente; a mensagem do advogado só aparece
+                        if (!msg.classList.contains('eu')) {
+                            f.dig.classList.add('on');
+                            await espera(1000);
+                            f.dig.classList.remove('on');
+                        }
+                        msg.classList.add('on');
+                        await espera(600);
+                    }
+                }
+                async function roda(f) {
+                    legenda(f, 0);
+                    await espera(700);
+                    await mensagens(f, true);
+                    // o nó com o agente demora mais: é ele que "pensa"; o do
+                    // timbrado, um pouco mais que os outros, porque monta o PDF
+                    for (var i = 0; i < f.nos.length; i++) {
+                        var no = f.nos[i];
+                        legenda(f, i);
+                        await executa(f, i, no.classList.contains('n8n-agente') ? 1500
+                            : no.classList.contains('n8n-timbre') ? 1100
+                            : (i === 0 ? 450 : 850));
+                    }
+                    await mensagens(f, false);
+                    await espera(4500);
+                }
+                async function troca(de, para) {
+                    limpa(fluxos[para]);
+                    var sai = fluxos[de].slide, entra = fluxos[para].slide;
+                    sai.classList.remove('ativo');
+                    sai.classList.add('saindo');
+                    entra.classList.add('ativo');
+                    fluxos[de].conversa.classList.remove('ativa');
+                    fluxos[para].conversa.classList.add('ativa');
+                    cada(pontos, function (p, k) { p.classList.toggle('on', k === para); });
+                    // espera a entrada terminar (0,4s de atraso + 1,3s)
+                    await espera(1750);
+                    // o que saiu volta para a esquerda sem aparecer, pronto para entrar de novo
+                    sai.classList.add('sem-transicao');
+                    sai.classList.remove('saindo');
+                    void sai.offsetWidth;
+                    sai.classList.remove('sem-transicao');
+                }
+                async function loop() {
+                    var atual = 0;
+                    limpa(fluxos[0]);
+                    for (;;) {
+                        await roda(fluxos[atual]);
+                        var prox = (atual + 1) % fluxos.length;
+                        await troca(atual, prox);
+                        atual = prox;
+                    }
+                }
+                loop();
+            })();
+        </script>
+
     </section>
 
     <!-- ======================================================================
