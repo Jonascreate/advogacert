@@ -2801,6 +2801,23 @@
             gap: 1.5rem;
             margin-bottom: 6rem;
         }
+        /* ─── EMENDA COM A SEÇÃO DA FOTO, NO CELULAR ───
+           Entre o fim do celular/fluxo e o começo do "Quem está por trás"
+           havia quase 200px de vazio, somados de três lugares: o respiro
+           interno do .vps-bloco (1,4rem), o padding de baixo desta seção
+           (6rem) e o padding de cima da seção da foto, que em ≤600px vale
+           --gap-2xl, 5rem. No computador os 6rem estão bem; no celular a
+           pilha inteira aparecia de uma vez.
+
+           A regra da foto vive em assets/css/bloco-02-missao.css, usado
+           por outras páginas: por isso não mexo lá, sobrescrevo aqui. Dá
+           certo porque este <style> vem depois do <link> e a
+           especificidade é a mesma (.section.missao) — quem está por
+           último vence. */
+        @media (max-width: 760px) {
+            .platform-section { padding-bottom: 2.25rem; }
+            .section.missao { padding-top: 1.75rem; }
+        }
         .suporte-cards .platform-card { padding: 1.15rem 1.25rem; gap: 1.1rem; }
         /* o vão à direita é onde mora o selo "Recomendado": sem repetir
            aqui, a regra de cima (mesma especificidade, mais abaixo na
